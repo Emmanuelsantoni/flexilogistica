@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora — Industrias Covin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0e16;--surface:#121520;--surface2:#181c28;--border:#22273a;
+  --accent:#e8ff47;--accent2:#47c4ff;--accent3:#ff6b35;
+  --text:#eef0f5;--muted:#6b7280;--green:#4ade80;--red:#f87171;--purple:#c084fc;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;}
+
+/* ── SELECTOR DE PRODUCTO ───────────────────── */
+#selector-screen{
+  position:fixed;inset:0;background:var(--bg);z-index:500;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background-image:radial-gradient(ellipse 80% 50% at 20% 10%,rgba(232,255,71,.07) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 90%,rgba(71,196,255,.06) 0%,transparent 60%);
+}
+.sel-logo{text-align:center;margin-bottom:48px;}
+.sel-logo .name{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;letter-spacing:-1px;color:var(--text);}
+.sel-logo .name span{color:var(--accent);}
+.sel-logo .sub{font-size:11px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:6px;}
+.sel-prompt{font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;}
+.producto-grid{display:grid;grid-template-columns:repeat(3,260px);gap:18px;}
+.prod-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:28px 22px;cursor:pointer;transition:all .25s;text-align:center;
+  position:relative;overflow:hidden;
+}
+.prod-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s;
+  background:radial-gradient(ellipse at 50% 0%,rgba(232,255,71,.08) 0%,transparent 70%);}
+.prod-card:hover{border-color:rgba(232,255,71,.35);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.4);}
+.prod-card:hover::before{opacity:1;}
+.prod-card.active-prod{border-color:var(--accent);box-shadow:0 0 24px rgba(232,255,71,.15);}
+.prod-icon{font-size:38px;margin-bottom:14px;}
+.prod-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px;}
+.prod-desc{font-size:10px;color:var(--muted);line-height:1.6;}
+.prod-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600;
+  margin-top:10px;background:rgba(232,255,71,.1);color:var(--accent);border:1px solid rgba(232,255,71,.2);}
+.sel-btn{margin-top:36px;}
+
+/* ── HEADER ─────────────────────────────────── */
+.header{padding:14px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;background:rgba(11,14,22,.96);
+  backdrop-filter:blur(12px);z-index:100;flex-wrap:wrap;gap:10px;}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer;}
+.accent-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);flex-shrink:0;}
+.logo-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.5px;}
+.logo-title span{color:var(--accent);}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;}
+.prod-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:11px;cursor:pointer;transition:border-color .2s;}
+.prod-pill:hover{border-color:var(--accent);}
+.prod-pill .pico{font-size:14px;}
+.tabs{display:flex;gap:3px;background:var(--surface);border-radius:10px;padding:4px;flex-wrap:wrap;}
+.tab{padding:6px 12px;border-radius:7px;font-size:10px;font-family:'DM Mono',monospace;font-weight:500;
+  cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .2s;letter-spacing:.2px;}
+.tab.active{background:var(--accent);color:#0d0f14;}
+.tab:hover:not(.active){color:var(--text);}
+
+/* ── LAYOUT ─────────────────────────────────── */
+#app{display:none;}
+.container{max-width:1340px;margin:0 auto;padding:24px 28px;}
+.panel{display:none;animation:fadeIn .25s ease;}
+.panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+
+/* ── CARD ───────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:20px;}
+.card-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.ico{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.cy{background:var(--accent);box-shadow:0 0 8px var(--accent);}
+.cb{background:var(--accent2);box-shadow:0 0 8px var(--accent2);}
+.co{background:var(--accent3);box-shadow:0 0 8px var(--accent3);}
+.cg{background:var(--green);box-shadow:0 0 8px var(--green);}
+.cp{background:var(--purple);box-shadow:0 0 8px var(--purple);}
+
+/* ── FORM ───────────────────────────────────── */
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.field input,.field select{width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:7px;padding:8px 11px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.field input::placeholder{color:var(--muted);}
+.unit{font-size:9px;color:var(--muted);margin-top:3px;}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border);outline:none;padding:0!important;border:none!important;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 8px var(--accent);}
+
+/* ── RESULT BOX ─────────────────────────────── */
+.rbox{background:var(--surface2);border:1px solid var(--border);border-radius:9px;
+  padding:11px 15px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.rlabel{font-size:11px;color:var(--muted);letter-spacing:.3px;line-height:1.5;}
+.rval{font-size:15px;font-weight:500;font-family:'Syne',sans-serif;white-space:nowrap;}
+.rval.ac{color:var(--accent);}.rval.bl{color:var(--accent2);}.rval.or{color:var(--accent3);}
+.rval.gr{color:var(--green);}.rval.rd{color:var(--red);}.rval.pu{color:var(--purple);}
+.bigres{border-radius:13px;padding:20px;text-align:center;margin-bottom:14px;
+  background:linear-gradient(135deg,var(--surface2) 0%,rgba(232,255,71,.04) 100%);
+  border:1px solid rgba(232,255,71,.2);}
+.bigres .lbl{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+.bigres .val{font-family:'Syne',sans-serif;font-size:34px;font-weight:800;color:var(--accent);letter-spacing:-1px;}
+.bigres .sub{font-size:10px;color:var(--muted);margin-top:4px;}
+
+/* ── BUTTONS ────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:7px;
+  font-family:'DM Mono',monospace;font-size:11px;font-weight:500;cursor:pointer;border:none;transition:all .2s;}
+.btn-p{background:var(--accent);color:#0b0e16;}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(232,255,71,.3);}
+.btn-s{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-s:hover{border-color:var(--accent);}
+.btn-d{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2);}
+.btn-d:hover{background:rgba(248,113,113,.2);}
+.btn-sm{padding:5px 11px;font-size:10px;}
+.btn-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:500;}
+.badge-ok{background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.2);}
+.badge-no{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.2);}
+
+/* ── TOGGLE ─────────────────────────────────── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.tog{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.tog.on{background:var(--accent);}
+.tog::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:white;top:3px;left:3px;transition:left .2s;}
+.tog.on::after{left:19px;}
+
+/* ── MISC ───────────────────────────────────── */
+.sep{height:1px;background:var(--border);margin:14px 0;}
+.sec-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:20px;letter-spacing:-.5px;}
+.sec-title span{color:var(--accent);}
+.tip{font-size:10px;color:var(--muted);font-style:italic;line-height:1.5;}
+.meter-bar{width:100%;height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px;}
+.meter-fill{height:100%;border-radius:3px;transition:width .5s;}
+.mlow{background:var(--red);}.mmid{background:var(--accent3);}.mgood{background:var(--green);}
+
+/* ── COSTOS FIJOS ───────────────────────────── */
+.cf-row{display:grid;grid-template-columns:1fr 130px 85px 36px;gap:6px;align-items:center;margin-bottom:7px;}
+.cf-row input,.cf-row select{background:var(--surface2);border:1px solid var(--border);border-radius:7px;
+  padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;width:100%;}
+.cf-row input:focus{border-color:var(--accent);}
+.cf-hdr{display:grid;grid-template-columns:1fr 130px 85px 36px;gap:6px;margin-bottom:5px;}
+.cf-hdr span{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.cf-total{display:flex;justify-content:space-between;align-items:center;
+  background:rgba(192,132,252,.06);border:1px solid rgba(192,132,252,.15);border-radius:10px;padding:11px 14px;margin-top:10px;}
+
+/* ── QTY / UNIT SELECTOR ───────────────────── */
+.qty-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.qty-sel{display:flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.qty-btn{background:var(--surface2);border:none;color:var(--text);width:32px;height:32px;font-size:17px;cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;}
+.qty-btn:hover{background:var(--border);}
+.qty-inp{background:var(--surface2);border:none;border-left:1px solid var(--border);border-right:1px solid var(--border);
+  color:var(--text);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;width:80px;text-align:center;height:32px;outline:none;}
+.unit-tog{display:flex;gap:3px;}
+.utbtn{padding:5px 10px;border-radius:6px;font-size:10px;font-family:'DM Mono',monospace;
+  cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted);transition:all .2s;}
+.utbtn.on{background:var(--accent2);color:#0b0e16;border-color:var(--accent2);}
+
+/* ── MATERIAL GRID ──────────────────────────── */
+.mat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
+.mat-c{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px;text-align:center;}
+.mat-c .ml{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.mat-c .mk{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+.mat-c .mc{font-size:10px;margin-top:3px;}
+.pp .mk{color:var(--accent);}.rec .mk{color:var(--accent2);}.mb .mk{color:var(--accent3);}
+
+/* ── COLADA BOX ─────────────────────────────── */
+.colada-box{background:rgba(192,132,252,.05);border:1px solid rgba(192,132,252,.2);
+  border-radius:10px;padding:14px;margin-top:12px;}
+.colada-title{font-size:10px;color:var(--purple);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;font-weight:700;}
+
+/* ── TANDA BOX ──────────────────────────────── */
+.tanda-box{background:linear-gradient(135deg,var(--surface2) 0%,rgba(71,196,255,.04) 100%);
+  border:1px solid rgba(71,196,255,.2);border-radius:13px;padding:18px;margin-bottom:14px;}
+.tanda-box .lbl2{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.tanda-box .val2{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent2);letter-spacing:-1px;}
+
+/* ── SENSIBILIDAD ───────────────────────────── */
+.sens-bar-wrap{margin-bottom:11px;}
+.sens-bar-label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;}
+.sens-bar-name{font-size:11px;}
+.sens-bar-pct{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+.sens-bar-track{height:10px;background:var(--surface2);border-radius:5px;overflow:hidden;border:1px solid var(--border);}
+.sens-bar-fill{height:100%;border-radius:5px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.sens-bar-cost{font-size:9px;color:var(--muted);margin-top:2px;}
+.impact-pill{display:inline-block;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:600;margin-left:4px;}
+.imp-high{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.25);}
+.imp-mid{background:rgba(255,107,53,.15);color:var(--accent3);border:1px solid rgba(255,107,53,.25);}
+.imp-low{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.25);}
+.alerta-box{border-radius:9px;padding:12px 14px;margin-bottom:9px;display:flex;align-items:flex-start;gap:9px;}
+.alerta-high{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);}
+.alerta-mid{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);}
+.alerta-low{background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);}
+.alerta-txt{font-size:10px;line-height:1.6;}
+.slider-row{display:grid;grid-template-columns:1fr 58px;gap:8px;align-items:center;margin-bottom:9px;}
+.slider-val{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;text-align:right;color:var(--accent);}
+.tabla-escenarios{width:100%;border-collapse:collapse;margin-top:4px;}
+.tabla-escenarios th{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);}
+.tabla-escenarios td{padding:9px 10px;font-size:11px;border-bottom:1px solid rgba(37,42,56,.4);}
+.tabla-escenarios tr:last-child td{border-bottom:none;}
+.tabla-escenarios tr:hover td{background:rgba(232,255,71,.02);}
+
+/* ── COLORES ────────────────────────────────── */
+.color-swatch{width:16px;height:16px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.15);}
+.color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;}
+.color-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;transition:border-color .2s;cursor:default;}
+.color-card:hover{border-color:rgba(232,255,71,.25);}
+.color-card-header{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+.color-card-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;flex:1;}
+.color-stat{display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px;}
+.color-stat .cs-label{color:var(--muted);}
+.color-stat .cs-val{font-weight:600;font-family:'Syne',sans-serif;}
+.color-actions{display:flex;gap:5px;margin-top:10px;}
+.color-actions .btn{flex:1;justify-content:center;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:26px;position:relative;}
+.modal-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;margin-bottom:18px;}
+.modal-title span{color:var(--accent);}
+.modal-close{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;}
+.modal-close:hover{color:var(--text);}
+.color-picker-wrap{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.color-picker-wrap input[type=color]{width:38px;height:34px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);padding:2px;cursor:pointer;}
+.compare-table{width:100%;border-collapse:collapse;}
+.compare-table th{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:7px 9px;border-bottom:1px solid var(--border);text-align:left;}
+.compare-table td{padding:9px 9px;font-size:11px;border-bottom:1px solid rgba(37,42,56,.4);}
+.compare-table tr:last-child td{border-bottom:none;}
+.compare-table .best{color:var(--green);font-weight:700;}
+.compare-table .worst{color:var(--red);font-weight:700;}
+.compare-bar{height:5px;border-radius:3px;margin-top:3px;transition:width .5s;}
+.precio-venta-box{background:linear-gradient(135deg,rgba(232,255,71,.05) 0%,rgba(74,222,128,.03) 100%);
+  border:1px solid rgba(232,255,71,.15);border-radius:12px;padding:16px;margin-bottom:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+.pv-label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.pv-input{background:var(--surface);border:1px solid rgba(232,255,71,.25);border-radius:8px;
+  padding:9px 12px;color:var(--accent);font-family:'Syne',sans-serif;font-size:18px;font-weight:800;
+  outline:none;width:140px;text-align:center;transition:border-color .2s;}
+.pv-input:focus{border-color:var(--accent);}
+
+/* ── EQUIV BOX ──────────────────────────────── */
+.equiv-box{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;}
+.equiv-box .el{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.equiv-box .ev{font-size:11px;margin-top:3px;}
+
+/* ── NOTIF ──────────────────────────────────── */
+.notif{position:fixed;bottom:22px;right:22px;background:var(--surface);border:1px solid var(--accent);
+  color:var(--accent);padding:10px 15px;border-radius:9px;font-size:11px;z-index:999;
+  transform:translateY(70px);opacity:0;transition:all .3s;}
+.notif.show{transform:translateY(0);opacity:1;}
+
+@media(max-width:900px){
+  .grid-2,.grid-3{grid-template-columns:1fr;}
+  .container{padding:14px;}
+  .header{padding:12px 16px;}
+  .mat-grid{grid-template-columns:1fr 1fr;}
+  .producto-grid{grid-template-columns:1fr;}
+  .prod-card{padding:20px 16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     PANTALLA SELECTOR DE PRODUCTO
+════════════════════════════════════════════════ -->
+<div id="selector-screen">
+  <div class="sel-logo">
+    <div class="name">Industrias <span>Covin</span></div>
+    <div class="sub">Calculadora de costos de producción</div>
+  </div>
+  <div class="sel-prompt">Seleccioná el producto a calcular</div>
+  <div class="producto-grid">
+
+    <div class="prod-card" onclick="elegirProducto('baldosas')" id="pc-baldosas">
+      <div class="prod-icon">🟫</div>
+      <div class="prod-name">Baldosas de piso</div>
+      <div class="prod-desc">Piezas PP inyectadas. Venta por pieza, por caja o por m². 16 baldosas = 1 m². Sin colada.</div>
+      <div class="prod-badge">PP + MB + Recuperado</div>
+    </div>
+
+    <div class="prod-card" onclick="elegirProducto('rejillas')" id="pc-rejillas">
+      <div class="prod-icon">🥩</div>
+      <div class="prod-name">Rejillas para fiambre</div>
+      <div class="prod-desc">Piezas con colada de desperdicio. Venta por caja de 4 kg. La colada se recupera.</div>
+      <div class="prod-badge">PP + MB + Colada recuperable</div>
+    </div>
+
+    <div class="prod-card" onclick="elegirProducto('manijas')" id="pc-manijas">
+      <div class="prod-icon">🚗</div>
+      <div class="prod-name">Manijas de auto</div>
+      <div class="prod-desc">Piezas técnicas con colada de desperdicio. Venta por pieza o por lote. La colada se recupera.</div>
+      <div class="prod-badge">PP + MB + Colada recuperable</div>
+    </div>
+
+  </div>
+  <div class="sel-btn">
+    <button class="btn btn-s" style="font-size:10px;color:var(--muted);" onclick="elegirProducto(localStorage.getItem('covin_prod')||'baldosas')" id="btn-continuar" style="display:none;">
+      → Continuar con el último producto
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     APP PRINCIPAL
+════════════════════════════════════════════════ -->
+<div id="app">
+<div class="header">
+  <div class="logo" onclick="volverSelector()" title="Cambiar producto">
+    <div class="accent-dot"></div>
+    <div>
+      <div class="logo-title">Industrias <span>Covin</span></div>
+      <div class="logo-sub">Calculadora de costos</div>
+    </div>
+  </div>
+  <div class="prod-pill" onclick="volverSelector()">
+    <span class="pico" id="header-icon">🟫</span>
+    <span id="header-prod">Baldosas de piso</span>
+    <span style="color:var(--muted);font-size:9px;margin-left:2px;">▾</span>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showPanel('config',this)">⚙ Config</button>
+    <button class="tab" onclick="showPanel('fijos',this)">🏗 Costos Fijos</button>
+    <button class="tab" onclick="showPanel('costo',this)">🧮 Costo Unitario</button>
+    <button class="tab" onclick="showPanel('tanda',this)">📦 Tanda / Lote</button>
+    <button class="tab" onclick="showPanel('produccion',this)">⏱ Producción</button>
+    <button class="tab" onclick="showPanel('rentabilidad',this)">💰 Rentabilidad</button>
+    <button class="tab" onclick="showPanel('sensibilidad',this)">📊 Sensibilidad</button>
+    <button class="tab" onclick="showPanel('colores',this)">🎨 Colores</button>
+  </div>
+</div>
+<div class="notif" id="notif">✓ Guardado</div>
+<div class="container">
+
+<!-- ═══ CONFIG ════ -->
+<div class="panel active" id="panel-config">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+    <div class="sec-title">Configuración <span id="cfg-prod-name">base</span></div>
+    <span class="badge badge-no" id="config-status">Sin guardar</span>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="ico cy"></span> Materias Primas</div>
+      <div class="field"><label>Precio PP virgen ($/kg)</label><input type="number" id="cfg-pp" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="field"><label>Precio Masterbatch/tinta ($/kg)</label><input type="number" id="cfg-mb" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="field"><label>% Masterbatch en mezcla virgen</label><input type="number" id="cfg-mbpct" placeholder="3" step="0.1" min="0" max="100"><div class="unit">% sobre la parte virgen</div></div>
+      <div class="sep"></div>
+      <div class="toggle-row"><span style="font-size:12px;">Usar material recuperado externo</span><div class="tog" id="tog-rec" onclick="toggleRec()"></div></div>
+      <div id="rec-fields" style="display:none;">
+        <div class="field"><label>Precio recuperado ($/kg)</label><input type="number" id="cfg-recprecio" placeholder="0.00" step="0.01" min="0"></div>
+        <div class="field"><label>% Recuperado en mezcla total</label><input type="number" id="cfg-recpct" placeholder="0" step="1" min="0" max="100"><div class="unit">el resto completa con PP virgen + MB</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-title"><span class="ico co"></span> Costos Operativos</div>
+        <div class="field"><label>Mano de obra ($/hora)</label><input type="number" id="cfg-mo" placeholder="0.00" step="0.01" min="0"></div>
+        <div class="field"><label>Potencia inyectora (kW)</label><input type="number" id="cfg-kw" placeholder="0.00" step="0.01" min="0"></div>
+        <div class="field"><label>Precio energía ($/kWh)</label><input type="number" id="cfg-kwh" placeholder="0.00" step="0.001" min="0"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="ico cb"></span> Pieza / Molde</div>
+        <div class="grid-2" style="gap:10px;">
+          <div class="field"><label>Peso neto pieza (g)</label><input type="number" id="cfg-peso" placeholder="0" step="0.1" min="0"></div>
+          <div class="field"><label>Cavidades molde</label><input type="number" id="cfg-cav" placeholder="1" step="1" min="1"></div>
+          <div class="field"><label>Ciclo (seg)</label><input type="number" id="cfg-ciclo" placeholder="30" step="1" min="1"></div>
+          <div class="field" id="cfg-bm2-field"><label id="cfg-bm2-label">Piezas por m²</label><input type="number" id="cfg-bm2" placeholder="16" step="1" min="1" value="16"><div class="unit" id="cfg-bm2-unit">piezas = 1 m²</div></div>
+        </div>
+        <!-- COLADA — solo para rejillas y manijas -->
+        <div id="cfg-colada-section" style="display:none;">
+          <div class="sep"></div>
+          <div class="colada-box">
+            <div class="colada-title">🔴 Colada / Desperdicio (recuperable)</div>
+            <div class="grid-2" style="gap:10px;">
+              <div class="field"><label>Peso colada por ciclo (g)</label><input type="number" id="cfg-colada" placeholder="0" step="0.1" min="0"><div class="unit">gramos de colada por inyectada</div></div>
+              <div class="field"><label>Precio recuperado colada ($/kg)</label><input type="number" id="cfg-colada-precio" placeholder="0.00" step="0.01" min="0"><div class="unit">lo que vale al recuperarlo</div></div>
+            </div>
+            <div class="tip" style="margin-top:4px;">La colada se divide entre las cavidades del molde. Su costo se suma a la pieza, y si tiene valor como recuperado, se descuenta.</div>
+          </div>
+        </div>
+        <!-- CAJA — para rejillas y manijas -->
+        <div id="cfg-caja-section" style="display:none;">
+          <div class="sep"></div>
+          <div class="card-title" style="margin-bottom:10px;"><span class="ico cp"></span> Venta por caja</div>
+          <div class="grid-2" style="gap:10px;">
+            <div class="field"><label id="cfg-caja-label">Kg por caja</label><input type="number" id="cfg-caja-kg" placeholder="4" step="0.1" min="0.1"><div class="unit" id="cfg-caja-unit">kg de producto por caja</div></div>
+            <div class="field"><label>Piezas por caja (calc.)</label><div id="cfg-piezas-caja" style="padding:8px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-size:13px;color:var(--accent);">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row" style="margin-top:14px;">
+    <button class="btn btn-p" onclick="guardarConfig()">💾 Guardar configuración</button>
+    <button class="btn btn-s" onclick="resetConfig()">↺ Resetear</button>
+  </div>
+  <p class="tip" style="margin-top:8px;">Los datos se guardan por separado para cada producto. Cambiar de producto carga su propia configuración.</p>
+</div>
+
+<!-- ═══ COSTOS FIJOS ════ -->
+<div class="panel" id="panel-fijos">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+    <div class="sec-title">Costos <span>fijos</span></div>
+    <span class="badge badge-no" id="fijos-status">Sin guardar</span>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="ico cp"></span> Ítems de costos fijos</div>
+      <p class="tip" style="margin-bottom:10px;">Alquiler, amortización, seguros, mantenimiento, etc.</p>
+      <div class="cf-hdr"><span>Concepto</span><span>Importe ($)</span><span>Período</span><span></span></div>
+      <div id="cf-lista"></div>
+      <button class="btn btn-s btn-sm" style="margin-top:5px;" onclick="agregarCF()">+ Agregar ítem</button>
+      <div class="cf-total">
+        <div><div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Total / mes</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--purple);" id="cf-tot-mes">$0.00</div></div>
+        <div style="text-align:right;"><div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Total / hora</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent2);" id="cf-tot-hora">$0.00</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-title"><span class="ico cp"></span> Prorrateo</div>
+        <div class="field"><label>Horas productivas por mes</label><input type="number" id="cf-hsmes" placeholder="176" step="1" min="1" value="176" oninput="calcularCF()"><div class="unit">Ej: 22 días × 8 hs = 176 hs/mes</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="ico cy"></span> Costo fijo por unidad</div>
+        <div class="rbox"><div class="rlabel">Por hora</div><div class="rval pu" id="cf-xhora">$0.00</div></div>
+        <div class="rbox"><div class="rlabel">Por pieza</div><div class="rval pu" id="cf-xpieza">$0.0000</div></div>
+        <div class="rbox" style="border:1px solid rgba(192,132,252,.15);background:rgba(192,132,252,.03);">
+          <div class="rlabel" id="cf-u2-label">Por m²</div>
+          <div class="rval ac" id="cf-xu2">$0.00</div>
+        </div>
+        <div class="rbox" id="cf-xcaja-box" style="display:none;">
+          <div class="rlabel">Por caja</div>
+          <div class="rval pu" id="cf-xcaja">$0.00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row" style="margin-top:14px;">
+    <button class="btn btn-p" onclick="guardarFijos()">💾 Guardar costos fijos</button>
+  </div>
+</div>
+
+<!-- ═══ COSTO UNITARIO ════ -->
+<div class="panel" id="panel-costo">
+  <div class="sec-title">Costo por <span>pieza</span></div>
+  <div class="grid-2">
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-title"><span class="ico cy"></span> Sobreescribir parámetros</div>
+        <p class="tip" style="margin-bottom:9px;">Vacío = usa Configuración guardada.</p>
+        <div class="grid-2" style="gap:9px;">
+          <div class="field"><label>Ciclo (seg)</label><input type="number" id="c-ciclo" placeholder="—" step="1" min="1" oninput="calcularCosto()"></div>
+          <div class="field"><label>Cavidades</label><input type="number" id="c-cav" placeholder="—" step="1" min="1" oninput="calcularCosto()"></div>
+          <div class="field"><label>Peso pieza (g)</label><input type="number" id="c-peso" placeholder="—" step="0.1" min="0" oninput="calcularCosto()"></div>
+          <div class="field"><label>PP $/kg</label><input type="number" id="c-pp" placeholder="—" step="0.01" min="0" oninput="calcularCosto()"></div>
+          <div class="field"><label>MB $/kg</label><input type="number" id="c-mb" placeholder="—" step="0.01" min="0" oninput="calcularCosto()"></div>
+          <div class="field"><label>MO $/hora</label><input type="number" id="c-mo" placeholder="—" step="0.01" min="0" oninput="calcularCosto()"></div>
+        </div>
+        <div class="toggle-row" style="margin-top:4px;"><span style="font-size:11px;">Incluir costos fijos</span><div class="tog on" id="tog-cf-c" onclick="this.classList.toggle('on');calcularCosto()"></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="bigres">
+        <div class="lbl">Costo total por pieza</div>
+        <div class="val" id="c-total">$—</div>
+        <div class="sub" id="c-sub">Completá los datos</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="ico cy"></span> Desglose por pieza</div>
+        <div class="rbox"><div><div class="rlabel">PP virgen</div><div class="rlabel" id="d-pp" style="font-size:9px;margin-top:1px;"></div></div><div class="rval ac" id="v-pp">$—</div></div>
+        <div class="rbox" id="box-rec-c" style="display:none;"><div><div class="rlabel">Material recuperado</div><div class="rlabel" id="d-rec" style="font-size:9px;"></div></div><div class="rval bl" id="v-rec">$—</div></div>
+        <div class="rbox"><div><div class="rlabel">Masterbatch</div><div class="rlabel" id="d-mb" style="font-size:9px;margin-top:1px;"></div></div><div class="rval or" id="v-mb">$—</div></div>
+        <!-- Colada rows - hidden for baldosas -->
+        <div class="rbox" id="box-colada-c" style="display:none;"><div><div class="rlabel">Colada bruta (costo)</div><div class="rlabel" id="d-colada" style="font-size:9px;"></div></div><div class="rval pu" id="v-colada-costo">$—</div></div>
+        <div class="rbox" id="box-colada-rec" style="display:none;"><div><div class="rlabel">Recupero colada (descuento)</div><div class="rlabel" id="d-colada-rec" style="font-size:9px;"></div></div><div class="rval gr" id="v-colada-rec">−$—</div></div>
+        <div class="rbox"><div><div class="rlabel">Mano de obra</div><div class="rlabel" id="d-mo" style="font-size:9px;"></div></div><div class="rval" id="v-mo">$—</div></div>
+        <div class="rbox"><div><div class="rlabel">Electricidad</div><div class="rlabel" id="d-elec" style="font-size:9px;"></div></div><div class="rval" id="v-elec">$—</div></div>
+        <div class="rbox"><div class="rlabel">Costos fijos</div><div class="rval pu" id="v-cf">$—</div></div>
+        <div class="sep"></div>
+        <div class="rbox" style="border:1px solid rgba(232,255,71,.15);background:rgba(232,255,71,.03);">
+          <div class="rlabel" style="font-size:12px;">COSTO TOTAL / PIEZA</div><div class="rval ac" id="v-total2" style="font-size:18px;">$—</div>
+        </div>
+        <div class="rbox" style="border:1px solid rgba(74,222,128,.15);background:rgba(74,222,128,.03);">
+          <div class="rlabel" id="c-u2-label">Costo por m²</div><div class="rval gr" id="v-u2" style="font-size:18px;">$—</div>
+        </div>
+        <div class="rbox" id="c-xcaja-box" style="display:none;">
+          <div class="rlabel">Costo por caja</div><div class="rval pu" id="v-xcaja">$—</div>
+        </div>
+        <div class="rbox"><div class="rlabel">Piezas por hora</div><div class="rval" id="v-pph">—</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TANDA ════ -->
+<div class="panel" id="panel-tanda">
+  <div class="sec-title">Costo de <span>tanda / lote</span></div>
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-title"><span class="ico cb"></span> Definir cantidad</div>
+    <div class="qty-wrap">
+      <div class="qty-sel">
+        <button class="qty-btn" onclick="qDelta(-1)">−</button>
+        <input class="qty-inp" type="number" id="t-qty" value="100" min="1" oninput="calcularTanda()">
+        <button class="qty-btn" onclick="qDelta(1)">+</button>
+      </div>
+      <div class="unit-tog" id="t-unit-tog">
+        <button class="utbtn on" id="ubtn-piezas" onclick="setUTanda('piezas')">Piezas</button>
+        <button class="utbtn" id="ubtn-u2" onclick="setUTanda('u2')">— </button>
+        <button class="utbtn" id="ubtn-caja" onclick="setUTanda('caja')" style="display:none;">Cajas</button>
+      </div>
+      <div class="equiv-box"><div class="el">Equivalencia</div><div class="ev" id="t-equiv">—</div></div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div>
+      <div class="tanda-box">
+        <div class="lbl2">Material total necesario</div>
+        <div class="val2" id="t-kgtot">0.000 kg</div>
+        <div class="mat-grid">
+          <div class="mat-c pp"><div class="ml">PP virgen</div><div class="mk" id="t-kgpp">—</div><div class="mc ac" id="t-cstpp">$—</div></div>
+          <div class="mat-c rec" id="t-card-rec"><div class="ml">Recuperado</div><div class="mk" id="t-kgrec">—</div><div class="mc bl" id="t-cstrec">$—</div></div>
+          <div class="mat-c mb"><div class="ml">Masterbatch</div><div class="mk" id="t-kgmb">—</div><div class="mc or" id="t-cstmb">$—</div></div>
+        </div>
+        <div id="t-colada-section" style="display:none;margin-top:10px;">
+          <div class="colada-box">
+            <div class="colada-title">🔴 Colada del lote</div>
+            <div class="mat-grid" style="grid-template-columns:1fr 1fr;">
+              <div class="mat-c"><div class="ml">Kg de colada</div><div class="mk" style="color:var(--purple);" id="t-kg-colada">—</div></div>
+              <div class="mat-c"><div class="ml">Recupero colada</div><div class="mk" style="color:var(--green);" id="t-rec-colada">−$—</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="ico co"></span> Costos operativos del lote</div>
+        <div class="rbox"><div class="rlabel">Tiempo de producción</div><div class="rval ac" id="t-tiempo">—</div></div>
+        <div class="rbox"><div class="rlabel">Costo materiales (neto)</div><div class="rval" id="t-cstmat">$—</div></div>
+        <div class="rbox"><div class="rlabel">Costo mano de obra</div><div class="rval" id="t-cstmo">$—</div></div>
+        <div class="rbox"><div class="rlabel">Costo electricidad</div><div class="rval" id="t-cstelec">$—</div></div>
+        <div class="rbox"><div class="rlabel">Costos fijos del período</div><div class="rval pu" id="t-cstcf">$—</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="bigres" style="background:linear-gradient(135deg,var(--surface2) 0%,rgba(71,196,255,.05) 100%);border-color:rgba(71,196,255,.2);">
+        <div class="lbl">Costo total del lote</div>
+        <div class="val" id="t-total" style="color:var(--accent2);">$—</div>
+        <div class="sub" id="t-sub">—</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="ico cg"></span> Costo por unidad</div>
+        <div class="rbox"><div class="rlabel">Por pieza</div><div class="rval ac" id="t-xpieza">$—</div></div>
+        <div class="rbox" style="border:1px solid rgba(74,222,128,.15);background:rgba(74,222,128,.03);">
+          <div class="rlabel" id="t-xu2-label">Por m²</div><div class="rval gr" id="t-xu2" style="font-size:18px;">$—</div>
+        </div>
+        <div class="rbox" id="t-xcaja-rbox" style="display:none;">
+          <div class="rlabel">Por caja</div><div class="rval pu" id="t-xcaja">$—</div>
+        </div>
+        <div class="sep"></div>
+        <div class="rbox"><div class="rlabel">Solo materiales</div><div class="rval" id="t-subtmat">$—</div></div>
+        <div class="rbox"><div class="rlabel">MO + Electricidad</div><div class="rval" id="t-subtop">$—</div></div>
+        <div class="rbox"><div class="rlabel">Costos fijos</div><div class="rval pu" id="t-subtcf">$—</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PRODUCCION ════ -->
+<div class="panel" id="panel-produccion">
+  <div class="sec-title">Planificación de <span>producción</span></div>
+  <div class="grid-2">
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-title"><span class="ico co"></span> Parámetros de jornada</div>
+        <div class="field"><label>Horas de inyección por día</label><input type="number" id="p-horas" placeholder="8" step="0.5" min="0" oninput="calcularProd()"></div>
+        <div class="field"><label>Ciclo (seg)</label><input type="number" id="p-ciclo" placeholder="—" step="1" min="1" oninput="calcularProd()"></div>
+        <div class="field"><label>Cavidades</label><input type="number" id="p-cav" placeholder="—" step="1" min="1" oninput="calcularProd()"></div>
+        <div class="field"><label>Peso pieza (g)</label><input type="number" id="p-peso" placeholder="—" step="0.1" min="0" oninput="calcularProd()"></div>
+        <div class="field">
+          <label>Eficiencia real (%)</label>
+          <input type="range" id="p-efic" min="50" max="100" value="85" oninput="updEfic()">
+          <div style="display:flex;justify-content:space-between;margin-top:3px;">
+            <span style="font-size:9px;color:var(--muted);">50%</span>
+            <span style="font-size:12px;color:var(--accent);font-weight:600;" id="efic-val">85%</span>
+            <span style="font-size:9px;color:var(--muted);">100%</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="ico cb"></span> Objetivo</div>
+        <div class="field"><label>Cantidad objetivo</label><input type="number" id="p-obj" placeholder="0" step="100" min="0" oninput="calcularProd()"></div>
+        <div class="unit-tog" style="margin-top:6px;">
+          <button class="utbtn on" id="pb-piezas" onclick="setProdU('piezas')">Piezas</button>
+          <button class="utbtn" id="pb-u2" onclick="setProdU('u2')">—</button>
+          <button class="utbtn" id="pb-caja" onclick="setProdU('caja')" style="display:none;">Cajas</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-title"><span class="ico cg"></span> Producción diaria</div>
+        <div class="rbox"><div class="rlabel">Ciclos/hora (teórico)</div><div class="rval ac" id="p-cph">—</div></div>
+        <div class="rbox"><div class="rlabel">Piezas/hora (real)</div><div class="rval gr" id="p-pph">—</div></div>
+        <div class="rbox"><div class="rlabel">Piezas por día</div><div class="rval gr" id="p-ppd" style="font-size:18px;">—</div></div>
+        <div class="rbox"><div class="rlabel" id="p-u2-label">m² por día</div><div class="rval bl" id="p-u2d">—</div></div>
+        <div class="rbox" id="p-caja-rbox" style="display:none;"><div class="rlabel">Cajas por día</div><div class="rval bl" id="p-cajad">—</div></div>
+        <div class="rbox"><div class="rlabel">kg material / día (pieza)</div><div class="rval or" id="p-kgd">—</div></div>
+        <div class="rbox" id="p-colada-rbox" style="display:none;"><div class="rlabel">kg colada / día</div><div class="rval pu" id="p-kgcolada">—</div></div>
+        <div class="mat-grid">
+          <div class="mat-c pp"><div class="ml">PP virgen</div><div class="mk" id="p-kgpp">—</div></div>
+          <div class="mat-c rec"><div class="ml">Recuperado</div><div class="mk" id="p-kgrec">—</div></div>
+          <div class="mat-c mb"><div class="ml">Masterbatch</div><div class="mk" id="p-kgmb">—</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="ico cy"></span> Para alcanzar objetivo</div>
+        <div class="rbox"><div class="rlabel">Horas necesarias</div><div class="rval ac" id="p-hs-obj">—</div></div>
+        <div class="rbox"><div class="rlabel">Días (a <span id="p-dias-hs">8</span> hs/día)</div><div class="rval bl" id="p-dias-obj">—</div></div>
+        <div class="rbox"><div class="rlabel">Material total (pieza)</div><div class="rval or" id="p-kg-obj">—</div></div>
+        <div class="rbox" id="p-colada-obj-rbox" style="display:none;"><div class="rlabel">Colada total del objetivo</div><div class="rval pu" id="p-kg-colada-obj">—</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RENTABILIDAD ════ -->
+<div class="panel" id="panel-rentabilidad">
+  <div class="sec-title">Precio de venta &amp; <span>rentabilidad</span></div>
+  <div class="grid-2">
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-title"><span class="ico cg"></span> Precio de venta</div>
+        <div class="field">
+          <label>Precio de venta por</label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;">
+            <input type="number" id="r-precio" placeholder="0.00" step="0.01" min="0" oninput="calcularRent()"
+              style="flex:1;min-width:90px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;outline:none;">
+            <div class="unit-tog">
+              <button class="utbtn on" id="rb-pieza" onclick="setRU('pieza')">Pieza</button>
+              <button class="utbtn" id="rb-u2r" onclick="setRU('u2')">—</button>
+              <button class="utbtn" id="rb-caja" onclick="setRU('caja')" style="display:none;">Caja</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Cantidad a analizar</label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;">
+            <input type="number" id="r-cant" placeholder="1000" step="100" min="1" oninput="calcularRent()"
+              style="flex:1;min-width:90px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;outline:none;">
+            <div class="unit-tog">
+              <button class="utbtn on" id="rq-piezas" onclick="setRQ('piezas')">Piezas</button>
+              <button class="utbtn" id="rq-u2" onclick="setRQ('u2')">—</button>
+              <button class="utbtn" id="rq-caja" onclick="setRQ('caja')" style="display:none;">Cajas</button>
+            </div>
+          </div>
+        </div>
+        <div class="toggle-row" style="margin-top:4px;"><span style="font-size:11px;">Incluir costos fijos</span><div class="tog on" id="tog-cf-r" onclick="this.classList.toggle('on');calcularRent()"></div></div>
+        <div class="sep"></div>
+        <div class="rbox"><div class="rlabel">Costo base / pieza</div><div class="rval ac" id="r-cbase">$—</div></div>
+        <div class="rbox"><div class="rlabel">Precio venta / pieza</div><div class="rval gr" id="r-pxpieza">$—</div></div>
+        <div class="rbox"><div class="rlabel" id="r-u2-label">Precio venta / m²</div><div class="rval gr" id="r-pxu2">$—</div></div>
+        <div class="rbox" id="r-caja-rbox" style="display:none;"><div class="rlabel">Precio venta / caja</div><div class="rval gr" id="r-pxcaja">$—</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="ico cy"></span> Simulador — margen deseado</div>
+        <div class="field"><label>Margen deseado (%)</label><input type="number" id="r-marg-d" placeholder="30" step="1" min="0" oninput="calcSug()"></div>
+        <div class="rbox"><div class="rlabel">Precio sugerido / pieza</div><div class="rval ac" id="r-sug-p">—</div></div>
+        <div class="rbox"><div class="rlabel" id="r-sug-u2-label">Precio sugerido / m²</div><div class="rval gr" id="r-sug-u2">—</div></div>
+        <div class="rbox" id="r-sug-caja-box" style="display:none;"><div class="rlabel">Precio sugerido / caja</div><div class="rval pu" id="r-sug-caja">—</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="bigres" style="background:linear-gradient(135deg,var(--surface2) 0%,rgba(74,222,128,.04) 100%);border-color:rgba(74,222,128,.2);">
+        <div class="lbl">Ganancia por pieza</div>
+        <div class="val" id="r-gan-p" style="color:var(--green);">$—</div>
+        <div class="sub" id="r-gan-sub">—</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="ico cg"></span> Resumen financiero</div>
+        <div class="rbox">
+          <div style="flex:1;"><div class="rlabel">Margen bruto</div><div class="meter-bar"><div class="meter-fill" id="r-meter" style="width:0%"></div></div></div>
+          <div class="rval" id="r-marg" style="margin-left:12px;">0%</div>
+        </div>
+        <div class="rbox"><div class="rlabel" id="r-u2gan-label">Ganancia por m²</div><div class="rval gr" id="r-gan-u2">$—</div></div>
+        <div class="rbox" id="r-caja-gan-rbox" style="display:none;"><div class="rlabel">Ganancia por caja</div><div class="rval gr" id="r-gan-caja">$—</div></div>
+        <div class="rbox"><div class="rlabel">Ingreso total</div><div class="rval gr" id="r-ingr">$—</div></div>
+        <div class="rbox"><div class="rlabel">Costo total producción</div><div class="rval or" id="r-costtot">$—</div></div>
+        <div class="rbox" style="border:1px solid rgba(74,222,128,.15);background:rgba(74,222,128,.03);">
+          <div class="rlabel" style="font-size:12px;">GANANCIA NETA TOTAL</div>
+          <div class="rval" id="r-gantot" style="font-size:18px;">$—</div>
+        </div>
+        <div class="sep"></div>
+        <div class="rbox"><div class="rlabel">Precio mínimo / pieza</div><div class="rval" id="r-pmin">$—</div></div>
+        <div class="rbox"><div class="rlabel" id="r-pmin-u2-label">Precio mínimo / m²</div><div class="rval" id="r-pmin-u2">$—</div></div>
+        <div class="rbox" id="r-pmin-caja-box" style="display:none;"><div class="rlabel">Precio mínimo / caja</div><div class="rval" id="r-pmin-caja">$—</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SENSIBILIDAD ════ -->
+<div class="panel" id="panel-sensibilidad">
+  <div class="sec-title">Análisis de <span>sensibilidad</span></div>
+  <div class="grid-2" style="margin-bottom:14px;">
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-title"><span class="ico cy"></span> Composición del costo</div>
+        <p class="tip" style="margin-bottom:12px;">El componente con mayor % es el que más impacta ante variaciones de precio.</p>
+        <div id="sens-barras"></div>
+        <div class="sep"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:10px;color:var(--muted);">Costo / pieza</span>
+          <span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--accent);" id="sens-total-pieza">$—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;">
+          <span style="font-size:10px;color:var(--muted);" id="sens-u2-label">Costo / m²</span>
+          <span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--green);" id="sens-total-u2">$—</span>
+        </div>
+      </div>
+      <div class="card"><div class="card-title"><span class="ico co"></span> Análisis de riesgo</div><div id="sens-alertas"></div></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-title"><span class="ico cb"></span> Simulador de variaciones</div>
+        <p class="tip" style="margin-bottom:12px;">Mové los sliders para ver el impacto de cambios de precio.</p>
+        <div id="sens-sliders"></div>
+        <button class="btn btn-s btn-sm" style="margin-top:4px;" onclick="resetSliders()">↺ Resetear</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="ico cg"></span> Resultado del escenario</div>
+        <div class="rbox" style="border:1px solid rgba(71,196,255,.15);background:rgba(71,196,255,.03);">
+          <div class="rlabel" style="font-size:12px;">Nuevo costo / pieza</div>
+          <div class="rval bl" id="ss-nuevo-pieza" style="font-size:18px;">$—</div>
+        </div>
+        <div class="rbox" style="border:1px solid rgba(74,222,128,.15);background:rgba(74,222,128,.03);">
+          <div class="rlabel" id="ss-u2-label" style="font-size:12px;">Nuevo costo / m²</div>
+          <div class="rval gr" id="ss-nuevo-u2" style="font-size:18px;">$—</div>
+        </div>
+        <div class="rbox"><div class="rlabel">Variación / pieza</div><div class="rval" id="ss-delta-pieza">$—</div></div>
+        <div class="rbox"><div class="rlabel">Variación %</div><div class="rval" id="ss-delta-pct">—</div></div>
+        <div class="sep"></div>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Desglose del escenario</div>
+        <table class="tabla-escenarios"><thead><tr><th>Componente</th><th>Antes</th><th>Var.</th><th>Nuevo</th></tr></thead><tbody id="ss-tabla"></tbody></table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="ico cp"></span> Impacto de un +1% en cada componente</div>
+    <p class="tip" style="margin-bottom:12px;">Ordenado por mayor impacto. El riesgo indica cuán sensible es el costo total ante variaciones de ese insumo.</p>
+    <div style="overflow-x:auto;"><table class="tabla-escenarios"><thead><tr><th>Componente</th><th>% del costo</th><th>Costo actual</th><th>Impacto +1% / pieza</th><th id="sens-th-u2">Impacto +1% / m²</th><th>Riesgo</th></tr></thead><tbody id="sens-tabla-1pct"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ═══ COLORES ════ -->
+<div class="panel" id="panel-colores">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+    <div class="sec-title">Perfiles por <span>color</span></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;">
+      <button class="btn btn-p" onclick="abrirModalColor(null)">+ Nuevo color</button>
+      <button class="btn btn-s" onclick="mostrarComparacion()">⇄ Comparar</button>
+    </div>
+  </div>
+  <div class="precio-venta-box">
+    <div>
+      <div class="pv-label">Precio de venta (igual para todos los colores)</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:5px;">
+        <div><div style="font-size:9px;color:var(--muted);margin-bottom:3px;">Por pieza</div>
+          <input class="pv-input" type="number" id="pv-pieza" placeholder="0.00" step="0.01" min="0" oninput="savePV();renderColores()"></div>
+        <div style="font-size:16px;color:var(--muted);">=</div>
+        <div><div style="font-size:9px;color:var(--muted);margin-bottom:3px;" id="pv-u2-label">Por m²</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--green);" id="pv-u2-calc">$—</div></div>
+        <div id="pv-caja-wrap" style="display:none;">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">Por caja</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--purple);" id="pv-caja-calc">$—</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div class="pv-label">Incluir costos fijos</div>
+      <div class="tog on" id="tog-cf-col" style="margin-top:7px;margin-left:auto;" onclick="this.classList.toggle('on');renderColores()"></div>
+    </div>
+  </div>
+  <div id="colores-grid" class="color-grid"></div>
+  <div id="comparacion-wrap" style="display:none;margin-top:20px;">
+    <div class="card">
+      <div class="card-title"><span class="ico cy"></span> Comparación de todos los colores</div>
+      <div style="overflow-x:auto;"><table class="compare-table" id="compare-table"></table></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+</div><!-- /app -->
+
+<!-- MODAL COLOR -->
+<div class="modal-overlay" id="modal-overlay" style="display:none;" onclick="if(event.target===this)cerrarModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="cerrarModal()">✕</button>
+    <div class="modal-title" id="modal-title">Nuevo <span>color</span></div>
+    <div class="field"><label>Nombre</label><input type="text" id="mc-nombre" placeholder="Ej: Rojo, Natural..."></div>
+    <div class="color-picker-wrap">
+      <label style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Color visual</label>
+      <input type="color" id="mc-color" value="#e8ff47">
+    </div>
+    <div class="sep"></div>
+    <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:9px;">Masterbatch / Pigmento</div>
+    <div class="grid-2" style="gap:9px;">
+      <div class="field"><label>Precio MB ($/kg)</label><input type="number" id="mc-mb-precio" placeholder="Usa config base" step="0.01" min="0"><div class="unit">Vacío = config base</div></div>
+      <div class="field"><label>% MB en virgen</label><input type="number" id="mc-mb-pct" placeholder="Usa config base" step="0.1" min="0" max="100"></div>
+    </div>
+    <div class="sep"></div>
+    <div class="toggle-row"><span style="font-size:11px;">Lleva material recuperado</span><div class="tog" id="mc-tog-rec" onclick="this.classList.toggle('on');$('mc-rec-fields').style.display=this.classList.contains('on')?'block':'none'"></div></div>
+    <div id="mc-rec-fields" style="display:none;">
+      <div class="grid-2" style="gap:9px;">
+        <div class="field"><label>Precio recuperado ($/kg)</label><input type="number" id="mc-rec-precio" placeholder="Usa config base" step="0.01" min="0"></div>
+        <div class="field"><label>% Recuperado</label><input type="number" id="mc-rec-pct" placeholder="Usa config base" step="1" min="0" max="100"></div>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="field"><label>Notas</label><input type="text" id="mc-notas" placeholder="Observaciones..."></div>
+    <div class="btn-row">
+      <button class="btn btn-p" onclick="guardarColor()" style="flex:1;justify-content:center;">💾 Guardar</button>
+      <button class="btn btn-s" onclick="cerrarModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// PRODUCTOS — definición de cada producto
+// ════════════════════════════════════════════════
+const PRODUCTOS = {
+  baldosas: {
+    id:'baldosas', nombre:'Baldosas de piso', icon:'🟫',
+    tieneColada: false,
+    unidad2: 'm²',           // segunda unidad de venta
+    u2Factor: ()=> +cfg.baldosasM2||16,  // piezas por unidad2
+    u2Label: 'por m²',
+    tieneU2: true,
+    tieneCaja: false,
+    cfgBm2Label: 'Piezas por m²', cfgBm2Unit:'piezas = 1 m²',
+    tandaU2Label: 'm²', prodU2Label:'m² por día',
+  },
+  rejillas: {
+    id:'rejillas', nombre:'Rejillas para fiambre', icon:'🥩',
+    tieneColada: true,
+    unidad2: 'caja',
+    u2Factor: ()=> {
+      const pesoKg=(cfg.peso||0)/1000;
+      const cajaKg=+cfg.cajaKg||4;
+      return pesoKg>0?cajaKg/pesoKg:0;
+    },
+    u2Label: 'por caja (4 kg)',
+    tieneU2: false,
+    tieneCaja: true,
+    cfgBm2Label: null,  // no usa m²
+    tandaU2Label: 'cajas', prodU2Label:'cajas por día',
+    cajaKgDefault: 4,
+    cajaLabel: 'Kg por caja',
+    cajaUnit: 'kg de producto por caja',
+  },
+  manijas: {
+    id:'manijas', nombre:'Manijas de auto', icon:'🚗',
+    tieneColada: true,
+    unidad2: 'lote',
+    u2Factor: ()=>1,
+    u2Label: 'por pieza',
+    tieneU2: false,
+    tieneCaja: false,
+    cfgBm2Label: null,
+    tandaU2Label: '', prodU2Label:'',
+    cajaKgDefault: null,
+  },
+};
+
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
+let prodActual = 'baldosas';
+let cfg={}, cfItems=[], cfHsMes=176, recActivo=false;
+let costoPieza=0, sensComps=[], sensTotalBase=0;
+let uTanda='piezas', uProd='piezas', uRent='pieza', uRentQ='piezas';
+let colores=[], editColorId=null, precioVentaPieza=0;
+let sensVars={};
+
+// ════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════
+const $=id=>document.getElementById(id);
+const fmt=(n,d=4)=>'$'+(+n||0).toFixed(d);
+const fmt2=n=>fmt(n,2);
+function notif(msg){const n=$('notif');n.textContent=msg;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2400);}
+function PR(){return PRODUCTOS[prodActual];}
+function lsKey(k){return `covin_${prodActual}_${k}`;}
+
+function piezasPorU2(){return PR().u2Factor();}
+function cajaKg(){return +cfg.cajaKg||4;}
+function piezasPorCaja(){const pk=(cfg.peso||0)/1000;return pk>0?cajaKg()/pk:0;}
+
+function getMix(){
+  const mbPct=cfg.mbPct||0, recPct=recActivo?cfg.recPct||0:0;
+  const fRec=recPct/100, fVir=1-fRec;
+  const fMB=(mbPct/100)*fVir, fPP=fVir-fMB;
+  return{fPP,fMB,fRec};
+}
+function getCFHora(){
+  let tot=0;
+  cfItems.forEach(c=>{tot+=c.per==='mes'?+c.imp||0:(+c.imp||0)*cfHsMes;});
+  return cfHsMes>0?tot/cfHsMes:0;
+}
+
+// ════════════════════════════════════════════════
+// SELECTOR DE PRODUCTO
+// ════════════════════════════════════════════════
+function elegirProducto(id){
+  if(!PRODUCTOS[id])return;
+  prodActual=id;
+  localStorage.setItem('covin_prod',id);
+  $('selector-screen').style.display='none';
+  $('app').style.display='block';
+
+  // Actualizar header
+  const P=PR();
+  $('header-icon').textContent=P.icon;
+  $('header-prod').textContent=P.nombre;
+  $('cfg-prod-name').textContent=P.nombre;
+
+  // Adaptar UI según producto
+  adaptarUI();
+
+  // Cargar datos del producto
+  cargarConfig();
+  cargarFijos();
+  cargarColores();
+
+  // Activar primer tab
+  showPanel('config', document.querySelector('.tab'));
+}
+
+function volverSelector(){
+  $('selector-screen').style.display='flex';
+  $('app').style.display='none';
+}
+
+function adaptarUI(){
+  const P=PR();
+
+  // COLADA
+  $('cfg-colada-section').style.display = P.tieneColada?'block':'none';
+  $('box-colada-c').style.display        = P.tieneColada?'flex':'none';
+  $('box-colada-rec').style.display      = P.tieneColada?'flex':'none';
+  $('t-colada-section').style.display    = P.tieneColada?'block':'none';
+  $('p-colada-rbox').style.display       = P.tieneColada?'flex':'none';
+  $('p-colada-obj-rbox').style.display   = P.tieneColada?'flex':'none';
+
+  // CAJA
+  $('cfg-caja-section').style.display    = P.tieneCaja?'block':'none';
+  $('c-xcaja-box').style.display         = P.tieneCaja?'flex':'none';
+  $('t-xcaja-rbox').style.display        = P.tieneCaja?'flex':'none';
+  $('p-caja-rbox').style.display         = P.tieneCaja?'flex':'none';
+  $('cf-xcaja-box').style.display        = P.tieneCaja?'flex':'none';
+  $('r-caja-rbox').style.display         = P.tieneCaja?'flex':'none';
+  $('r-caja-gan-rbox').style.display     = P.tieneCaja?'flex':'none';
+  $('r-sug-caja-box').style.display      = P.tieneCaja?'flex':'none';
+  $('r-pmin-caja-box').style.display     = P.tieneCaja?'flex':'none';
+  $('pv-caja-wrap').style.display        = P.tieneCaja?'block':'none';
+
+  // Botón unidad 2 en tanda/prod/rent
+  const u2Label = P.tieneCaja?'Cajas':P.tieneU2?'m²':'';
+  $('ubtn-u2').textContent = u2Label;
+  $('ubtn-u2').style.display = (P.tieneU2||P.tieneCaja)?'inline-flex':'none';
+  $('ubtn-caja').style.display = P.tieneCaja?'inline-flex':'none';
+
+  $('pb-u2').textContent = u2Label;
+  $('pb-u2').style.display=(P.tieneU2||P.tieneCaja)?'inline-flex':'none';
+  $('pb-caja').style.display=P.tieneCaja?'inline-flex':'none';
+
+  $('rb-u2r').textContent = P.tieneCaja?'Caja':P.tieneU2?'m²':'';
+  $('rb-u2r').style.display=(P.tieneU2||P.tieneCaja)?'inline-flex':'none';
+  $('rb-caja').style.display=P.tieneCaja?'inline-flex':'none';
+
+  $('rq-u2').textContent = u2Label;
+  $('rq-u2').style.display=(P.tieneU2||P.tieneCaja)?'inline-flex':'none';
+  $('rq-caja').style.display=P.tieneCaja?'inline-flex':'none';
+
+  // Etiquetas segunda unidad
+  const u2Lbl = P.tieneCaja?'por caja':P.tieneU2?'por m²':'';
+  if($('c-u2-label'))   $('c-u2-label').textContent='Costo '+u2Lbl;
+  if($('t-xu2-label'))  $('t-xu2-label').textContent='Costo '+u2Lbl;
+  if($('p-u2-label'))   $('p-u2-label').textContent=(P.tieneCaja?'Cajas':P.tieneU2?'m²':'')+' por día';
+  if($('r-u2-label'))   $('r-u2-label').textContent='Precio venta '+u2Lbl;
+  if($('r-u2gan-label'))$('r-u2gan-label').textContent='Ganancia '+u2Lbl;
+  if($('r-pmin-u2-label'))$('r-pmin-u2-label').textContent='Precio mínimo '+u2Lbl;
+  if($('r-sug-u2-label'))$('r-sug-u2-label').textContent='Precio sugerido '+u2Lbl;
+  if($('cf-u2-label'))  $('cf-u2-label').textContent='Por '+(P.tieneCaja?'caja':P.tieneU2?'m²':'unidad');
+  if($('sens-u2-label'))$('sens-u2-label').textContent='Costo '+u2Lbl;
+  if($('pv-u2-label'))  $('pv-u2-label').textContent='Por '+(P.tieneCaja?'caja':P.tieneU2?'m²':'unidad');
+  if($('sens-th-u2'))   $('sens-th-u2').textContent='Impacto +1% / '+(P.tieneCaja?'caja':P.tieneU2?'m²':'u.');
+
+  // m² field en config
+  const showBm2=P.tieneU2;
+  $('cfg-bm2-field').style.display=showBm2?'block':'none';
+
+  // Esconder v-u2 row si no aplica
+  const showU2rows=P.tieneU2||P.tieneCaja;
+  document.querySelectorAll('.u2-row').forEach(r=>r.style.display=showU2rows?'flex':'none');
+}
+
+// ════════════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════════════
+function showPanel(name,tab){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  $('panel-'+name).classList.add('active');
+  if(tab)tab.classList.add('active');
+  const fns={costo:calcularCosto,tanda:calcularTanda,produccion:calcularProd,rentabilidad:calcularRent,fijos:calcularCF,sensibilidad:calcularSensibilidad,colores:renderColores};
+  if(fns[name])fns[name]();
+}
+
+// ════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════
+function guardarConfig(){
+  cfg={
+    ppPrecio:+$('cfg-pp').value||0, mbPrecio:+$('cfg-mb').value||0, mbPct:+$('cfg-mbpct').value||0,
+    recActivo, recPrecio:+$('cfg-recprecio').value||0, recPct:+$('cfg-recpct').value||0,
+    mo:+$('cfg-mo').value||0, kw:+$('cfg-kw').value||0, kwh:+$('cfg-kwh').value||0,
+    peso:+$('cfg-peso').value||0, cavidades:+$('cfg-cav').value||1,
+    ciclo:+$('cfg-ciclo').value||30, baldosasM2:+$('cfg-bm2').value||16,
+    coladaG:+$('cfg-colada').value||0, coladaPrecio:+$('cfg-colada-precio').value||0,
+    cajaKg:+$('cfg-caja-kg').value||4,
+  };
+  localStorage.setItem(lsKey('cfg'),JSON.stringify(cfg));
+  $('config-status').className='badge badge-ok';$('config-status').textContent='✓ Guardado';
+  notif('✓ Configuración guardada');
+  propagar();calcularCF();calcularCosto();calcularTanda();calcularProd();calcularRent();calcularSensibilidad();renderColores();
+}
+
+function cargarConfig(){
+  const r=localStorage.getItem(lsKey('cfg'));
+  cfg=r?JSON.parse(r):{};
+  $('cfg-pp').value=cfg.ppPrecio||'';$('cfg-mb').value=cfg.mbPrecio||'';
+  $('cfg-mbpct').value=cfg.mbPct||'';$('cfg-recprecio').value=cfg.recPrecio||'';
+  $('cfg-recpct').value=cfg.recPct||'';$('cfg-mo').value=cfg.mo||'';
+  $('cfg-kw').value=cfg.kw||'';$('cfg-kwh').value=cfg.kwh||'';
+  $('cfg-peso').value=cfg.peso||'';$('cfg-cav').value=cfg.cavidades||1;
+  $('cfg-ciclo').value=cfg.ciclo||30;$('cfg-bm2').value=cfg.baldosasM2||16;
+  $('cfg-colada').value=cfg.coladaG||'';$('cfg-colada-precio').value=cfg.coladaPrecio||'';
+  $('cfg-caja-kg').value=cfg.cajaKg||4;
+  recActivo=cfg.recActivo||false;
+  $('tog-rec').classList.toggle('on',recActivo);
+  $('rec-fields').style.display=recActivo?'block':'none';
+  $('config-status').className='badge badge-ok';$('config-status').textContent='✓ Guardado';
+  propagar();
+  actualizarPiezasCaja();
+}
+
+function resetConfig(){
+  if(!confirm('¿Resetear configuración de este producto?'))return;
+  localStorage.removeItem(lsKey('cfg'));cfg={};recActivo=false;
+  ['cfg-pp','cfg-mb','cfg-mbpct','cfg-recprecio','cfg-recpct','cfg-mo','cfg-kw','cfg-kwh','cfg-peso','cfg-colada','cfg-colada-precio'].forEach(i=>$(i).value='');
+  $('cfg-cav').value=1;$('cfg-ciclo').value=30;$('cfg-bm2').value=16;$('cfg-caja-kg').value=4;
+  $('tog-rec').classList.remove('on');$('rec-fields').style.display='none';
+  $('config-status').className='badge badge-no';$('config-status').textContent='Sin guardar';
+  notif('↺ Reseteado');
+}
+
+function toggleRec(){recActivo=!recActivo;$('tog-rec').classList.toggle('on',recActivo);$('rec-fields').style.display=recActivo?'block':'none';}
+
+function propagar(){
+  const ph=(id,v)=>{try{if(v&&$(id))$(id).placeholder=v;}catch(e){}};
+  ph('c-ciclo',cfg.ciclo);ph('c-cav',cfg.cavidades);ph('c-peso',cfg.peso);
+  ph('c-pp',cfg.ppPrecio);ph('c-mb',cfg.mbPrecio);ph('c-mo',cfg.mo);
+  ph('p-ciclo',cfg.ciclo);ph('p-cav',cfg.cavidades);ph('p-peso',cfg.peso);
+}
+
+function actualizarPiezasCaja(){
+  if(!PR().tieneCaja)return;
+  const pk=(+$('cfg-peso').value||cfg.peso||0)/1000;
+  const ck=+$('cfg-caja-kg').value||4;
+  const ppc=pk>0?(ck/pk).toFixed(1):'—';
+  $('cfg-piezas-caja').textContent=ppc!=='—'?ppc+' pzs':'—';
+}
+
+// ════════════════════════════════════════════════
+// COSTOS FIJOS
+// ════════════════════════════════════════════════
+function cargarFijos(){
+  const r=localStorage.getItem(lsKey('fijos'));if(r)cfItems=JSON.parse(r);else cfItems=[];
+  cfHsMes=+(localStorage.getItem(lsKey('cfhs'))||176);
+  $('cf-hsmes').value=cfHsMes;
+  renderCF();calcularCF();
+}
+function guardarFijos(){
+  localStorage.setItem(lsKey('fijos'),JSON.stringify(cfItems));
+  localStorage.setItem(lsKey('cfhs'),$('cf-hsmes').value||176);
+  cfHsMes=+$('cf-hsmes').value||176;
+  $('fijos-status').className='badge badge-ok';$('fijos-status').textContent='✓ Guardado';
+  notif('✓ Costos fijos guardados');
+  calcularCF();calcularCosto();calcularTanda();calcularRent();calcularSensibilidad();
+}
+function agregarCF(){cfItems.push({nombre:'Nuevo ítem',imp:0,per:'mes'});renderCF();calcularCF();}
+function eliminarCF(i){cfItems.splice(i,1);renderCF();calcularCF();}
+function renderCF(){
+  const el=$('cf-lista');el.innerHTML='';
+  cfItems.forEach((c,i)=>{
+    const row=document.createElement('div');row.className='cf-row';
+    row.innerHTML=`<input type="text" value="${c.nombre}" placeholder="Concepto" oninput="cfItems[${i}].nombre=this.value">
+      <input type="number" value="${c.imp||''}" placeholder="0.00" step="0.01" min="0" oninput="cfItems[${i}].imp=+this.value;calcularCF()">
+      <select onchange="cfItems[${i}].per=this.value;calcularCF()">
+        <option value="mes" ${c.per==='mes'?'selected':''}>/ mes</option>
+        <option value="hora" ${c.per==='hora'?'selected':''}>/ hora</option>
+      </select>
+      <button class="btn btn-d btn-sm" onclick="eliminarCF(${i})" style="width:32px;padding:4px;justify-content:center;">✕</button>`;
+    el.appendChild(row);
+  });
+}
+function calcularCF(){
+  cfHsMes=+$('cf-hsmes').value||176;
+  let totMes=0;
+  cfItems.forEach(c=>{totMes+=c.per==='mes'?+c.imp||0:(+c.imp||0)*cfHsMes;});
+  const totHora=cfHsMes>0?totMes/cfHsMes:0;
+  $('cf-tot-mes').textContent=fmt2(totMes);
+  $('cf-tot-hora').textContent=fmt2(totHora);
+  $('cf-xhora').textContent=fmt2(totHora);
+  const ciclo=cfg.ciclo||30,cav=cfg.cavidades||1,pph=cav*3600/ciclo;
+  const cfP=pph>0?totHora/pph:0;
+  $('cf-xpieza').textContent=fmt(cfP);
+  // u2
+  const P=PR();
+  if(P.tieneU2){$('cf-xu2').textContent=fmt2(cfP*piezasPorU2());}
+  else if(P.tieneCaja){$('cf-xu2').textContent=fmt2(cfP*piezasPorCaja());$('cf-xcaja').textContent=fmt2(cfP*piezasPorCaja());}
+  else{$('cf-xu2').textContent='—';}
+}
+
+// ════════════════════════════════════════════════
+// COSTO POR PIEZA
+// ════════════════════════════════════════════════
+function calcularCosto(){
+  const P=PR();
+  const {fPP,fMB,fRec}=getMix();
+  const ciclo=+$('c-ciclo').value||cfg.ciclo||0;
+  const cav  =+$('c-cav').value ||cfg.cavidades||1;
+  const pesoG=+$('c-peso').value||cfg.peso||0;
+  const ppP  =+$('c-pp').value  ||cfg.ppPrecio||0;
+  const mbP  =+$('c-mb').value  ||cfg.mbPrecio||0;
+  const recP =cfg.recPrecio||0;
+  const mo   =+$('c-mo').value  ||cfg.mo||0;
+  const kwh  =cfg.kwh||0, kw=cfg.kw||0;
+  const inclCF=$('tog-cf-c').classList.contains('on');
+  const coladaG=cfg.coladaG||0, coladaP=cfg.coladaPrecio||0;
+
+  if(!ciclo||!pesoG){$('c-total').textContent='$—';$('c-sub').textContent='Ingresá ciclo y peso';return;}
+
+  const pesoKg=pesoG/1000;
+  const pph=cav*3600/ciclo;
+
+  const cPP  =pesoKg*fPP*ppP;
+  const cMB  =pesoKg*fMB*mbP;
+  const cRec =pesoKg*fRec*recP;
+  const cMO  =pph>0?mo/pph:0;
+  const cElec=pph>0?(kw*kwh)/pph:0;
+  const cCF  =inclCF&&pph>0?getCFHora()/pph:0;
+
+  // Colada: peso colada por ciclo repartido entre cavidades, menos su valor de recupero
+  const coladaKgPieza=cav>0?(coladaG/1000)/cav:0;
+  const coladaBruto=coladaKgPieza*ppP; // cuesta como PP virgen
+  const coladaRecupero=coladaKgPieza*coladaP; // recupero = ingreso neto
+  const coladaNeto=P.tieneColada?coladaBruto-coladaRecupero:0;
+
+  const tot=cPP+cMB+cRec+cMO+cElec+cCF+(P.tieneColada?coladaNeto:0);
+  costoPieza=tot;
+
+  $('c-total').textContent=fmt(tot);
+  $('c-sub').textContent=`PP ${(fPP*100).toFixed(1)}% | MB ${(fMB*100).toFixed(1)}% | Rec ${(fRec*100).toFixed(1)}%`;
+  $('v-pp').textContent=fmt(cPP);  $('d-pp').textContent=`${(fPP*100).toFixed(1)}% × $${ppP}/kg`;
+  $('v-mb').textContent=fmt(cMB);  $('d-mb').textContent=`${(fMB*100).toFixed(1)}% × $${mbP}/kg`;
+  $('v-mo').textContent=fmt(cMO);  $('d-mo').textContent=pph>0?`$${mo}/h ÷ ${Math.round(pph)} pzs/h`:'';
+  $('v-elec').textContent=fmt(cElec); $('d-elec').textContent=`${kw}kW×$${kwh}/kWh÷${Math.round(pph)} pzs/h`;
+  $('v-cf').textContent=fmt(cCF);
+  $('v-total2').textContent=fmt(tot);
+  $('v-pph').textContent=Math.round(pph)+' pzs/h';
+
+  if(recActivo&&fRec>0){$('box-rec-c').style.display='flex';$('v-rec').textContent=fmt(cRec);$('d-rec').textContent=`${(fRec*100).toFixed(1)}% × $${recP}/kg`;}
+  else $('box-rec-c').style.display='none';
+
+  if(P.tieneColada){
+    $('v-colada-costo').textContent=fmt(coladaBruto);
+    $('d-colada').textContent=`${coladaG}g/ciclo ÷ ${cav} cav = ${(coladaKgPieza*1000).toFixed(2)}g/pza × $${ppP}/kg`;
+    $('v-colada-rec').textContent='−'+fmt(coladaRecupero);
+    $('d-colada-rec').textContent=`${(coladaKgPieza*1000).toFixed(2)}g/pza × $${coladaP}/kg (recupero)`;
+  }
+
+  // segunda unidad
+  if(P.tieneU2){
+    $('v-u2').textContent=fmt2(tot*piezasPorU2());
+  } else if(P.tieneCaja){
+    $('v-u2').textContent=fmt2(tot*piezasPorCaja());
+    $('v-xcaja').textContent=fmt2(tot*piezasPorCaja());
+  } else {
+    $('v-u2').textContent='—';
+  }
+
+  calcularRent();
+}
+
+// ════════════════════════════════════════════════
+// TANDA
+// ════════════════════════════════════════════════
+function setUTanda(u){uTanda=u;['piezas','u2','caja'].forEach(x=>{const el=$('ubtn-'+x);if(el)el.classList.toggle('on',x===u);});calcularTanda();}
+function qDelta(d){const s=uTanda==='u2'?1:uTanda==='caja'?1:10;const inp=$('t-qty');inp.value=Math.max(1,(+inp.value||0)+d*s);calcularTanda();}
+
+function calcularTanda(){
+  const P=PR();
+  let rawQty=+$('t-qty').value||0, piezas=rawQty;
+  if(uTanda==='u2')   piezas=P.tieneU2?rawQty*piezasPorU2():rawQty*piezasPorCaja();
+  if(uTanda==='caja') piezas=rawQty*piezasPorCaja();
+
+  const u2=P.tieneU2?piezas/piezasPorU2():P.tieneCaja?piezas/piezasPorCaja():piezas;
+
+  // Equivalencia
+  let eq='';
+  if(uTanda==='piezas') eq=P.tieneU2?`${(piezas/piezasPorU2()).toFixed(2)} m²`:P.tieneCaja?`${(piezas/piezasPorCaja()).toFixed(1)} cajas`:'';
+  else if(uTanda==='u2') eq=`${piezas.toLocaleString('es')} piezas`;
+  else if(uTanda==='caja') eq=`${piezas.toLocaleString('es')} piezas`;
+  $('t-equiv').textContent=eq||`${piezas.toLocaleString('es')} piezas`;
+
+  const pesoKg=(cfg.peso||0)/1000;
+  const {fPP,fMB,fRec}=getMix();
+  const ppP=cfg.ppPrecio||0,mbP=cfg.mbPrecio||0,recP=cfg.recPrecio||0;
+  const ciclo=cfg.ciclo||0,cav=cfg.cavidades||1;
+  const mo=cfg.mo||0,kw=cfg.kw||0,kwh=cfg.kwh||0;
+  const coladaG=cfg.coladaG||0,coladaP=cfg.coladaPrecio||0;
+  const pph=ciclo>0?cav*3600/ciclo:0;
+  const horas=pph>0?piezas/pph:0;
+
+  const kgTot=piezas*pesoKg;
+  const kgPP=kgTot*fPP,kgMB=kgTot*fMB,kgRec=kgTot*fRec;
+  const cstPP=kgPP*ppP,cstMB=kgMB*mbP,cstRec=kgRec*recP;
+
+  // Colada
+  const ciclosTotales=cav>0?piezas/cav:0;
+  const kgColadaTot=P.tieneColada?(coladaG/1000)*ciclosTotales:0;
+  const cstColadaBruto=kgColadaTot*ppP;
+  const cstColadaRec=kgColadaTot*coladaP;
+  const cstColadaNeto=P.tieneColada?cstColadaBruto-cstColadaRec:0;
+
+  const cstMat=cstPP+cstMB+cstRec+cstColadaNeto;
+  const cstMO=horas*mo,cstElec=horas*kw*kwh,cstCF=horas*getCFHora();
+  const tot=cstMat+cstMO+cstElec+cstCF;
+
+  $('t-kgtot').textContent=kgTot.toFixed(3)+' kg';
+  $('t-kgpp').textContent=kgPP.toFixed(3)+' kg';  $('t-cstpp').textContent=fmt2(cstPP);
+  $('t-kgmb').textContent=kgMB.toFixed(3)+' kg';  $('t-cstmb').textContent=fmt2(cstMB);
+  $('t-kgrec').textContent=kgRec.toFixed(3)+' kg';$('t-cstrec').textContent=fmt2(cstRec);
+  $('t-card-rec').style.display=recActivo&&fRec>0?'block':'none';
+  if(P.tieneColada){
+    $('t-kg-colada').textContent=kgColadaTot.toFixed(3)+' kg';
+    $('t-rec-colada').textContent='−'+fmt2(cstColadaRec);
+  }
+  $('t-tiempo').textContent=horas<1?`${Math.round(horas*60)} min`:`${horas.toFixed(2)} hs`;
+  $('t-cstmat').textContent=fmt2(cstMat);
+  $('t-cstmo').textContent=fmt2(cstMO);
+  $('t-cstelec').textContent=fmt2(cstElec);
+  $('t-cstcf').textContent=fmt2(cstCF);
+  $('t-total').textContent=fmt2(tot);
+  $('t-sub').textContent=`${piezas.toLocaleString('es')} piezas`;
+  const xp=piezas>0?tot/piezas:0;
+  $('t-xpieza').textContent=fmt(xp);
+  if(P.tieneU2)  $('t-xu2').textContent=fmt2(xp*piezasPorU2());
+  else if(P.tieneCaja){$('t-xu2').textContent=fmt2(xp*piezasPorCaja());$('t-xcaja').textContent=fmt2(xp*piezasPorCaja());}
+  else $('t-xu2').textContent='—';
+  $('t-subtmat').textContent=fmt2(cstMat);
+  $('t-subtop').textContent=fmt2(cstMO+cstElec);
+  $('t-subtcf').textContent=fmt2(cstCF);
+}
+
+// ════════════════════════════════════════════════
+// PRODUCCION
+// ════════════════════════════════════════════════
+function setProdU(u){uProd=u;['piezas','u2','caja'].forEach(x=>{const el=$('pb-'+x);if(el)el.classList.toggle('on',x===u);});calcularProd();}
+function updEfic(){$('efic-val').textContent=$('p-efic').value+'%';calcularProd();}
+
+function calcularProd(){
+  const P=PR();
+  const horas=+$('p-horas').value||0;
+  const ciclo=+$('p-ciclo').value||cfg.ciclo||0;
+  const cav  =+$('p-cav').value ||cfg.cavidades||1;
+  const pesoG=+$('p-peso').value||cfg.peso||0;
+  const efic =+$('p-efic').value/100;
+  const coladaG=cfg.coladaG||0;
+  let objRaw=+$('p-obj').value||0, objPiezas=objRaw;
+  if(uProd==='u2')  objPiezas=P.tieneU2?objRaw*piezasPorU2():objRaw*piezasPorCaja();
+  if(uProd==='caja')objPiezas=objRaw*piezasPorCaja();
+  const {fPP,fMB,fRec}=getMix();
+  if(!ciclo)return;
+
+  const cph=3600/ciclo,pphR=cph*cav*efic,ppd=pphR*horas;
+  const pesoKg=pesoG/1000,kgD=ppd*pesoKg;
+  const ciclosD=cav>0?ppd/cav:0,kgColadaD=P.tieneColada?(coladaG/1000)*ciclosD:0;
+
+  $('p-cph').textContent=cph.toFixed(1);
+  $('p-pph').textContent=Math.round(pphR)+' pzs/h';
+  $('p-ppd').textContent=Math.round(ppd).toLocaleString('es');
+  $('p-kgd').textContent=kgD.toFixed(2)+' kg';
+  $('p-kgpp').textContent=(kgD*fPP).toFixed(3)+' kg';
+  $('p-kgrec').textContent=(kgD*fRec).toFixed(3)+' kg';
+  $('p-kgmb').textContent=(kgD*fMB).toFixed(3)+' kg';
+  $('p-dias-hs').textContent=horas||8;
+  if(P.tieneColada)$('p-kgcolada').textContent=kgColadaD.toFixed(3)+' kg';
+
+  if(P.tieneU2) $('p-u2d').textContent=(ppd/piezasPorU2()).toFixed(2)+' m²';
+  else if(P.tieneCaja) $('p-cajad').textContent=(ppd/piezasPorCaja()).toFixed(1)+' cajas';
+  else $('p-u2d').textContent='—';
+
+  if(objPiezas&&pphR>0){
+    const hs=objPiezas/pphR,dias=horas>0?hs/horas:null;
+    const ciclosObj=cav>0?objPiezas/cav:0,kgColadaObj=P.tieneColada?(coladaG/1000)*ciclosObj:0;
+    $('p-hs-obj').textContent=hs.toFixed(1)+' hs';
+    $('p-dias-obj').textContent=dias!==null?dias.toFixed(1)+' días':'—';
+    $('p-kg-obj').textContent=(objPiezas*pesoKg).toFixed(2)+' kg';
+    if(P.tieneColada)$('p-kg-colada-obj').textContent=kgColadaObj.toFixed(2)+' kg';
+  } else {
+    ['p-hs-obj','p-dias-obj','p-kg-obj','p-kg-colada-obj'].forEach(id=>{try{$(id).textContent='—';}catch(e){}});
+  }
+}
+
+// ════════════════════════════════════════════════
+// RENTABILIDAD
+// ════════════════════════════════════════════════
+function setRU(u){uRent=u;['pieza','u2r','caja'].forEach(x=>{const el=$('rb-'+x);if(el)el.classList.toggle('on',x===u);});calcularRent();}
+function setRQ(u){uRentQ=u;['piezas','u2','caja'].forEach(x=>{const el=$('rq-'+x);if(el)el.classList.toggle('on',x===u);});calcularRent();}
+
+function calcularRent(){
+  const P=PR();
+  const inclCF=$('tog-cf-r').classList.contains('on');
+  // Recalcular costo
+  const {fPP,fMB,fRec}=getMix();
+  const pesoKg=(cfg.peso||0)/1000,ciclo=cfg.ciclo||0,cav=cfg.cavidades||1;
+  const pph=ciclo>0?cav*3600/ciclo:0;
+  const ppP=cfg.ppPrecio||0,mbP=cfg.mbPrecio||0,recP=cfg.recPrecio||0;
+  const mo=cfg.mo||0,kw=cfg.kw||0,kwh=cfg.kwh||0;
+  const coladaG=cfg.coladaG||0,coladaPrecio=cfg.coladaPrecio||0;
+  const coladaKgPieza=cav>0?(coladaG/1000)/cav:0;
+  const coladaNeto=P.tieneColada?coladaKgPieza*ppP-coladaKgPieza*coladaPrecio:0;
+  const cMat=pesoKg*(fPP*ppP+fMB*mbP+fRec*recP)+coladaNeto;
+  const cMO=pph>0?mo/pph:0,cElec=pph>0?(kw*kwh)/pph:0;
+  const cCF=inclCF&&pph>0?getCFHora()/pph:0;
+  const cBase=cMat+cMO+cElec+cCF;
+  costoPieza=cBase;
+
+  $('r-cbase').textContent=fmt(cBase);
+  $('r-pmin').textContent=fmt(cBase);
+  if(P.tieneU2){$('r-pmin-u2').textContent=fmt2(cBase*piezasPorU2());}
+  else if(P.tieneCaja){$('r-pmin-u2').textContent=fmt2(cBase*piezasPorCaja());$('r-pmin-caja').textContent=fmt2(cBase*piezasPorCaja());}
+
+  // Precio ingresado → convertir a $/pieza
+  let prRaw=+$('r-precio').value||0, pxPieza=prRaw;
+  if(uRent==='u2'||uRent==='caja'){
+    const factor=P.tieneU2?piezasPorU2():piezasPorCaja();
+    pxPieza=factor>0?prRaw/factor:0;
+  }
+  $('r-pxpieza').textContent=fmt(pxPieza);
+  if(P.tieneU2) $('r-pxu2').textContent=fmt2(pxPieza*piezasPorU2());
+  else if(P.tieneCaja){$('r-pxu2').textContent=fmt2(pxPieza*piezasPorCaja());$('r-pxcaja').textContent=fmt2(pxPieza*piezasPorCaja());}
+
+  // Cantidad → piezas
+  let cantRaw=+$('r-cant').value||1, cantPiezas=cantRaw;
+  if(uRentQ==='u2'||uRentQ==='caja'){
+    const f=P.tieneU2?piezasPorU2():piezasPorCaja();
+    cantPiezas=cantRaw*f;
+  }
+
+  if(!prRaw){$('r-gan-p').textContent='$—';$('r-gan-sub').textContent='Ingresá precio de venta';$('r-marg').textContent='0%';$('r-meter').style.width='0%';return;}
+
+  const ganP=pxPieza-cBase,marg=pxPieza>0?(ganP/pxPieza)*100:0;
+  const ingrT=pxPieza*cantPiezas,costT=cBase*cantPiezas,ganT=ganP*cantPiezas;
+
+  $('r-gan-p').textContent=fmt(ganP);$('r-gan-p').style.color=ganP>=0?'var(--green)':'var(--red)';
+  $('r-gan-sub').textContent=`Margen: ${marg.toFixed(1)}%`;
+  $('r-marg').textContent=marg.toFixed(1)+'%';$('r-marg').style.color=marg>=20?'var(--green)':marg>=10?'var(--accent3)':'var(--red)';
+  const mp=Math.min(Math.max(marg,0),100);
+  $('r-meter').style.width=mp+'%';$('r-meter').className='meter-fill '+(marg>=20?'mgood':marg>=10?'mmid':'mlow');
+  const ganU2=P.tieneU2?ganP*piezasPorU2():ganP*piezasPorCaja();
+  $('r-gan-u2').textContent=fmt2(ganU2);$('r-gan-u2').style.color=ganP>=0?'var(--green)':'var(--red)';
+  if(P.tieneCaja){$('r-gan-caja').textContent=fmt2(ganU2);$('r-gan-caja').style.color=ganP>=0?'var(--green)':'var(--red)';}
+  $('r-ingr').textContent=fmt2(ingrT);$('r-costtot').textContent=fmt2(costT);
+  $('r-gantot').textContent=fmt2(ganT);$('r-gantot').style.color=ganT>=0?'var(--green)':'var(--red)';
+}
+
+function calcSug(){
+  const P=PR(),marg=+$('r-marg-d').value||0;
+  if(!costoPieza){$('r-sug-p').textContent='—';return;}
+  const ps=marg<100?costoPieza/(1-marg/100):0;
+  $('r-sug-p').textContent=fmt(ps);
+  if(P.tieneU2) $('r-sug-u2').textContent=fmt2(ps*piezasPorU2());
+  else if(P.tieneCaja){$('r-sug-u2').textContent=fmt2(ps*piezasPorCaja());$('r-sug-caja').textContent=fmt2(ps*piezasPorCaja());}
+  else $('r-sug-u2').textContent='—';
+}
+
+// ════════════════════════════════════════════════
+// SENSIBILIDAD
+// ════════════════════════════════════════════════
+function calcularSensibilidad(){
+  const P=PR();
+  const {fPP,fMB,fRec}=getMix();
+  const pesoKg=(cfg.peso||0)/1000,ciclo=cfg.ciclo||0,cav=cfg.cavidades||1;
+  const pph=ciclo>0?cav*3600/ciclo:0;
+  const ppP=cfg.ppPrecio||0,mbP=cfg.mbPrecio||0,recP=cfg.recPrecio||0;
+  const mo=cfg.mo||0,kw=cfg.kw||0,kwh=cfg.kwh||0;
+  const coladaG=cfg.coladaG||0,coladaP=cfg.coladaPrecio||0;
+  const coladaKg=cav>0?(coladaG/1000)/cav:0;
+
+  const cPP  =pesoKg*fPP*ppP;
+  const cMB  =pesoKg*fMB*mbP;
+  const cRec =pesoKg*fRec*recP;
+  const cMO  =pph>0?mo/pph:0;
+  const cElec=pph>0?(kw*kwh)/pph:0;
+  const cCF  =pph>0?getCFHora()/pph:0;
+  const cColadaBruto=P.tieneColada?coladaKg*ppP:0;
+  const cColadaRec  =P.tieneColada?coladaKg*coladaP:0;
+
+  let comps=[
+    {nombre:'PP Virgen',    costo:cPP,          color:'#e8ff47'},
+    {nombre:'Masterbatch',  costo:cMB,           color:'#ff6b35'},
+    {nombre:'Recuperado',   costo:cRec,          color:'#47c4ff', skip:!(recActivo&&fRec>0)},
+    {nombre:'Colada (costo)',costo:cColadaBruto, color:'#c084fc', skip:!P.tieneColada},
+    {nombre:'Colada (recupero)',costo:-cColadaRec,color:'#4ade80',skip:!P.tieneColada||cColadaRec<=0,isNeg:true},
+    {nombre:'Mano de obra', costo:cMO,           color:'#c084fc'},
+    {nombre:'Electricidad', costo:cElec,         color:'#4ade80'},
+    {nombre:'Costos fijos', costo:cCF,           color:'#60a5fa', skip:cCF<=0},
+  ].filter(c=>!c.skip&&Math.abs(c.costo)>0).sort((a,b)=>b.costo-a.costo);
+
+  const total=comps.reduce((s,c)=>s+c.costo,0);
+  sensComps=comps; sensTotalBase=total;
+
+  $('sens-total-pieza').textContent=fmt(total);
+  const u2v=P.tieneU2?total*piezasPorU2():P.tieneCaja?total*piezasPorCaja():null;
+  $('sens-total-u2').textContent=u2v!==null?fmt2(u2v):'—';
+
+  if(total<=0){$('sens-barras').innerHTML='<p class="tip">Configurá los datos base primero.</p>';return;}
+
+  // Barras
+  const barrasEl=$('sens-barras');barrasEl.innerHTML='';
+  comps.forEach(c=>{
+    const pct=Math.abs(c.costo)/Math.abs(total)*100;
+    const riesgo=pct>=40?'ALTO':pct>=15?'MEDIO':'BAJO';
+    const rColor=pct>=40?'var(--red)':pct>=15?'var(--accent3)':'var(--green)';
+    const imp1=Math.abs(c.costo)*0.01;
+    barrasEl.innerHTML+=`<div class="sens-bar-wrap">
+      <div class="sens-bar-label">
+        <span class="sens-bar-name" style="color:${c.color}">${c.nombre}${c.isNeg?' (descuento)':''}</span>
+        <span class="sens-bar-pct" style="color:${c.color}">${pct.toFixed(1)}%</span>
+      </div>
+      <div class="sens-bar-track"><div class="sens-bar-fill" style="width:${pct}%;background:${c.color};opacity:.85;"></div></div>
+      <div class="sens-bar-cost">Impacto +1%: <span style="color:${rColor};font-weight:600;">${c.isNeg?'−':'+'} ${fmt(imp1)}</span> · Riesgo: <span style="color:${rColor};font-weight:600;">${riesgo}</span></div>
+    </div>`;
+  });
+
+  // Alertas
+  const alertasEl=$('sens-alertas');alertasEl.innerHTML='';
+  comps.filter(c=>!c.isNeg).forEach(c=>{
+    const pct=c.costo/total*100;
+    const cls=pct>=40?'alerta-high':pct>=15?'alerta-mid':'alerta-low';
+    const icon=pct>=40?'🔴':pct>=15?'🟡':'🟢';
+    alertasEl.innerHTML+=`<div class="alerta-box ${cls}"><div style="font-size:14px;">${icon}</div><div class="alerta-txt"><strong>${c.nombre}</strong>: ${pct.toFixed(1)}% del costo. Un +10% en este insumo sube el costo total <strong>${(pct*0.1).toFixed(1)}%</strong>.</div></div>`;
+  });
+
+  // Sliders
+  buildSliders(comps);
+
+  // Tabla +1%
+  const tablaEl=$('sens-tabla-1pct');tablaEl.innerHTML='';
+  const u2lbl=P.tieneU2?'m²':P.tieneCaja?'caja':'u.';
+  comps.forEach(c=>{
+    const pct=Math.abs(c.costo)/Math.abs(total)*100;
+    const imp1=Math.abs(c.costo)*0.01;
+    const imp1u2=P.tieneU2?imp1*piezasPorU2():P.tieneCaja?imp1*piezasPorCaja():imp1;
+    const riesgo=pct>=40?'ALTO':pct>=15?'MEDIO':'BAJO';
+    const rCls=pct>=40?'imp-high':pct>=15?'imp-mid':'imp-low';
+    tablaEl.innerHTML+=`<tr>
+      <td style="color:${c.color};font-weight:600;">${c.nombre}</td>
+      <td style="font-family:'Syne',sans-serif;font-weight:700;">${pct.toFixed(1)}%</td>
+      <td>${fmt(c.costo)}</td>
+      <td style="font-family:'Syne',sans-serif;color:${c.isNeg?'var(--green)':'var(--red)'};">${c.isNeg?'−':'+'}${fmt(imp1)}</td>
+      <td style="font-family:'Syne',sans-serif;color:var(--accent3);">${c.isNeg?'−':'+'}${fmt2(imp1u2)}</td>
+      <td><span class="impact-pill ${rCls}">${riesgo}</span></td>
+    </tr>`;
+  });
+
+  // Init sliders
+  updSens();
+}
+
+function buildSliders(comps){
+  const el=$('sens-sliders');el.innerHTML='';
+  sensVars={};
+  comps.forEach((c,i)=>{
+    sensVars[c.nombre]=0;
+    el.innerHTML+=`<div style="margin-bottom:10px;">
+      <div style="font-size:9px;color:${c.color};letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">${c.nombre}${c.isNeg?' (recupero)':''}</div>
+      <div class="slider-row">
+        <input type="range" data-nombre="${c.nombre}" min="-50" max="100" value="0"
+          oninput="sensVars['${c.nombre}']=+this.value;$('sv-${i}').textContent=(+this.value>=0?'+':'')+this.value+'%';$('sv-${i}').style.color=+this.value>0?'var(--red)':+this.value<0?'var(--green)':'var(--accent)';updSens()">
+        <div class="slider-val" id="sv-${i}">+0%</div>
+      </div>
+    </div>`;
+  });
+}
+
+function updSens(){
+  const P=PR();
+  if(!sensComps.length)return;
+  let nuevoTotal=0;
+  const tablaEl=$('ss-tabla');tablaEl.innerHTML='';
+  sensComps.forEach(c=>{
+    const v=sensVars[c.nombre]||0;
+    const nuevo=c.costo*(1+v/100);
+    nuevoTotal+=nuevo;
+    const delta=nuevo-c.costo;
+    const dColor=delta>0?'var(--red)':delta<0?'var(--green)':'var(--muted)';
+    const dSign=delta>=0?'+':'';
+    tablaEl.innerHTML+=`<tr>
+      <td style="color:${c.color};">${c.nombre}</td>
+      <td>${fmt(c.costo)}</td>
+      <td style="color:${dColor};font-weight:600;">${v!==0?(v>=0?'+':'')+v+'%':'—'}</td>
+      <td style="font-family:'Syne',sans-serif;font-weight:700;">${fmt(nuevo)}</td>
+    </tr>`;
+  });
+  const delta=nuevoTotal-sensTotalBase,deltaPct=sensTotalBase>0?(delta/sensTotalBase)*100:0;
+  $('ss-nuevo-pieza').textContent=fmt(nuevoTotal);
+  const u2v=P.tieneU2?nuevoTotal*piezasPorU2():P.tieneCaja?nuevoTotal*piezasPorCaja():null;
+  $('ss-nuevo-u2').textContent=u2v!==null?fmt2(u2v):'—';
+  $('ss-delta-pieza').textContent=(delta>=0?'+':'')+fmt(delta).replace('$','$');
+  $('ss-delta-pieza').style.color=delta>0?'var(--red)':delta<0?'var(--green)':'var(--muted)';
+  $('ss-delta-pct').textContent=(deltaPct>=0?'+':'')+deltaPct.toFixed(2)+'%';
+  $('ss-delta-pct').style.color=deltaPct>0?'var(--red)':deltaPct<0?'var(--green)':'var(--muted)';
+}
+
+function resetSliders(){
+  document.querySelectorAll('#sens-sliders input[type=range]').forEach(r=>{r.value=0;});
+  Object.keys(sensVars).forEach(k=>sensVars[k]=0);
+  document.querySelectorAll('[id^="sv-"]').forEach(el=>{el.textContent='+0%';el.style.color='var(--accent)';});
+  updSens();
+}
+
+// ════════════════════════════════════════════════
+// COLORES
+// ════════════════════════════════════════════════
+function calcCostoColor(c){
+  const P=PR();
+  const mbPrecio=c.mbPrecio!=null?+c.mbPrecio:cfg.mbPrecio||0;
+  const mbPct   =c.mbPct!=null?+c.mbPct:cfg.mbPct||0;
+  const usaRec  =c.usaRec;
+  const recPrecio=c.recPrecio!=null?+c.recPrecio:cfg.recPrecio||0;
+  const recPct   =c.recPct!=null?+c.recPct:cfg.recPct||0;
+  const fRec=usaRec?recPct/100:0,fVir=1-fRec,fMB=(mbPct/100)*fVir,fPP=fVir-fMB;
+  const pesoKg=(cfg.peso||0)/1000;
+  const ciclo=cfg.ciclo||0,cav=cfg.cavidades||1,pph=ciclo>0?cav*3600/ciclo:0;
+  const ppP=cfg.ppPrecio||0,mo=cfg.mo||0,kw=cfg.kw||0,kwh=cfg.kwh||0;
+  const coladaG=cfg.coladaG||0,coladaP=cfg.coladaPrecio||0;
+  const coladaKg=cav>0?(coladaG/1000)/cav:0;
+  const inclCF=$('tog-cf-col').classList.contains('on');
+  const cPP=pesoKg*fPP*ppP,cMB=pesoKg*fMB*mbPrecio,cRec=pesoKg*fRec*recPrecio;
+  const cMO=pph>0?mo/pph:0,cElec=pph>0?(kw*kwh)/pph:0,cCF=inclCF&&pph>0?getCFHora()/pph:0;
+  const coladaNeto=P.tieneColada?coladaKg*ppP-coladaKg*coladaP:0;
+  const total=cPP+cMB+cRec+cMO+cElec+cCF+coladaNeto;
+  const pv=precioVentaPieza;
+  const gan=pv>0?pv-total:null,marg=pv>0&&total>0?(gan/pv)*100:null;
+  return{cPP,cMB,cRec,cMO,cElec,cCF,total,fPP,fMB,fRec,mbPrecio,recPrecio,gan,marg};
+}
+
+function savePV(){
+  precioVentaPieza=+$('pv-pieza').value||0;
+  localStorage.setItem(lsKey('pv'),precioVentaPieza);
+  const P=PR();
+  const u2v=P.tieneU2?precioVentaPieza*piezasPorU2():P.tieneCaja?precioVentaPieza*piezasPorCaja():null;
+  $('pv-u2-calc').textContent=u2v!==null&&precioVentaPieza>0?fmt2(u2v):'$—';
+  if(P.tieneCaja)$('pv-caja-calc').textContent=precioVentaPieza>0?fmt2(precioVentaPieza*piezasPorCaja()):'$—';
+}
+
+function cargarColores(){
+  const r=localStorage.getItem(lsKey('colores'));colores=r?JSON.parse(r):[];
+  precioVentaPieza=+(localStorage.getItem(lsKey('pv'))||0);
+  if($('pv-pieza'))$('pv-pieza').value=precioVentaPieza||'';
+  savePV();
+  renderColores();
+}
+
+function guardarColoresLS(){localStorage.setItem(lsKey('colores'),JSON.stringify(colores));}
+
+function abrirModalColor(id){
+  editColorId=id;
+  const c=id!==null?colores.find(x=>x.id===id):null;
+  $('modal-title').innerHTML=c?`Editar <span>${c.nombre}</span>`:'Nuevo <span>color</span>';
+  $('mc-nombre').value=c?.nombre||'';
+  $('mc-color').value=c?.colorHex||'#e8ff47';
+  $('mc-mb-precio').value=c?.mbPrecio!=null?c.mbPrecio:'';
+  $('mc-mb-pct').value=c?.mbPct!=null?c.mbPct:'';
+  $('mc-notas').value=c?.notas||'';
+  const usaRec=c?.usaRec||false;
+  $('mc-tog-rec').classList.toggle('on',usaRec);
+  $('mc-rec-fields').style.display=usaRec?'block':'none';
+  $('mc-rec-precio').value=c?.recPrecio!=null?c.recPrecio:'';
+  $('mc-rec-pct').value=c?.recPct!=null?c.recPct:'';
+  $('modal-overlay').style.display='flex';
+}
+
+function cerrarModal(){$('modal-overlay').style.display='none';}
+
+function guardarColor(){
+  const nombre=$('mc-nombre').value.trim();
+  if(!nombre){notif('⚠ Ingresá un nombre');return;}
+  const usaRec=$('mc-tog-rec').classList.contains('on');
+  const data={
+    id:editColorId!==null?editColorId:Date.now(),nombre,colorHex:$('mc-color').value,
+    mbPrecio:$('mc-mb-precio').value!==''?+$('mc-mb-precio').value:null,
+    mbPct:$('mc-mb-pct').value!==''?+$('mc-mb-pct').value:null,
+    usaRec,
+    recPrecio:usaRec&&$('mc-rec-precio').value!==''?+$('mc-rec-precio').value:null,
+    recPct:usaRec&&$('mc-rec-pct').value!==''?+$('mc-rec-pct').value:null,
+    notas:$('mc-notas').value.trim(),
+  };
+  if(editColorId!==null){const i=colores.findIndex(x=>x.id===editColorId);if(i>=0)colores[i]=data;}
+  else colores.push(data);
+  guardarColoresLS();cerrarModal();renderColores();notif(`✓ "${nombre}" guardado`);
+}
+
+function eliminarColor(id){
+  const c=colores.find(x=>x.id===id);
+  if(!confirm(`¿Eliminar "${c?.nombre}"?`))return;
+  colores=colores.filter(x=>x.id!==id);guardarColoresLS();renderColores();notif('Color eliminado');
+}
+
+function duplicarColor(id){
+  const c=colores.find(x=>x.id===id);if(!c)return;
+  const n={...c,id:Date.now(),nombre:c.nombre+' (copia)'};colores.push(n);
+  guardarColoresLS();renderColores();notif(`✓ "${n.nombre}" creado`);
+}
+
+function renderColores(){
+  savePV();
+  const P=PR();
+  const grid=$('colores-grid');
+  if(colores.length===0){
+    grid.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:140px;background:var(--surface);border:2px dashed var(--border);border-radius:12px;color:var(--muted);font-size:11px;cursor:pointer;" onclick="abrirModalColor(null)">+ Agregar primer color</div>`;
+    return;
+  }
+  const costos=colores.map(c=>calcCostoColor(c).total);
+  const minC=Math.min(...costos),maxC=Math.max(...costos);
+  grid.innerHTML=colores.map(c=>{
+    const r=calcCostoColor(c);
+    const isBest=r.total===minC&&colores.length>1,isWorst=r.total===maxC&&colores.length>1;
+    const bStyle=isBest?'background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.25);'
+      :isWorst?'background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.25);':'display:none;';
+    const bText=isBest?'MÁS BARATO':isWorst?'MÁS CARO':'';
+    const mc=r.marg===null?'var(--muted)':r.marg>=20?'var(--green)':r.marg>=10?'var(--accent3)':'var(--red)';
+    const u2v=P.tieneU2?r.total*piezasPorU2():P.tieneCaja?r.total*piezasPorCaja():null;
+    const u2lbl=P.tieneU2?'m²':P.tieneCaja?'caja':'';
+    return `<div class="color-card">
+      <div class="color-card-header">
+        <div class="color-swatch" style="background:${c.colorHex};"></div>
+        <div class="color-card-name">${c.nombre}</div>
+        <span style="font-size:9px;padding:2px 7px;border-radius:10px;font-weight:600;${bStyle}">${bText}</span>
+      </div>
+      <div class="color-stat"><span class="cs-label">Costo / pieza</span><span class="cs-val" style="color:var(--accent);">$${r.total.toFixed(4)}</span></div>
+      ${u2v!==null?`<div class="color-stat"><span class="cs-label">Costo / ${u2lbl}</span><span class="cs-val" style="color:var(--green);">$${u2v.toFixed(2)}</span></div>`:''}
+      <div class="color-stat"><span class="cs-label">MB $${r.mbPrecio.toFixed(2)}/kg · ${(r.fMB*100).toFixed(1)}%</span></div>
+      ${r.marg!==null?`<div class="color-stat"><span class="cs-label">Margen</span><span class="cs-val" style="color:${mc};">${r.marg.toFixed(1)}%</span></div>`:''}
+      ${r.gan!==null?`<div class="color-stat"><span class="cs-label">Ganancia / pieza</span><span class="cs-val" style="color:${r.gan>=0?'var(--green)':'var(--red)'};">${r.gan>=0?'+':''}$${Math.abs(r.gan).toFixed(4)}</span></div>`:''}
+      ${c.notas?`<div style="font-size:9px;color:var(--muted);font-style:italic;margin-top:6px;border-top:1px solid var(--border);padding-top:6px;">${c.notas}</div>`:''}
+      <div class="color-actions">
+        <button class="btn btn-s btn-sm" onclick="abrirModalColor(${c.id})">✏</button>
+        <button class="btn btn-s btn-sm" onclick="duplicarColor(${c.id})">⧉</button>
+        <button class="btn btn-d btn-sm" onclick="eliminarColor(${c.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+  if($('comparacion-wrap').style.display!=='none')renderComparacion();
+}
+
+function mostrarComparacion(){
+  const w=$('comparacion-wrap');w.style.display=w.style.display==='none'?'block':'none';
+  if(w.style.display==='block')renderComparacion();
+}
+
+function renderComparacion(){
+  const P=PR();
+  if(colores.length===0){$('compare-table').innerHTML='<tr><td style="color:var(--muted);padding:12px;">No hay colores cargados.</td></tr>';return;}
+  const res=colores.map(c=>({c,r:calcCostoColor(c)}));
+  const costos=res.map(x=>x.r.total),minC=Math.min(...costos),maxC=Math.max(...costos);
+  const u2lbl=P.tieneU2?'m²':P.tieneCaja?'caja':'';
+  let html=`<thead><tr><th>Color</th><th>PP</th><th>MB</th><th>Recuperado</th><th>MO</th><th>Elec.</th><th>CF</th>
+    <th>$/pieza</th>${u2lbl?`<th>$/${u2lbl}</th>`:''}${precioVentaPieza>0?'<th>Margen</th><th>Gan/pieza</th>':''}</tr></thead><tbody>`;
+  res.forEach(({c,r})=>{
+    const cls=r.total===minC&&colores.length>1?'best':r.total===maxC&&colores.length>1?'worst':'';
+    const u2v=P.tieneU2?r.total*piezasPorU2():P.tieneCaja?r.total*piezasPorCaja():null;
+    const mc=r.marg===null?'var(--muted)':r.marg>=20?'var(--green)':r.marg>=10?'var(--accent3)':'var(--red)';
+    const bw=(r.total/maxC*100).toFixed(1);
+    html+=`<tr>
+      <td><div style="display:flex;align-items:center;gap:7px;">
+        <div class="color-swatch" style="background:${c.colorHex};"></div><strong>${c.nombre}</strong></div>
+        <div class="compare-bar" style="width:${bw}%;background:${c.colorHex};opacity:.4;"></div></td>
+      <td>$${r.cPP.toFixed(4)}<br><span style="font-size:9px;color:var(--muted);">${(r.fPP*100).toFixed(1)}%</span></td>
+      <td>$${r.cMB.toFixed(4)}<br><span style="font-size:9px;color:var(--muted);">$${r.mbPrecio.toFixed(2)}/kg·${(r.fMB*100).toFixed(1)}%</span></td>
+      <td>${r.fRec>0?'$'+r.cRec.toFixed(4)+'<br><span style="font-size:9px;color:var(--muted);">$'+r.recPrecio.toFixed(2)+'/kg·'+(r.fRec*100).toFixed(1)+'%</span>':'—'}</td>
+      <td>$${r.cMO.toFixed(4)}</td><td>$${r.cElec.toFixed(4)}</td><td>$${r.cCF.toFixed(4)}</td>
+      <td class="${cls}" style="font-family:'Syne',sans-serif;">$${r.total.toFixed(4)}</td>
+      ${u2v!==null?`<td class="${cls}" style="font-family:'Syne',sans-serif;">$${u2v.toFixed(2)}</td>`:''}
+      ${precioVentaPieza>0?`<td style="color:${mc};font-weight:700;">${r.marg!==null?r.marg.toFixed(1)+'%':'—'}</td>
+      <td style="color:${r.gan!==null&&r.gan>=0?'var(--green)':'var(--red)'};font-weight:700;">${r.gan!==null?(r.gan>=0?'+':'')+r.gan.toFixed(4):'—'}</td>`:''}
+    </tr>`;
+  });
+  html+='</tbody>';$('compare-table').innerHTML=html;
+}
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+window.onload=()=>{
+  // Mostrar botón continuar si hay producto guardado
+  const saved=localStorage.getItem('covin_prod');
+  if(saved&&PRODUCTOS[saved]){
+    const btn=$('btn-continuar');
+    btn.style.display='inline-flex';
+    btn.textContent=`→ Continuar con ${PRODUCTOS[saved].nombre}`;
+    // Highlight last product card
+    document.querySelectorAll('.prod-card').forEach(card=>{
+      if(card.querySelector('.prod-name').textContent===PRODUCTOS[saved].nombre)
+        card.classList.add('active-prod');
+    });
+  }
+};
+</script>
+</body>
+</html>
