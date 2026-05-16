@@ -1,0 +1,2253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FlexiFloor · Sistema Logístico</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ══════════════════════════════════════════════════════
+   VARIABLES Y RESET
+══════════════════════════════════════════════════════ */
+:root{
+  --bg:#0d0d0d;--card:#181818;--border:#2a2a2a;--white:#f0f0eb;
+  --accent:#ff4e00;--green:#6dcc00;--muted:#666;--radius:6px;
+  --blue:#6C63FF;--teal:#00C9A7;--red:#FF6B6B;--yellow:#F59E0B;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;}
+body{background:var(--bg);color:var(--white);overflow:hidden;}
+#app{height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+button,input,select,textarea{font-family:inherit;}
+
+/* ══════════════════════════════════════════════════════
+   LOGIN
+══════════════════════════════════════════════════════ */
+#login-screen{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:20px;
+  background:#0a0f1e;
+  background-image:radial-gradient(ellipse at 20% 50%,#1a1040 0%,transparent 60%),
+                   radial-gradient(ellipse at 80% 20%,#0a2040 0%,transparent 50%);
+}
+.login-box{
+  width:100%;max-width:380px;
+  background:#1E293B;border:1px solid #334155;border-radius:16px;
+  padding:32px;box-shadow:0 30px 80px rgba(0,0,0,.6);
+}
+.login-logo{text-align:center;margin-bottom:32px;}
+.login-logo .icon{font-size:44px;color:var(--blue);}
+.login-logo h1{font-size:26px;font-weight:900;color:#F1F5F9;letter-spacing:-1px;margin-top:6px;}
+.login-logo p{font-size:11px;color:#475569;letter-spacing:3px;margin-top:4px;}
+.lf-label{font-size:10px;letter-spacing:2px;color:#64748B;display:block;margin-bottom:5px;text-transform:uppercase;}
+.lf-input{width:100%;background:#0F172A;border:1px solid #334155;border-radius:8px;
+  color:#F1F5F9;padding:11px 14px;font-size:14px;outline:none;margin-bottom:14px;}
+.lf-input:focus{border-color:var(--blue);}
+.lf-select{width:100%;background:#0F172A;border:1px solid #334155;border-radius:8px;
+  color:#F1F5F9;padding:11px 14px;font-size:14px;outline:none;margin-bottom:14px;-webkit-appearance:none;}
+.btn-login{width:100%;background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;
+  border:none;border-radius:9px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;}
+.btn-login:active{opacity:.85;}
+.login-hint{margin-top:18px;padding:12px 14px;background:#0F172A;border-radius:8px;font-size:10px;color:#475569;line-height:1.9;}
+.login-error{color:var(--red);font-size:12px;text-align:center;margin-bottom:12px;}
+.login-loading{text-align:center;color:#64748B;font-size:13px;padding:20px;}
+
+/* ══════════════════════════════════════════════════════
+   APP SHELL
+══════════════════════════════════════════════════════ */
+#app{display:none;min-height:100vh;flex-direction:column;}
+html,body{height:100%;}
+.topbar{
+  background:#1E293B;border-bottom:1px solid #334155;
+  padding:11px 16px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:200;
+}
+.topbar-brand{display:flex;align-items:center;gap:10px;}
+.topbar-brand .icon{font-size:20px;color:var(--blue);}
+.topbar-brand h1{font-size:16px;font-weight:900;color:#F1F5F9;letter-spacing:-.5px;}
+.topbar-brand small{font-size:9px;color:#475569;letter-spacing:2px;margin-left:6px;}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.tab-nav{display:flex;background:#0F172A;border-radius:8px;overflow:hidden;border:1px solid #334155;}
+.tab-btn{padding:7px 14px;font-size:11px;font-weight:700;color:#64748B;background:transparent;
+  border:none;cursor:pointer;letter-spacing:.5px;white-space:nowrap;}
+.tab-btn.on{background:var(--blue);color:#fff;}
+.user-badge{display:flex;align-items:center;gap:6px;padding:6px 10px;
+  background:#0F172A;border:1px solid #334155;border-radius:8px;font-size:12px;color:#94A3B8;}
+.user-badge span{font-size:14px;}
+.btn-out{background:transparent;border:none;color:#475569;font-size:11px;cursor:pointer;}
+.btn-sync{background:transparent;border:1px solid #334155;color:#94A3B8;border-radius:6px;
+  padding:5px 10px;cursor:pointer;font-size:11px;}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#334155;display:inline-block;margin-right:4px;}
+.sync-dot.ok{background:var(--teal);}
+.sync-dot.err{background:var(--red);}
+
+/* ══════════════════════════════════════════════════════
+   SECCIONES PRINCIPALES
+══════════════════════════════════════════════════════ */
+.section{display:none;padding:16px 16px 40px;height:calc(100vh - 55px);overflow-y:auto;overflow-x:hidden;}
+.section.on{display:block;}
+
+/* ══════════════════════════════════════════════════════
+   FLEXI (presupuestador) — estilos originales
+══════════════════════════════════════════════════════ */
+.flexi-wrap{max-width:520px;margin:0 auto;}
+nav.flexi-nav{display:flex;background:var(--card);border-radius:var(--radius);overflow:hidden;
+  border:1px solid var(--border);margin-bottom:14px;}
+nav.flexi-nav button{flex:1;padding:9px 2px;font-size:9px;font-weight:700;letter-spacing:.3px;
+  background:none;border:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;
+  text-transform:uppercase;line-height:1.4;}
+nav.flexi-nav button span{display:block;font-size:8px;margin-bottom:2px;}
+nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
+.fpg{display:none;padding-bottom:80px;}
+.fpg.on{display:block;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+.ctitle{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.flexi-wrap label{display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.flexi-wrap input,.flexi-wrap textarea,.flexi-wrap select{width:100%;background:#111;border:1px solid var(--border);
+  border-radius:var(--radius);color:var(--white);font-size:15px;padding:11px 12px;
+  outline:none;margin-bottom:12px;-webkit-appearance:none;}
+.flexi-wrap input:focus,.flexi-wrap textarea:focus,.flexi-wrap select:focus{border-color:var(--accent);}
+.flexi-wrap textarea{resize:vertical;min-height:60px;}
+.flexi-wrap select option{background:#111;color:var(--white);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.note{font-size:10px;color:var(--muted);margin-top:-8px;margin-bottom:12px;line-height:1.5;}
+.delivery-toggle{display:flex;gap:0;margin-bottom:12px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);}
+.dtog{flex:1;padding:12px;text-align:center;font-size:12px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;background:#111;color:var(--muted);cursor:pointer;border:none;transition:all .2s;}
+.dtog.on{background:var(--accent);color:#fff;}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.res-box{background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+.res-box .v{font-size:20px;font-weight:700;line-height:1.1;}
+.res-box .v.ac{color:var(--accent);}
+.res-box .v.gr{color:var(--green);}
+.res-total{background:#1a0800;border:1px solid var(--accent);border-radius:var(--radius);
+  padding:14px;grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;}
+.res-total .v{font-size:24px;font-weight:700;color:var(--accent);}
+.res-total .l{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.fbtn{width:100%;padding:14px;font-size:12px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;border:none;border-radius:var(--radius);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;}
+.fbtn-pri{background:var(--accent);color:#fff;}
+.fbtn-sec{background:transparent;color:var(--white);border:1px solid var(--border);}
+.fbtn-logi{background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;}
+.paint-colors{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.pc-btn{width:32px;height:32px;border-radius:4px;border:2px solid transparent;cursor:pointer;}
+.pc-btn.on{border-color:#fff;outline:2px solid var(--accent);outline-offset:1px;}
+.sel-preview{display:flex;align-items:center;gap:10px;margin-bottom:12px;
+  background:#111;border:1px solid var(--border);padding:10px;border-radius:var(--radius);}
+.sel-dot{width:26px;height:26px;border-radius:4px;flex-shrink:0;}
+.sel-name{font-size:14px;font-weight:600;}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.tool-btn{padding:8px 12px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  background:#222;border:1px solid var(--border);color:var(--white);border-radius:var(--radius);cursor:pointer;}
+.tool-btn.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+.paint-wrap{border:1px solid var(--border);border-radius:var(--radius);
+  overflow:auto;-webkit-overflow-scrolling:touch;background:#ffffff;margin-bottom:10px;
+  width:100%;max-height:55vh;cursor:grab;}
+#fcv{display:block;}
+.legend{display:flex;flex-direction:column;gap:8px;}
+.leg-row{background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+.leg-top{display:flex;align-items:center;gap:10px;margin-bottom:5px;}
+.leg-dot{width:20px;height:20px;border-radius:3px;flex-shrink:0;}
+.leg-name{font-size:14px;font-weight:700;flex:1;}
+.leg-pzas{font-size:18px;font-weight:700;color:var(--accent);}
+.leg-emb{font-size:11px;color:var(--muted);line-height:1.5;padding-left:30px;}
+.leg-emb strong{color:var(--white);}
+.total-emb{background:#0a1a00;border:1px solid #3a6000;border-radius:var(--radius);padding:12px;margin-top:4px;}
+.total-emb .tl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.total-emb .tv{font-size:16px;font-weight:700;color:var(--green);}
+.sobrante-banner{background:#1a1000;border:1px solid var(--accent);border-radius:var(--radius);
+  padding:14px;margin-bottom:14px;text-align:center;}
+.sobrante-banner .sb-num{font-size:36px;font-weight:700;color:var(--accent);line-height:1;}
+.sobrante-banner .sb-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+.sobrante-banner .sb-ok{font-size:22px;font-weight:700;color:var(--green);}
+.adj-row{display:flex;align-items:center;gap:10px;background:#111;
+  border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;}
+.adj-dot{width:22px;height:22px;border-radius:3px;flex-shrink:0;}
+.adj-name{flex:1;font-size:13px;font-weight:600;}
+.adj-controls{display:flex;align-items:center;}
+.adj-btn{width:36px;height:36px;background:#222;border:1px solid var(--border);
+  color:var(--white);font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.adj-btn:first-child{border-radius:var(--radius) 0 0 var(--radius);}
+.adj-btn:last-child{border-radius:0 var(--radius) var(--radius) 0;}
+.adj-val{width:44px;text-align:center;background:#181818;border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);border-left:none;border-right:none;
+  color:var(--white);font-size:16px;font-weight:700;padding:7px 0;}
+
+/* ══════════════════════════════════════════════════════
+   KANBAN
+══════════════════════════════════════════════════════ */
+.kanban-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.kstat{background:#1E293B;border:1px solid #334155;border-radius:10px;padding:10px 14px;
+  display:flex;align-items:center;gap:8px;}
+.kstat-num{font-size:22px;font-weight:900;font-family:monospace;}
+.kstat-lbl{font-size:10px;color:#64748B;line-height:1.3;}
+.kanban-board{display:flex;gap:14px;overflow-x:auto;align-items:flex-start;padding-bottom:20px;}
+.k-col{flex:0 0 290px;background:#111827;border-radius:12px;border:1px solid #1E293B;overflow:hidden;}
+.k-col-header{padding:12px 14px;border-bottom:1px solid #1E293B;display:flex;justify-content:space-between;align-items:center;}
+.k-col-title{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.5px;}
+.k-col-dot{width:7px;height:7px;border-radius:50%;}
+.k-col-count{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;}
+.k-col-body{padding:10px;max-height:calc(100vh - 280px);overflow-y:auto;min-height:50px;}
+.k-empty{text-align:center;padding:24px 0;color:#334155;font-size:11px;}
+
+/* CARD PEDIDO */
+.pedido-card{background:#1E293B;border-radius:10px;border:1px solid #334155;
+  border-left:3px solid #334155;padding:14px;margin-bottom:10px;
+  transition:transform .15s,box-shadow .15s;cursor:default;}
+.pedido-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.pc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.pc-num{font-size:17px;font-weight:900;color:#F1F5F9;font-family:monospace;}
+.pc-fecha{font-size:11px;color:#64748B;margin-top:1px;}
+.pc-badge{border-radius:20px;padding:3px 9px;font-size:9px;font-weight:700;letter-spacing:.5px;border:1px solid;}
+.pc-cliente{font-size:13px;font-weight:700;color:#F1F5F9;margin-bottom:2px;}
+.pc-dir{font-size:11px;color:#64748B;line-height:1.4;}
+.pc-productos{background:#0F172A;border-radius:6px;padding:8px 10px;margin:8px 0;}
+.pc-prod-row{display:flex;justify-content:space-between;font-size:11px;color:#94A3B8;margin-bottom:3px;}
+.pc-prod-row:last-child{margin-bottom:0;}
+.pc-totales{display:flex;justify-content:space-between;border-top:1px solid #1E293B;margin-top:6px;padding-top:6px;font-size:11px;}
+.pc-obs{font-size:11px;color:#64748B;background:#0F172A;border-radius:5px;padding:5px 9px;
+  border-left:2px solid var(--blue);margin-bottom:8px;}
+.pc-origen{font-size:9px;color:var(--blue);letter-spacing:1px;margin-bottom:6px;}
+.pc-actions{display:flex;gap:7px;}
+.pc-btn-avanzar{flex:1;border-radius:6px;padding:8px 10px;cursor:pointer;font-size:11px;font-weight:700;
+  border:1px solid;transition:all .2s;}
+.pc-btn-etiqueta,.pc-btn-editar{background:#0F172A;border:1px solid #334155;color:#94A3B8;
+  border-radius:6px;padding:8px 10px;cursor:pointer;font-size:13px;transition:all .2s;}
+.pc-btn-etiqueta:hover,.pc-btn-editar:hover{border-color:var(--blue);color:var(--blue);}
+
+/* ══════════════════════════════════════════════════════
+   HISTORIAL
+══════════════════════════════════════════════════════ */
+.historial-filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.hist-input{background:#1E293B;border:1px solid #334155;border-radius:7px;color:#F1F5F9;
+  padding:8px 12px;font-size:13px;outline:none;}
+.hist-input:focus{border-color:var(--blue);}
+.hist-table{background:#1E293B;border-radius:10px;border:1px solid #334155;overflow:hidden;}
+.hist-row{display:grid;grid-template-columns:80px 1fr 1fr 100px 80px;gap:12px;
+  padding:12px 16px;border-bottom:1px solid #0F172A;align-items:center;font-size:12px;}
+.hist-row.header{background:#0F172A;font-size:10px;font-weight:700;color:#64748B;letter-spacing:1px;text-transform:uppercase;}
+.hist-row:last-child{border-bottom:none;}
+
+/* ══════════════════════════════════════════════════════
+   PANEL USUARIOS
+══════════════════════════════════════════════════════ */
+.usuarios-grid{display:grid;gap:12px;max-width:700px;}
+.usuario-card{background:#1E293B;border:1px solid #334155;border-radius:10px;padding:16px;
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;}
+.u-info{display:flex;align-items:center;gap:12px;}
+.u-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.u-name{font-size:14px;font-weight:700;color:#F1F5F9;}
+.u-rol{font-size:10px;color:#64748B;text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+.u-actions{display:flex;gap:8px;}
+.u-btn{background:#0F172A;border:1px solid #334155;color:#94A3B8;border-radius:6px;
+  padding:6px 12px;cursor:pointer;font-size:11px;font-weight:700;transition:all .2s;}
+.u-btn:hover{border-color:var(--blue);color:var(--blue);}
+.u-btn.danger:hover{border-color:var(--red);color:var(--red);}
+.u-inactive{opacity:.45;}
+.btn-add-user{background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;
+  border-radius:8px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;margin-bottom:16px;}
+
+/* ══════════════════════════════════════════════════════
+   MODALES GENÉRICOS
+══════════════════════════════════════════════════════ */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:999;
+  align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:16px;}
+.modal-bg.on{display:flex;}
+.modal-box{background:#1E293B;border:1px solid #334155;border-radius:16px;
+  width:100%;max-width:520px;max-height:92vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.6);}
+.modal-box.wide{max-width:700px;}
+.modal-header{padding:16px 20px;border-bottom:1px solid #334155;display:flex;
+  justify-content:space-between;align-items:center;position:sticky;top:0;background:#1E293B;z-index:2;}
+.modal-title{font-weight:800;font-size:15px;color:#6C63FF;letter-spacing:1px;}
+.modal-close{background:transparent;border:none;color:#64748B;font-size:22px;cursor:pointer;}
+.modal-body{padding:20px;}
+.m-label{font-size:10px;letter-spacing:2px;color:#64748B;display:block;margin-bottom:5px;text-transform:uppercase;}
+.m-input{width:100%;background:#0F172A;border:1px solid #334155;border-radius:7px;
+  color:#F1F5F9;padding:10px 13px;font-size:14px;outline:none;margin-bottom:12px;}
+.m-input:focus{border-color:var(--blue);}
+.m-select{width:100%;background:#0F172A;border:1px solid #334155;border-radius:7px;
+  color:#F1F5F9;padding:10px 13px;font-size:14px;outline:none;margin-bottom:12px;-webkit-appearance:none;}
+.m-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.m-error{color:var(--red);font-size:12px;margin-bottom:12px;background:#1a0808;border-radius:6px;padding:8px 12px;}
+.btn-primary{width:100%;background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;
+  border-radius:9px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.5px;}
+.btn-primary:active{opacity:.85;}
+.m-preview-box{background:#0F172A;border-radius:8px;padding:12px 14px;margin-bottom:14px;}
+.m-preview-title{font-size:10px;letter-spacing:2px;color:#64748B;text-transform:uppercase;margin-bottom:10px;}
+.m-prod-preview-row{display:flex;justify-content:space-between;font-size:12px;color:#94A3B8;
+  margin-bottom:5px;padding:6px 0;border-bottom:1px solid #1E293B;}
+.m-prod-preview-row:last-child{border-bottom:none;}
+
+/* PRODUCTO INLINE */
+.prod-row{display:grid;grid-template-columns:2fr 60px 70px 80px 28px;gap:7px;margin-bottom:7px;align-items:center;}
+.prod-input{background:#0F172A;border:1px solid #334155;border-radius:6px;color:#F1F5F9;
+  padding:8px 10px;font-size:13px;outline:none;width:100%;}
+.prod-input:focus{border-color:var(--blue);}
+.prod-del{background:transparent;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0;}
+.btn-add-prod{width:100%;background:transparent;border:1px dashed #334155;border-radius:7px;
+  color:var(--blue);padding:8px;cursor:pointer;font-size:12px;margin-top:4px;margin-bottom:14px;}
+
+/* ══════════════════════════════════════════════════════
+   ETIQUETA IMPRIMIBLE (basada en FlexiFloor_Carteles)
+══════════════════════════════════════════════════════ */
+.etiqueta-preview{
+  background:#fff;color:#000;border:2px solid #000;
+  width:100mm;max-width:100%;padding:5mm;
+  font-family:"Segoe UI",Arial,sans-serif;
+  margin:0 auto;font-size:13px;line-height:1.3;
+}
+.et-header{display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:2px solid #ff4e00;padding-bottom:4px;margin-bottom:8px;}
+.et-brand{font-size:18px;font-weight:900;letter-spacing:-1px;}
+.et-brand small{display:block;font-size:8px;font-weight:400;color:#888;letter-spacing:2px;text-transform:uppercase;}
+.et-num{text-align:right;}
+.et-num .num{font-size:20px;font-weight:900;color:#ff4e00;}
+.et-num .fecha{font-size:9px;color:#888;}
+.et-section{margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed #ddd;}
+.et-section:last-child{border-bottom:none;}
+.et-stitle{font-size:8px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#cc3300;margin-bottom:4px;}
+.et-name{font-size:16px;font-weight:700;}
+.et-sub{font-size:12px;color:#444;line-height:1.5;}
+.et-table{width:100%;border-collapse:collapse;font-size:11px;}
+.et-table th{text-align:left;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;padding:3px 0;border-bottom:1px solid #eee;}
+.et-table td{padding:4px 0;border-bottom:1px solid #f5f5f5;vertical-align:top;}
+.et-table tr:last-child td{border-bottom:none;}
+.et-color-dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle;}
+.et-totales{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;}
+.et-tot-box{background:#f5f5f5;border:1px solid #ddd;border-radius:3px;padding:5px 7px;}
+.et-tot-box .v{font-size:13px;font-weight:700;}
+.et-tot-box .v.ac{color:#cc3300;}
+.et-tot-box .v.gr{color:#226600;}
+.et-tot-box .l{font-size:7px;color:#888;text-transform:uppercase;letter-spacing:.5px;}
+.et-footer{font-size:8px;color:#bbb;text-align:center;margin-top:8px;padding-top:6px;border-top:1px solid #eee;}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);
+  opacity:0;background:var(--blue);color:#fff;font-size:11px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;padding:10px 18px;border-radius:var(--radius);
+  transition:all .25s;z-index:9999;pointer-events:none;white-space:nowrap;}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1;}
+.toast.ok{background:#10B981;}
+.toast.err{background:var(--red);}
+
+/* PRINT */
+@media print{
+  body > *:not(#etiqueta-print-target){display:none!important;}
+  #etiqueta-print-target{display:block!important;position:fixed;top:0;left:0;z-index:99999;}
+  .etiqueta-preview{border:2px solid #000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .et-color-dot{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:#0F172A;}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:10px;}
+
+/* FLEXI PDF (original) */
+@media print{
+  @page{size:A4 landscape;margin:8mm;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════ LOGIN ══════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">◈</div>
+      <h1>FlexiLogística</h1>
+      <p>SISTEMA INTEGRADO</p>
+    </div>
+    <div id="login-loading" class="login-loading">Conectando...</div>
+    <div id="login-form" style="display:none;">
+      <label class="lf-label">Usuario</label>
+      <select id="login-user" class="lf-select">
+        <option value="">Seleccioná tu perfil...</option>
+      </select>
+      <label class="lf-label">Contraseña</label>
+      <input id="login-pass" type="password" class="lf-input" placeholder="••••••••">
+      <div id="login-error" class="login-error" style="display:none;"></div>
+      <button class="btn-login" onclick="doLogin()">INGRESAR →</button>
+      <div class="login-hint" id="login-hint"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ APP ══════ -->
+<div id="app" style="display:none;flex-direction:column;">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span class="icon">◈</span>
+      <h1>FlexiLogística</h1>
+      <small>SISTEMA INTEGRADO</small>
+    </div>
+    <div class="topbar-right">
+      <span id="sync-indicator"><span class="sync-dot" id="sync-dot"></span><span id="sync-txt" style="font-size:10px;color:#64748B;"></span></span>
+      <button class="btn-sync" onclick="syncAll()">↻</button>
+      <div class="tab-nav" id="main-tabs"></div>
+      <div class="user-badge">
+        <span id="user-icon-top"></span>
+        <span id="user-name-top" style="font-size:12px;"></span>
+      </div>
+      <button class="btn-out" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+
+  <!-- SECCIÓN: PRESUPUESTADOR -->
+  <div class="section" id="sec-flexi">
+    <div class="flexi-wrap">
+
+      <nav class="flexi-nav">
+        <button onclick="fpg('fpg-client',this)" class="on"><span>👤</span>Cliente</button>
+        <button onclick="fpg('fpg-dims',this)"><span>📐</span>Medidas</button>
+        <button onclick="fpg('fpg-paint',this)"><span>🎨</span>Diseño</button>
+        <button onclick="fpg('fpg-ajuste',this)"><span>⚖</span>Ajuste</button>
+        <button onclick="fpg('fpg-price',this)"><span>💲</span>Precio</button>
+        <button onclick="fpg('fpg-result',this)"><span>✓</span>Resumen</button>
+      </nav>
+
+      <!-- PG 1 CLIENTE -->
+      <div class="fpg on" id="fpg-client">
+        <div class="card">
+          <div class="ctitle">Datos del cliente</div>
+          <label>Nombre completo</label><input id="cNombre" type="text" placeholder="Apellido, Nombre">
+          <div class="row2">
+            <div><label>Teléfono</label><input id="cTel" type="tel" placeholder="+54 9 11..."></div>
+            <div><label>Ciudad / Localidad</label><input id="cCiudad" type="text" placeholder="CABA, GBA..."></div>
+          </div>
+          <label>Email</label><input id="cEmail" type="email" placeholder="cliente@mail.com">
+          <label>Tipo de entrega</label>
+          <div class="delivery-toggle">
+            <button class="dtog on" id="dtog-retiro" onclick="setDelivery('retiro')">📦 Retira en local</button>
+            <button class="dtog" id="dtog-envio" onclick="setDelivery('envio')">🚚 Envío</button>
+          </div>
+          <div id="dir-wrap" style="display:none;">
+            <label>Dirección de envío</label><input id="cDireccion" type="text" placeholder="Calle 1234, Piso 2, Depto B">
+          </div>
+          <label>Observaciones</label><textarea id="cNota" placeholder="Instrucciones especiales..."></textarea>
+        </div>
+        <button class="fbtn fbtn-pri" onclick="fpg('fpg-dims',document.querySelectorAll('.flexi-nav button')[1])">Siguiente → Medidas</button>
+      </div>
+
+      <!-- PG 2 MEDIDAS -->
+      <div class="fpg" id="fpg-dims">
+        <div class="card">
+          <div class="ctitle">Dimensiones del espacio</div>
+          <p class="note">Ingresá largo y ancho en metros, o el m² directamente.</p>
+          <div class="row2">
+            <div><label>Largo (m)</label><input id="dL" type="number" step="0.01" min="0" placeholder="3.50" oninput="calcDims()"></div>
+            <div><label>Ancho (m)</label><input id="dA" type="number" step="0.01" min="0" placeholder="4.20" oninput="calcDims()"></div>
+          </div>
+          <label>O bien: m² directamente</label>
+          <input id="dM2" type="number" step="0.01" min="0" placeholder="14.70" oninput="calcM2()">
+        </div>
+        <div class="card" id="dims-card" style="display:none;">
+          <div class="ctitle">Resultado</div>
+          <div class="res-grid">
+            <div class="res-box"><div class="v" id="r-dim">—</div><div class="l">Dimensiones</div></div>
+            <div class="res-box"><div class="v ac" id="r-mreal">—</div><div class="l">M² reales</div></div>
+            <div class="res-box"><div class="v ac" id="r-mcot">—</div><div class="l">M² cotizados</div></div>
+            <div class="res-box"><div class="v gr" id="r-pzas">—</div><div class="l">Piezas a pedir</div></div>
+          </div>
+          <div style="margin-top:8px;background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;">
+            <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">Embalaje estimado</div>
+            <div style="font-size:15px;font-weight:700;color:var(--green);margin-top:4px;" id="r-cajas">—</div>
+          </div>
+        </div>
+        <button class="fbtn fbtn-pri" onclick="fpg('fpg-paint',document.querySelectorAll('.flexi-nav button')[2]);startPaint()">Siguiente → Diseño</button>
+      </div>
+
+      <!-- PG 3 DISEÑO -->
+      <div class="fpg" id="fpg-paint">
+        <div class="card">
+          <div class="ctitle">Diseño del espacio</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;">Seleccioná un color y tocá cada baldosa. Cada cuadrado = 1 baldosa 25×25 cm.</div>
+          <label>Color activo</label>
+          <div class="paint-colors" id="paint-colors"></div>
+          <div class="sel-preview">
+            <div class="sel-dot" id="sel-dot" style="background:#333;border:1px solid #555;"></div>
+            <div class="sel-name" id="sel-name">Seleccioná un color</div>
+          </div>
+          <div style="background:#1a0a00;border:1px solid var(--accent);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;">
+            <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;font-weight:700;">⬛ Color predominante (rellena todo)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;" id="pred-colors"></div>
+          </div>
+          <div class="toolbar">
+            <button class="tool-btn on" id="tb-p" onclick="setTool('p')">✏ Pintar</button>
+            <button class="tool-btn" id="tb-b" onclick="setTool('b')">✕ Borrar</button>
+            <button class="tool-btn" id="tb-m" onclick="setTool('m')" style="font-size:16px;">✋ Mover</button>
+            <button class="tool-btn" onclick="undoPaint()" title="Deshacer último trazo (Ctrl+Z)">↩ Deshacer</button>
+            <button class="tool-btn" onclick="undoGrid()">↩ Deshacer</button>
+            <button class="tool-btn" onclick="clearGrid()">⟳ Limpiar</button>
+          </div>
+          <div id="no-dims" style="background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;color:var(--muted);font-size:12px;margin-bottom:10px;">⚠ Primero ingresá las medidas en el paso 2.</div>
+          <div id="zoom-bar" style="display:none;align-items:center;gap:8px;margin-bottom:8px;background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;">
+            <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap;">Zoom</span>
+            <button onclick="zoomChange(-10)" style="width:32px;height:32px;background:#222;border:1px solid var(--border);color:var(--white);font-size:18px;font-weight:700;border-radius:4px;cursor:pointer;flex-shrink:0;">−</button>
+            <input type="range" id="zoom-slider" min="20" max="200" value="100" oninput="zoomSet(this.value)" style="flex:1;accent-color:var(--accent);height:4px;background:var(--border);border:none;padding:0;margin-bottom:0;cursor:pointer;">
+            <button onclick="zoomChange(10)" style="width:32px;height:32px;background:#222;border:1px solid var(--border);color:var(--white);font-size:18px;font-weight:700;border-radius:4px;cursor:pointer;flex-shrink:0;">+</button>
+            <span id="zoom-label" style="font-size:12px;font-weight:700;color:var(--accent);min-width:38px;text-align:right;white-space:nowrap;">100%</span>
+            <button onclick="zoomFit()" style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:#222;border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;flex-shrink:0;">↔ Ajustar</button>
+          </div>
+          <div class="paint-wrap" id="paint-wrap" style="display:none;">
+            <div id="cv-sizer" style="display:inline-block;"><canvas id="fcv" style="display:block;cursor:crosshair;touch-action:none;"></canvas></div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;" id="paint-info"></div>
+        </div>
+        <div class="card">
+          <div class="ctitle">Colores en diseño</div>
+          <div class="legend" id="legend-live"><div style="color:var(--muted);font-size:12px;">Pintá las baldosas para ver el resumen.</div></div>
+        </div>
+        <button class="fbtn fbtn-pri" onclick="fpg('fpg-ajuste',document.querySelectorAll('.flexi-nav button')[3]);startAjuste()">Siguiente → Ajuste sobrante</button>
+      </div>
+
+      <!-- PG 4 AJUSTE -->
+      <div class="fpg" id="fpg-ajuste">
+        <div id="ajuste-nodims" style="background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;color:var(--muted);font-size:12px;margin-bottom:14px;display:none;">⚠ Completá medidas y diseño primero.</div>
+        <div id="ajuste-ok" class="card" style="display:none;">
+          <div class="ctitle">Sobrante a repartir</div>
+          <div id="sob-banner" class="sobrante-banner"></div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5;">Repartí las baldosas sobrantes entre los colores usados.</div>
+          <div id="adj-rows"></div>
+          <div style="background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;">
+            <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">Sobrante sin asignar</div>
+            <div style="font-size:28px;font-weight:700;color:var(--accent);margin-top:4px;" id="sob-num">0</div>
+          </div>
+        </div>
+        <div class="card" id="ajuste-preview" style="display:none;">
+          <div class="ctitle">Vista previa con ajuste</div>
+          <div class="legend" id="legend-ajuste"></div>
+        </div>
+        <button class="fbtn fbtn-pri" onclick="fpg('fpg-price',document.querySelectorAll('.flexi-nav button')[4])">Siguiente → Precio</button>
+      </div>
+
+      <!-- PG 5 PRECIO -->
+      <div class="fpg" id="fpg-price">
+        <div class="card">
+          <div class="ctitle">Precios actuales</div>
+          <div class="row2">
+            <div><label>Precio por m² ($)</label><input id="pM2" type="number" placeholder="8500" min="0" oninput="calcPrice()"></div>
+            <div><label>Precio por pieza ($)</label><input id="pPz" type="number" placeholder="1500" min="0" oninput="calcPrice()"></div>
+          </div>
+          <p class="note">Ingresá los precios actuales. No se guardan.</p>
+        </div>
+        <div class="card">
+          <div class="ctitle">Total estimado</div>
+          <div id="price-aviso" style="display:none;background:#1a0d00;border:1px solid var(--accent);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12px;color:#ffaa55;line-height:1.6;"></div>
+          <div class="res-grid">
+            <div class="res-box"><div class="v ac" id="p-tm2">—</div><div class="l">Por m²</div></div>
+            <div class="res-box"><div class="v ac" id="p-tpz">—</div><div class="l">Por pieza</div></div>
+            <div class="res-total"><div><div class="l">Total a cobrar</div></div><div class="v" id="p-total">—</div></div>
+          </div>
+        </div>
+        <button class="fbtn fbtn-pri" onclick="fpg('fpg-result',document.querySelectorAll('.flexi-nav button')[5]);buildResult()">Ver resumen final</button>
+      </div>
+
+      <!-- PG 6 RESUMEN -->
+      <div class="fpg" id="fpg-result">
+        <div id="screen-result">
+          <div class="card"><div class="ctitle">Cliente</div><div id="sum-client" style="font-size:14px;line-height:1.9;"></div></div>
+          <div class="card">
+            <div class="ctitle">Medidas y piezas</div>
+            <div class="res-grid">
+              <div class="res-box"><div class="v" id="sum-dim">—</div><div class="l">Dimensiones</div></div>
+              <div class="res-box"><div class="v ac" id="sum-mcot">—</div><div class="l">M² cotizados</div></div>
+              <div class="res-box"><div class="v gr" id="sum-pzas">—</div><div class="l">Piezas a pedir</div></div>
+              <div class="res-box"><div class="v gr" id="sum-emb">—</div><div class="l">Embalaje total</div></div>
+            </div>
+          </div>
+          <div id="sum-aviso-pintar" style="display:none;background:#1a0d00;border:1px solid var(--accent);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12px;color:#ffaa55;line-height:1.6;"></div>
+          <div class="card"><div class="ctitle">Colores y embalaje</div><div class="legend" id="legend-result"><div style="color:var(--muted);font-size:12px;">Sin diseño pintado.</div></div></div>
+          <div class="card">
+            <div class="ctitle">Total</div>
+            <div class="res-total" style="grid-column:unset;"><div><div class="l">Total estimado</div></div><div class="v" id="sum-total">—</div></div>
+          </div>
+        </div>
+        <button class="fbtn fbtn-pri" onclick="genPDF()" style="margin-top:8px;">⬇ Imprimir / Guardar PDF</button>
+        <button class="fbtn fbtn-logi" onclick="abrirModalLogiflow()">◈ Confirmar y enviar a LogiFlow</button>
+        <button class="fbtn fbtn-sec" onclick="nuevoPresup()">✕ Nuevo presupuesto</button>
+      </div>
+
+    </div><!-- /flexi-wrap -->
+  </div><!-- /sec-flexi -->
+
+  <!-- SECCIÓN: PRESUPUESTOS GUARDADOS -->
+  <div class="section" id="sec-presupuestos">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <h2 style="font-size:18px;font-weight:800;color:#F1F5F9;">💾 Presupuestos Guardados</h2>
+        <p style="font-size:12px;color:#64748B;margin-top:3px;">Retomá cualquier cotización anterior con todos sus datos.</p>
+      </div>
+      <button onclick="guardarPresupuestoActual()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:8px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;">
+        💾 Guardar presupuesto actual
+      </button>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      <input id="pres-search" class="hist-input" placeholder="Buscar por cliente..." oninput="renderPresupuestos()" style="flex:1;">
+    </div>
+    <div id="presupuestos-lista" style="display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));">
+      <div style="color:#475569;font-size:13px;padding:20px;">Cargando...</div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN: CALCULADORA -->
+  <div class="section" id="sec-calc">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:20px;">
+      <div style="font-size:48px;">🧮</div>
+      <div style="text-align:center;">
+        <h2 style="font-size:20px;font-weight:800;color:#F1F5F9;margin-bottom:8px;">Calculadora de Costos</h2>
+        <p style="font-size:13px;color:#64748B;max-width:400px;line-height:1.6;">La calculadora abre en una ventana separada para mejor experiencia.</p>
+      </div>
+      <button onclick="abrirCalculadora()" style="background:linear-gradient(135deg,#e8ff47,#c8d900);color:#0b0e16;border:none;border-radius:10px;padding:14px 32px;cursor:pointer;font-size:15px;font-weight:800;letter-spacing:.5px;">
+        🧮 Abrir Calculadora
+      </button>
+      <p style="font-size:11px;color:#475569;">Se abre en una pestaña nueva</p>
+    </div>
+  </div></div>
+
+  <!-- SECCIÓN: KANBAN -->
+  <div class="section" id="sec-kanban">
+    <div class="kanban-stats" id="kanban-stats"></div>
+    <div class="kanban-board" id="kanban-board">
+      <div style="color:#475569;padding:40px;font-size:13px;">Cargando pedidos...</div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN: HISTORIAL -->
+  <div class="section" id="sec-historial">
+    <div class="historial-filters">
+      <input class="hist-input" id="hist-search" placeholder="Buscar cliente, N° pedido..." oninput="renderHistorial()" style="flex:1;min-width:200px;">
+      <input class="hist-input" id="hist-fecha" type="date" onchange="renderHistorial()" style="width:150px;">
+    </div>
+    <div class="hist-table">
+      <div class="hist-row header">
+        <div>N° Pedido</div><div>Cliente</div><div>Productos</div><div>Fecha</div><div>Origen</div>
+      </div>
+      <div id="historial-rows"><div style="padding:20px;color:#475569;font-size:13px;">Sin pedidos entregados aún.</div></div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN: USUARIOS (solo admin) -->
+  <div class="section" id="sec-usuarios">
+    <button class="btn-add-user" onclick="abrirModalUsuario()">+ Nuevo usuario</button>
+    <div class="usuarios-grid" id="usuarios-grid">Cargando...</div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ══════ MODAL LOGIFLOW ══════ -->
+<div class="modal-bg" id="modal-logi">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">◈ Enviar a LogiFlow</span>
+      <button class="modal-close" onclick="cerrarModal('modal-logi')">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="m-label">Cliente *</label>
+      <input id="lf-cliente" class="m-input" placeholder="Nombre completo">
+      <div class="m-grid2">
+        <div><label class="m-label">Teléfono *</label><input id="lf-telefono" class="m-input" placeholder="+54 9 11..."></div>
+        <div><label class="m-label">Ciudad</label><input id="lf-ciudad" class="m-input" placeholder="CABA..."></div>
+      </div>
+      <label class="m-label">Dirección de entrega</label>
+      <input id="lf-direccion" class="m-input" placeholder="Calle 1234...">
+      <label class="m-label">Tipo de entrega</label>
+      <select id="lf-entrega" class="m-select">
+        <option value="retiro">📦 Retira en local</option>
+        <option value="envio">🚚 Envío a domicilio</option>
+      </select>
+      <label class="m-label">Observaciones</label>
+      <textarea id="lf-obs" class="m-input" style="min-height:56px;resize:vertical;"></textarea>
+      <div class="m-preview-box">
+        <div class="m-preview-title">Productos (desde presupuesto)</div>
+        <div id="lf-productos-preview"></div>
+      </div>
+      <div id="lf-error" class="m-error" style="display:none;"></div>
+      <button class="btn-primary" onclick="confirmarEnvioLogiflow()">◈ Crear pedido en LogiFlow</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL EDITAR PEDIDO ══════ -->
+<div class="modal-bg" id="modal-pedido">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-pedido-title">✏ Editar Pedido</span>
+      <button class="modal-close" onclick="cerrarModal('modal-pedido')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ep-id">
+      <label class="m-label">Cliente *</label>
+      <input id="ep-cliente" class="m-input">
+      <div class="m-grid2">
+        <div><label class="m-label">Teléfono *</label><input id="ep-telefono" class="m-input"></div>
+        <div><label class="m-label">Ciudad</label><input id="ep-ciudad" class="m-input"></div>
+      </div>
+      <label class="m-label">Dirección de entrega</label>
+      <input id="ep-direccion" class="m-input">
+      <label class="m-label">Observaciones</label>
+      <textarea id="ep-obs" class="m-input" style="min-height:56px;resize:vertical;"></textarea>
+      <label class="m-label">Productos</label>
+      <div class="prod-row" style="margin-bottom:4px;">
+        <span style="font-size:10px;color:#475569;">Nombre</span>
+        <span style="font-size:10px;color:#475569;">Cant.</span>
+        <span style="font-size:10px;color:#475569;">Peso kg</span>
+        <span style="font-size:10px;color:#475569;">Precio $</span>
+        <span></span>
+      </div>
+      <div id="ep-productos"></div>
+      <button class="btn-add-prod" onclick="addProdRow()">+ Agregar producto</button>
+      <div id="ep-error" class="m-error" style="display:none;"></div>
+      <button class="btn-primary" onclick="guardarPedidoEditado()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL ETIQUETA ══════ -->
+<div class="modal-bg" id="modal-etiqueta">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">🖨 Etiqueta de envío</span>
+      <button class="modal-close" onclick="cerrarModal('modal-etiqueta')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <select id="et-tipo" class="m-select" style="flex:1;margin-bottom:0;" onchange="renderEtiquetaPreview()">
+          <option value="privado">Envío privado</option>
+          <option value="transporte">Via transporte / micro</option>
+        </select>
+        <button onclick="imprimirEtiqueta()" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:0 16px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;">🖨 Imprimir</button>
+      </div>
+      <div id="etiqueta-preview-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL USUARIO ══════ -->
+<div class="modal-bg" id="modal-usuario">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-usuario-title">👤 Usuario</span>
+      <button class="modal-close" onclick="cerrarModal('modal-usuario')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="u-id-orig">
+      <label class="m-label">ID de usuario (para login)</label>
+      <input id="u-id" class="m-input" placeholder="ej: operario1">
+      <label class="m-label">Nombre completo</label>
+      <input id="u-nombre" class="m-input" placeholder="Ej: Juan Pérez">
+      <label class="m-label">Contraseña</label>
+      <input id="u-pass" class="m-input" type="password" placeholder="••••••••">
+      <label class="m-label">Rol</label>
+      <select id="u-rol" class="m-select">
+        <option value="admin">Admin — acceso total</option>
+        <option value="deposito">Depósito — preparación y embalaje</option>
+        <option value="entrega">Entrega — despacho y etiquetas</option>
+      </select>
+      <div id="u-error" class="m-error" style="display:none;"></div>
+      <button class="btn-primary" onclick="guardarUsuario()">Guardar usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DESPACHO -->
+<div class="modal-bg" id="modal-despacho">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">🚚 Datos de Despacho</span>
+      <button class="modal-close" onclick="cerrarModal('modal-despacho')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="desp-id">
+      <input type="hidden" id="desp-confirmar">
+      <p style="font-size:13px;color:#94A3B8;margin-bottom:16px;line-height:1.6;" id="desp-desc">Ingresá los datos del transporte para marcar este pedido como Listo para Despachar.</p>
+      <label class="m-label">Transporte / Empresa</label>
+      <input id="desp-transporte" class="m-input" placeholder="Ej: Andreani, OCA, El Rápido...">
+      <label class="m-label">N° de envío / Referencia</label>
+      <input id="desp-numero" class="m-input" placeholder="Ej: 00123456789">
+      <label class="m-label">Observaciones adicionales</label>
+      <input id="desp-obs" class="m-input" placeholder="Opcional...">
+      <div id="desp-error" class="m-error" style="display:none;"></div>
+      <button class="btn-primary" id="desp-btn" onclick="confirmarDespacho()">🚚 Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+<!-- Print target -->
+<div id="etiqueta-print-target" style="display:none;"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  SUPABASE CONFIG
+// ═══════════════════════════════════════════════════════════════════
+const SUPA_URL = "https://eszdibaycqirmouqzlkc.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzemRpYmF5Y3Fpcm1vdXF6bGtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1OTE4MjcsImV4cCI6MjA5NDE2NzgyN30.9BDss2-LtybweiVzCESTM-R5tWTWpWdpbHuQbawjX6A";
+const { createClient } = supabase;
+const db = createClient(SUPA_URL, SUPA_KEY);
+
+// ═══════════════════════════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════════════════
+let currentUser = null;
+let allPedidos = [];
+let allUsuarios = [];
+let etiquetaPedidoActual = null;
+let syncInterval = null;
+
+const TODOS = ["deposito","entrega","admin"];
+const ESTADOS = [
+  {id:"pendiente",        label:"Pendiente",           color:"#94A3B8", roles:TODOS},
+  {id:"preparado",        label:"En Preparación",       color:"#F59E0B", roles:TODOS},
+  {id:"embalado",         label:"Embalado",              color:"#6C63FF", roles:TODOS},
+  {id:"listo_retirar",    label:"Listo para Retirar",   color:"#00C9A7", roles:TODOS},
+  {id:"listo_despachar",  label:"Listo para Despachar", color:"#F97316", roles:TODOS},
+  {id:"entregado",        label:"Entregado",             color:"#10B981", roles:TODOS},
+  {id:"despachado",       label:"Despachado",            color:"#8B5CF6", roles:TODOS},
+];
+const SIG_ESTADO = {pendiente:"preparado",preparado:"embalado",listo_retirar:"entregado",listo_despachar:"despachado"};
+const ANT_ESTADO = {preparado:"pendiente",embalado:"preparado",listo_retirar:"embalado",listo_despachar:"embalado",entregado:"listo_retirar",despachado:"listo_despachar"};
+const LABEL_ACCION = {pendiente:"▶ Iniciar Preparación",preparado:"⬡ Marcar Embalado",listo_retirar:"◎ Confirmar Entrega",listo_despachar:"✈ Confirmar Despacho"};
+const ROL_TABS = {
+  admin:   [{id:"sec-flexi",label:"◈ Presupuesto"},{id:"sec-presupuestos",label:"💾 Guardados"},{id:"sec-kanban",label:"⬡ Kanban"},{id:"sec-historial",label:"📋 Historial"},{id:"sec-calc",label:"🧮 Calculadora"},{id:"sec-usuarios",label:"👤 Usuarios"}],
+  deposito:[{id:"sec-kanban",label:"⬡ Kanban"},{id:"sec-historial",label:"📋 Historial"}],
+  entrega: [{id:"sec-kanban",label:"⬡ Kanban"},{id:"sec-historial",label:"📋 Historial"}],
+};
+const ROL_ICONS = {admin:"◈",deposito:"⬡",entrega:"◎"};
+const ROL_COLORS = {admin:"#6C63FF",deposito:"#00C9A7",entrega:"#FF6B6B"};
+
+// ═══════════════════════════════════════════════════════════════════
+//  INICIO
+// ═══════════════════════════════════════════════════════════════════
+window.addEventListener("DOMContentLoaded", async () => {
+  // Intentar sesión guardada
+  const saved = localStorage.getItem("flexi-session");
+  if(saved){
+    try{
+      const u = JSON.parse(saved);
+      // Verificar que el usuario sigue activo en la base
+      const {data} = await db.from("usuarios").select("*").eq("id",u.id).eq("activo",true).single();
+      if(data && data.password === u.password){
+        await iniciarSesion(data);
+        return;
+      }
+    }catch(e){}
+    localStorage.removeItem("flexi-session");
+  }
+  await cargarUsuariosLogin();
+});
+
+async function cargarUsuariosLogin(){
+  document.getElementById("login-loading").style.display = "block";
+  document.getElementById("login-form").style.display = "none";
+  try{
+    const {data,error} = await db.from("usuarios").select("id,nombre,rol").eq("activo",true).order("nombre");
+    if(error) throw error;
+    const sel = document.getElementById("login-user");
+    sel.innerHTML = `<option value="">Seleccioná tu perfil...</option>`;
+    (data||[]).forEach(u=>{
+      const opt = document.createElement("option");
+      opt.value = u.id;
+      opt.textContent = `${ROL_ICONS[u.rol]||"·"} ${u.nombre}`;
+      sel.appendChild(opt);
+    });
+    document.getElementById("login-loading").style.display = "none";
+    document.getElementById("login-form").style.display = "block";
+  }catch(e){
+    document.getElementById("login-loading").innerHTML = `
+      <span style="color:var(--red);font-size:12px;line-height:1.8;">
+        ⚠ Error: ${e.message||JSON.stringify(e)}<br><br>
+        <button onclick="cargarUsuariosLogin()" style="background:#6C63FF;color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:12px;">↻ Reintentar</button>
+      </span>`;
+  }
+}
+
+async function doLogin(){
+  const uid = document.getElementById("login-user").value;
+  const pass = document.getElementById("login-pass").value;
+  const errEl = document.getElementById("login-error");
+  errEl.style.display = "none";
+  if(!uid){errEl.textContent="Seleccioná un usuario.";errEl.style.display="block";return;}
+  if(!pass){errEl.textContent="Ingresá la contraseña.";errEl.style.display="block";return;}
+  const {data,error} = await db.from("usuarios").select("*").eq("id",uid).eq("activo",true).single();
+  if(error||!data||data.password!==pass){
+    errEl.textContent="Usuario o contraseña incorrectos.";errEl.style.display="block";return;
+  }
+  localStorage.setItem("flexi-session",JSON.stringify({id:data.id,password:data.password}));
+  await iniciarSesion(data);
+}
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&document.getElementById("login-screen").style.display!=="none")doLogin();
+  if((e.ctrlKey||e.metaKey)&&e.key==="z"&&currentSection==="sec-flexi"){e.preventDefault();undoPaint();}
+});
+
+async function iniciarSesion(u){
+  currentUser = u;
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("app").style.display = "flex";
+  // Topbar
+  document.getElementById("user-icon-top").textContent = ROL_ICONS[u.rol]||"·";
+  document.getElementById("user-name-top").textContent = u.nombre;
+  document.getElementById("user-icon-top").style.color = ROL_COLORS[u.rol]||"#94A3B8";
+  // Tabs
+  // Tabs y primera sección
+  buildTabs();
+  // Cargar datos y renderizar sección activa
+  await syncAll();
+  // Render después de sync
+  if(currentSection==="sec-kanban") renderKanban();
+  else if(currentSection==="sec-historial") renderHistorial();
+  else if(currentSection==="sec-usuarios") renderUsuarios();
+  // Reset scroll
+  const secEl = document.getElementById(currentSection);
+  if(secEl) secEl.scrollTop = 0;
+  // Auto-sync cada 10s
+  syncInterval = setInterval(()=>syncAll().then(()=>{
+    if(currentSection==="sec-kanban") renderKanban();
+    else if(currentSection==="sec-historial") renderHistorial();
+  }), 10000);
+}
+
+function doLogout(){
+  clearInterval(syncInterval);
+  localStorage.removeItem("flexi-session");
+  currentUser = null;
+  document.getElementById("app").style.display = "none";
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("login-pass").value = "";
+  cargarUsuariosLogin();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════════════════
+let currentSection = null;
+function buildTabs(){
+  const tabs = ROL_TABS[currentUser.rol] || ROL_TABS.entrega;
+  const nav = document.getElementById("main-tabs");
+  nav.innerHTML = "";
+  tabs.forEach((t,i)=>{
+    const btn = document.createElement("button");
+    btn.className = "tab-btn" + (i===0?" on":"");
+    btn.textContent = t.label;
+    btn.onclick = ()=>showSection(t.id, btn);
+    nav.appendChild(btn);
+  });
+  showSection(tabs[0].id, nav.children[0]);
+}
+function showSection(id, btn){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("on"));
+  document.getElementById(id).classList.add("on");
+  if(btn) btn.classList.add("on");
+  currentSection = id;
+  const el = document.getElementById(id);
+  if(el){ el.scrollTop = 0; el.scrollLeft = 0; }
+  if(id==="sec-kanban"){ syncAll().then(()=>renderKanban()); }
+  else if(id==="sec-historial"){ syncAll().then(()=>renderHistorial()); }
+  else if(id==="sec-usuarios"){ syncAll().then(()=>renderUsuarios()); }
+  else if(id==="sec-presupuestos"){ syncAll().then(()=>renderPresupuestos()); }
+  // calc abre en ventana nueva
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SYNC / DATA
+// ═══════════════════════════════════════════════════════════════════
+async function syncAll(){
+  try{
+    setSyncState("syncing");
+    const [{data:p},{data:u}] = await Promise.all([
+      db.from("pedidos").select("*").order("numero",{ascending:false}),
+      db.from("usuarios").select("*").order("nombre"),
+    ]);
+    allPedidos = p||[];
+    allUsuarios = u||[];
+    setSyncState("ok");
+    // Refrescar vista activa siempre
+    if(currentSection==="sec-kanban") renderKanban();
+    else if(currentSection==="sec-historial") renderHistorial();
+    else if(currentSection==="sec-usuarios") renderUsuarios();
+    else if(currentSection==="sec-presupuestos") renderPresupuestos();
+  }catch(e){
+    setSyncState("err");
+    if(currentSection==="sec-kanban") renderKanban();
+  }
+}
+function setSyncState(st){
+  const dot = document.getElementById("sync-dot");
+  const txt = document.getElementById("sync-txt");
+  dot.className = "sync-dot " + (st==="ok"?"ok":st==="err"?"err":"");
+  txt.textContent = st==="ok"? new Date().toLocaleTimeString("es-AR") : st==="err"?"Error":"...";
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  KANBAN
+// ═══════════════════════════════════════════════════════════════════
+function renderKanban(){
+  // Si no hay datos y no hay conexión, mostrar mensaje
+  if(!allPedidos.length){
+    const board = document.getElementById("kanban-board");
+    const stats = document.getElementById("kanban-stats");
+    if(board) board.innerHTML = `<div style="color:#475569;padding:40px;font-size:13px;text-align:center;">
+      <div style="font-size:32px;margin-bottom:12px;">⟳</div>
+      <div style="color:#F1F5F9;font-weight:700;margin-bottom:6px;">Conectando a Supabase...</div>
+      <div style="color:#64748B;font-size:12px;">Si esto persiste, verificá tu conexión a internet.</div>
+    </div>`;
+    if(stats) stats.innerHTML = "";
+    return;
+  }
+  const activos = allPedidos.filter(p=>p.estado!=="entregado" && p.estado!=="despachado");
+  // Stats
+  const statsEl = document.getElementById("kanban-stats");
+  statsEl.innerHTML = ESTADOS.filter(e=>e.id!=="entregado"&&e.id!=="despachado").map(e=>{
+    const n = activos.filter(p=>p.estado===e.id).length;
+    return`<div class="kstat"><span class="kstat-num" style="color:${e.color}">${n}</span><span class="kstat-lbl">${e.label}</span></div>`;
+  }).join("") + `<div class="kstat" style="margin-left:auto;"><span class="kstat-num" style="color:#F1F5F9">${activos.length}</span><span class="kstat-lbl">Total activos</span></div>`;
+  // Board
+  const board = document.getElementById("kanban-board");
+  board.innerHTML = "";
+  ESTADOS.filter(e=>e.id!=="entregado"&&e.id!=="despachado").forEach(est=>{
+    const peds = activos.filter(p=>p.estado===est.id).sort((a,b)=>{
+      const pa=a.prioridad||9999, pb=b.prioridad||9999;
+      return pa-pb;
+    });
+    const col = document.createElement("div");
+    col.className = "k-col";
+    col.innerHTML = `
+      <div class="k-col-header" style="background:${est.color}11;">
+        <div class="k-col-title"><div class="k-col-dot" style="background:${est.color}"></div><span style="color:${est.color}">${est.label.toUpperCase()}</span></div>
+        <div class="k-col-count" style="background:${est.color}22;color:${est.color}">${peds.length}</div>
+      </div>
+      <div class="k-col-body">${peds.length===0?'<div class="k-empty">Sin pedidos</div>':peds.map(p=>cardHTML(p,est)).join("")}</div>`;
+    board.appendChild(col);
+  });
+  // Nuevo pedido (solo admin)
+  if(currentUser.rol==="admin"){
+    const addBtn = document.createElement("div");
+    addBtn.style.cssText="flex:0 0 auto;display:flex;align-items:flex-start;padding-top:8px;";
+    addBtn.innerHTML=`<button onclick="abrirModalNuevoPedido()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:12px 18px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;">+ Nuevo pedido</button>`;
+    board.appendChild(addBtn);
+  }
+}
+
+function cardHTML(p, est){
+  const UxCaja=64, KgxCaja=14;
+  const totalPeso = (p.productos||[]).reduce((s,pr)=>s+parseFloat(pr.peso||0)*parseInt(pr.cantidad||1),0);
+  const totalPrecio = (p.productos||[]).reduce((s,pr)=>s+parseFloat(pr.precio||0)*parseInt(pr.cantidad||1),0);
+  const sigEst = SIG_ESTADO[p.estado];
+  const antEst = ANT_ESTADO[p.estado];
+  const esAdmin = currentUser.rol==="admin";
+  const puedeAvanzar = !!sigEst; // todos pueden avanzar
+  const puedeRetroceder = !!antEst && esAdmin; // solo admin retrocede
+  const puedeEtiqueta = ["embalado","listo_retirar","listo_despachar","entregado","despachado"].includes(p.estado);
+  const puedeEditar = esAdmin;
+
+  // Calcular cajas/sueltas por producto — vista prominente
+  const COLORES_MAP = {
+    "Negro":"#1F1F1F","Gris Oscuro":"#3F4244","Gris Medio":"#9C9C93","Gris Claro":"#D0D3D4",
+    "Blanco":"#FFFFFF","Amarillo":"#FFD100","Naranja":"#FF6A00","Rojo":"#ED1C24",
+    "Fucsia":"#EC008C","Violeta":"#6B2DBD","Azul Electrico":"#0057FF","Azul Pastel":"#2D76B8",
+    "Celeste":"#18BDEB","Verde Agua":"#27C7BD","Verde":"#69BE28"};
+  let cajasHTML="";
+  (p.productos||[]).forEach(pr=>{
+    const total=parseInt(pr.cantidad||1);
+    const cajas=Math.floor(total/UxCaja);
+    const sueltas=total%UxCaja;
+    const pesoNum=cajas*KgxCaja + sueltas*0.22;
+    const peso=fmtKg(pesoNum);
+    // Extraer nombre del color (quita "Baldosa " o "FlexiFloor ")
+    const nombreColor = pr.nombre.replace(/^(Baldosa |FlexiFloor )/i,"").trim();
+    const hex = COLORES_MAP[nombreColor] || "#555";
+    const textColor = ["Blanco","Gris Claro","Gris Medio","Amarillo","Celeste","Verde Agua","Verde"].includes(nombreColor) ? "#222" : "#fff";
+    const cajasStr = cajas>0 ? cajas+(cajas===1?" Caja":" Cajas") : "";
+    const sueltasStr = sueltas>0 ? sueltas+(sueltas===1?" Unid":" Unid") : "";
+    const emb = [cajasStr,sueltasStr].filter(Boolean).join(" + ");
+    cajasHTML+=`<div style="background:${hex};border-radius:7px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact;">
+      <div>
+        <div style="color:${textColor};font-size:13px;font-weight:800;letter-spacing:.3px;">${nombreColor}</div>
+        <div style="color:${textColor};opacity:.8;font-size:10px;margin-top:2px;">${fmtNum(total)} piezas · ${peso}</div>
+      </div>
+      <div style="color:${textColor};font-size:14px;font-weight:900;text-align:right;line-height:1.2;">${emb||total+" u"}</div>
+    </div>`;
+  });
+
+    const prioridad = p.prioridad||"";
+  return`<div class="pedido-card" style="border-left-color:${est.color};cursor:${esAdmin?'grab':'default'};"
+    draggable="${esAdmin}"
+    ondragstart="onDragStart(event,'${p.id}','${p.estado}')"
+    ondragend="onDragEnd(event)"
+    ondragover="onDragOver(event,'${p.id}')"
+    ondrop="onDrop(event,'${p.id}','${p.estado}')">
+    <div class="pc-header">
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="pc-num">#${p.numero}</div>
+          ${esAdmin?'<input type="number" min="1" value="'+prioridad+'" placeholder="P" title="Prioridad" onclick="event.stopPropagation()" onchange="cambiarPrioridad(\'${p.id}\',this.value)" style="width:42px;background:#0F172A;border:1px solid #334155;border-radius:5px;color:#F59E0B;font-size:11px;font-weight:700;padding:2px 5px;text-align:center;outline:none;">':''} 
+        </div>
+        <div class="pc-fecha">${p.fecha}</div>
+      </div>
+      <span class="pc-badge" style="background:${est.color}22;color:${est.color};border-color:${est.color}44;">${est.label.toUpperCase()}</span>
+    </div>
+    ${p.origen_flexi?'<div class="pc-origen">◈ FLEXI</div>':''}
+    <div class="pc-cliente">${p.cliente}</div>
+    <div class="pc-dir">${p.direccion||''}${p.telefono?' · ☎ '+p.telefono:''}</div>
+    <div class="pc-productos">${cajasHTML}
+      <div class="pc-totales">
+        <span style="color:#6C63FF;">⚖ ${fmtKg(totalPeso)}</span>
+      </div>
+    </div>
+    ${p.observaciones?`<div class="pc-obs">${p.observaciones}</div>`:''}
+    <div class="pc-actions" style="flex-wrap:wrap;">
+      ${p.estado==="embalado" ? `
+        <button class="pc-btn-avanzar" style="background:#00C9A722;color:#00C9A7;border-color:#00C9A744;flex:1;"
+          onmouseenter="this.style.background='#00C9A7';this.style.color='#fff';"
+          onmouseleave="this.style.background='#00C9A722';this.style.color='#00C9A7';"
+          onclick="cambiarEstado('${p.id}','listo_retirar')">🏪 Para Retirar</button>
+        <button class="pc-btn-avanzar" style="background:#F9731622;color:#F97316;border-color:#F9731644;flex:1;"
+          onmouseenter="this.style.background='#F97316';this.style.color='#fff';"
+          onmouseleave="this.style.background='#F9731622';this.style.color='#F97316';"
+          onclick="abrirModalDespacho('${p.id}')">🚚 Para Despachar</button>
+      ` : puedeAvanzar ? `
+        <button class="pc-btn-avanzar" style="background:${est.color}22;color:${est.color};border-color:${est.color}44;"
+          onmouseenter="this.style.background='${est.color}';this.style.color='#fff';"
+          onmouseleave="this.style.background='${est.color}22';this.style.color='${est.color}';"
+          onclick="${p.estado==='listo_despachar'?`abrirModalDespachoConfirm('`+p.id+`')`:`cambiarEstado('`+p.id+`','`+sigEst+`')`}">${LABEL_ACCION[p.estado]||""}</button>
+      ` : ""}
+      ${puedeRetroceder?`<button class="pc-btn-editar" onclick="cambiarEstado('${p.id}','${antEst}')" title="Volver estado anterior" style="font-size:11px;padding:8px;">← Volver</button>`:''}
+      ${puedeEtiqueta?`<button class="pc-btn-etiqueta" onclick="abrirEtiqueta('${p.id}')" title="Imprimir etiqueta">🖨</button>`:''}
+      ${puedeEditar?`<button class="pc-btn-editar" onclick="abrirEditarPedido('${p.id}')" title="Editar">✏</button>`:''}
+      ${puedeEditar?`<button class="pc-btn-editar" onclick="eliminarPedido('${p.id}','${p.numero}')" title="Eliminar" style="color:#FF6B6B;" onmouseenter="this.style.borderColor='#FF6B6B'" onmouseleave="this.style.borderColor='#334155'">🗑</button>`:''}
+    </div>
+  </div>`;
+}
+
+async function cambiarEstado(id, nuevoEstado){
+  try{
+    const ahora = new Date().toISOString();
+    const pedido = allPedidos.find(p=>p.id===id);
+    const hist = pedido?.historial_estados||[];
+    hist.push({estado:nuevoEstado, fecha:ahora, usuario:currentUser.nombre});
+    await db.from("pedidos").update({estado:nuevoEstado, historial_estados:hist, updated_at:ahora}).eq("id",id);
+    await syncAll();
+    toast("Estado actualizado ✓","ok");
+  }catch(e){toast("Error al actualizar","err");}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ELIMINAR PEDIDO
+// ═══════════════════════════════════════════════════════════════════
+async function eliminarPedido(id, numero){
+  if(!confirm(`¿Eliminar el pedido #${numero}? Esta acción no se puede deshacer.`)) return;
+  try{
+    await db.from("pedidos").delete().eq("id",id);
+    toast("Pedido #"+numero+" eliminado","ok");
+    await syncAll();
+  }catch(e){toast("Error al eliminar: "+e.message,"err");}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  PRESUPUESTOS GUARDADOS
+// ═══════════════════════════════════════════════════════════════════
+let allPresupuestos = [];
+
+async function syncPresupuestos(){
+  try{
+    const {data} = await db.from("presupuestos").select("*").order("created_at",{ascending:false});
+    allPresupuestos = data||[];
+  }catch(e){}
+}
+
+function capturarEstadoFlexi(){
+  // Captura todo el estado actual del presupuestador
+  return {
+    cliente:{
+      nombre: document.getElementById("cNombre")?.value||"",
+      tel: document.getElementById("cTel")?.value||"",
+      ciudad: document.getElementById("cCiudad")?.value||"",
+      email: document.getElementById("cEmail")?.value||"",
+      nota: document.getElementById("cNota")?.value||"",
+      direccion: document.getElementById("cDireccion")?.value||"",
+      delivery: FS.delivery||"retiro",
+    },
+    dims:{
+      lR:FS.lR, aR:FS.aR, m2cot:FS.m2cot, m2real:FS.m2real, pzas:FS.pzas,
+      dL: document.getElementById("dL")?.value||"",
+      dA: document.getElementById("dA")?.value||"",
+      dM2: document.getElementById("dM2")?.value||"",
+    },
+    precios:{
+      pm2: document.getElementById("pM2")?.value||"",
+      ppz: document.getElementById("pPz")?.value||"",
+    },
+    grid: [...FS.grid],
+    cols: FS.cols, rows: FS.rows,
+    ci: FS.ci, fadj: {...fadj},
+  };
+}
+
+async function guardarPresupuestoActual(){
+  const nombre = document.getElementById("cNombre")?.value?.trim();
+  if(!nombre){ toast("Completá el nombre del cliente antes de guardar","err"); return; }
+  const estado = capturarEstadoFlexi();
+  const id = "pres-"+Date.now();
+  const fecha = new Date().toLocaleDateString("es-AR");
+  try{
+    await db.from("presupuestos").insert({id, nombre_cliente:nombre, fecha, datos:estado});
+    toast("Presupuesto de "+nombre+" guardado ✓","ok");
+    await syncPresupuestos();
+    renderPresupuestos();
+  }catch(e){toast("Error al guardar: "+e.message,"err");}
+}
+
+async function renderPresupuestos(){
+  await syncPresupuestos();
+  const search = document.getElementById("pres-search")?.value?.toLowerCase()||"";
+  const lista = document.getElementById("presupuestos-lista");
+  if(!lista) return;
+  const filtrados = allPresupuestos.filter(p=>
+    !search || p.nombre_cliente?.toLowerCase().includes(search)
+  );
+  if(!filtrados.length){
+    lista.innerHTML='<div style="color:#475569;font-size:13px;padding:20px;grid-column:1/-1;">No hay presupuestos guardados aún.</div>';
+    return;
+  }
+  lista.innerHTML = filtrados.map(p=>{
+    const d = p.datos||{};
+    const dims = d.dims||{};
+    const dim = dims.lR>0?`${parseFloat(dims.lR).toFixed(2)}×${parseFloat(dims.aR).toFixed(2)} m`:(dims.m2cot?dims.m2cot+" m²":"Sin medidas");
+    const pzas = dims.pzas||0;
+    const pm2 = d.precios?.pm2||0;
+    const ppz = d.precios?.ppz||0;
+    const total = pm2>0&&dims.m2cot?parseFloat(pm2)*parseFloat(dims.m2cot):ppz>0&&pzas?parseFloat(ppz)*pzas:0;
+    return`<div style="background:#1E293B;border:1px solid #334155;border-radius:12px;padding:16px;transition:transform .15s,box-shadow .15s;"
+      onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.4)'"
+      onmouseleave="this.style.transform='none';this.style.boxShadow='none'">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#F1F5F9;">${p.nombre_cliente}</div>
+          <div style="font-size:11px;color:#64748B;margin-top:2px;">${p.fecha}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:13px;font-weight:700;color:#6C63FF;">${dim}</div>
+          <div style="font-size:11px;color:#64748B;">${pzas?new Intl.NumberFormat("es-AR").format(pzas)+" pzas":""}</div>
+        </div>
+      </div>
+      ${total>0?`<div style="font-size:14px;font-weight:700;color:#00C9A7;margin-bottom:10px;">${new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(total)}</div>`:''}
+      <div style="display:flex;gap:8px;">
+        <button onclick="cargarPresupuesto('${p.id}')" style="flex:1;background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:7px;padding:9px;cursor:pointer;font-size:12px;font-weight:700;">
+          ↩ Cargar presupuesto
+        </button>
+        <button onclick="eliminarPresupuesto('${p.id}','${p.nombre_cliente}')" style="background:#0F172A;border:1px solid #334155;color:#FF6B6B;border-radius:7px;padding:9px 12px;cursor:pointer;font-size:13px;"
+          onmouseenter="this.style.borderColor='#FF6B6B'" onmouseleave="this.style.borderColor='#334155'">🗑</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+async function cargarPresupuesto(id){
+  const p = allPresupuestos.find(x=>x.id===id);
+  if(!p||!p.datos) return;
+  const d = p.datos;
+  // Cargar datos cliente
+  if(d.cliente){
+    document.getElementById("cNombre").value = d.cliente.nombre||"";
+    document.getElementById("cTel").value = d.cliente.tel||"";
+    document.getElementById("cCiudad").value = d.cliente.ciudad||"";
+    document.getElementById("cEmail").value = d.cliente.email||"";
+    document.getElementById("cNota").value = d.cliente.nota||"";
+    if(document.getElementById("cDireccion")) document.getElementById("cDireccion").value = d.cliente.direccion||"";
+    setDelivery(d.cliente.delivery||"retiro");
+  }
+  // Cargar dimensiones
+  if(d.dims){
+    FS.lR=d.dims.lR||0; FS.aR=d.dims.aR||0;
+    FS.m2cot=d.dims.m2cot||0; FS.m2real=d.dims.m2real||0; FS.pzas=d.dims.pzas||0;
+    document.getElementById("dL").value = d.dims.dL||"";
+    document.getElementById("dA").value = d.dims.dA||"";
+    document.getElementById("dM2").value = d.dims.dM2||"";
+    if(FS.m2cot>0) showDims();
+  }
+  // Cargar precios
+  if(d.precios){
+    document.getElementById("pM2").value = d.precios.pm2||"";
+    document.getElementById("pPz").value = d.precios.ppz||"";
+    calcPrice();
+  }
+  // Cargar grilla y diseño
+  if(d.grid&&d.cols&&d.rows){
+    FS.cols=d.cols; FS.rows=d.rows; FS.ci=d.ci||0;
+    FS.grid=[...d.grid];
+    fadj=d.fadj||{};
+    gridHistory=[];
+  }
+  toast("Presupuesto de "+p.nombre_cliente+" cargado ✓","ok");
+  // Ir a la sección presupuesto
+  const tab = document.querySelector('#main-tabs .tab-btn');
+  showSection("sec-flexi", document.querySelector('#main-tabs .tab-btn'));
+  fpg("fpg-client",document.querySelectorAll(".flexi-nav button")[0]);
+}
+
+async function eliminarPresupuesto(id, nombre){
+  if(!confirm(`¿Eliminar el presupuesto de ${nombre}?`)) return;
+  try{
+    await db.from("presupuestos").delete().eq("id",id);
+    toast("Presupuesto eliminado","ok");
+    renderPresupuestos();
+  }catch(e){toast("Error: "+e.message,"err");}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  HISTORIAL
+// ═══════════════════════════════════════════════════════════════════
+function renderHistorial(){
+  const search = document.getElementById("hist-search").value.toLowerCase();
+  const fecha = document.getElementById("hist-fecha").value;
+  const entregados = allPedidos.filter(p=>{
+    if(p.estado!=="entregado" && p.estado!=="despachado") return false;
+    if(search && !p.cliente?.toLowerCase().includes(search) && !String(p.numero).includes(search)) return false;
+    if(fecha && p.fecha && !p.fecha.includes(fecha.split("-").reverse().join("/"))) return false;
+    return true;
+  });
+  const el = document.getElementById("historial-rows");
+  if(!entregados.length){el.innerHTML='<div style="padding:20px;color:#475569;font-size:13px;">Sin resultados.</div>';return;}
+  el.innerHTML = entregados.map(p=>`
+    <div class="hist-row">
+      <div style="font-family:monospace;font-weight:700;color:#6C63FF;">#${p.numero}</div>
+      <div><div style="font-weight:600;color:#F1F5F9;">${p.cliente}</div><div style="font-size:10px;color:#64748B;">${p.telefono||''}</div></div>
+      <div style="color:#94A3B8;font-size:11px;">${(p.productos||[]).map(pr=>pr.nombre+' ×'+pr.cantidad).join(', ')}</div>
+      <div style="color:#64748B;">${p.fecha}</div>
+      <div>${p.origen_flexi?'<span style="color:#6C63FF;font-size:10px;">◈ Flexi</span>':'<span style="color:#64748B;font-size:10px;">Manual</span>'}</div>
+    </div>`).join("");
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ETIQUETA
+// ═══════════════════════════════════════════════════════════════════
+function abrirEtiqueta(id){
+  etiquetaPedidoActual = allPedidos.find(p=>p.id===id);
+  if(!etiquetaPedidoActual) return;
+  renderEtiquetaPreview();
+  document.getElementById("modal-etiqueta").classList.add("on");
+}
+function renderEtiquetaPreview(){
+  const p = etiquetaPedidoActual;
+  if(!p) return;
+  const tipo = document.getElementById("et-tipo").value;
+  const UxCaja=64, KgxCaja=14;
+  const totalPzas = (p.productos||[]).reduce((s,pr)=>s+parseInt(pr.cantidad||1),0);
+  const totalCajas = Math.floor(totalPzas/UxCaja);
+  const totalSueltas = totalPzas%UxCaja;
+  const totalPeso = (p.productos||[]).reduce((s,pr)=>s+parseFloat(pr.peso||0)*parseInt(pr.cantidad||1),0);
+  const totalPrecio = (p.productos||[]).reduce((s,pr)=>s+parseFloat(pr.precio||0)*parseInt(pr.cantidad||1),0);
+
+  const prodRows = (p.productos||[]).map(pr=>{
+    const pz=parseInt(pr.cantidad||1);
+    const cj=Math.floor(pz/UxCaja), su=pz%UxCaja;
+    const pesoLn=parseFloat(pr.peso||0)*pz; const pesoLnFmt=typeof fmtKg==='function'?fmtKg(pesoLn):pesoLn.toFixed(1)+' kg';
+    return`<tr>
+      <td>${pr.nombre}</td>
+      <td style="text-align:center;">${pz}</td>
+      <td style="text-align:center;">${cj>0?cj+'cj':''}${cj>0&&su>0?' + ':''}${su>0?su+'u':''}</td>
+      <td style="text-align:right;">${fmtKg(pesoLn)}</td>
+    </tr>`;
+  }).join("");
+
+  const html = `<div class="etiqueta-preview">
+    <div class="et-header">
+      <div class="et-brand">FlexiFloor<small>DESPACHO DE PEDIDO</small></div>
+      <div class="et-num"><div class="num">#${p.numero}</div><div class="fecha">${p.fecha}</div></div>
+    </div>
+    <div class="et-section">
+      <div class="et-stitle">Destinatario</div>
+      <div class="et-name">${p.cliente}</div>
+      <div class="et-sub">${p.direccion||''}<br>☎ ${p.telefono||''}</div>
+    </div>
+    ${tipo==="transporte"?`<div class="et-section"><div class="et-stitle">Transporte</div><div class="et-sub">_______________________<br>Destino: ${p.direccion||''}</div></div>`:''}
+    <div class="et-section">
+      <div class="et-stitle">Detalle de productos</div>
+      <table class="et-table">
+        <thead><tr><th>Producto</th><th style="text-align:center;">Pzas</th><th style="text-align:center;">Embalaje</th><th style="text-align:right;">Peso</th></tr></thead>
+        <tbody>${prodRows}</tbody>
+      </table>
+    </div>
+    <div class="et-section">
+      <div class="et-stitle">Totales del pedido</div>
+      <div class="et-totales">
+        <div class="et-tot-box"><div class="v">${totalPzas}</div><div class="l">Piezas totales</div></div>
+        <div class="et-tot-box"><div class="v ac">${totalCajas} cj${totalSueltas>0?' + '+totalSueltas+' u':''}</div><div class="l">Embalaje</div></div>
+        <div class="et-tot-box"><div class="v gr">${fmtKg(totalPeso)}</div><div class="l">Peso estimado</div></div>
+        ${totalPrecio>0?`<div class="et-tot-box"><div class="v ac">$${totalPrecio.toFixed(0)}</div><div class="l">Total</div></div>`:''}
+      </div>
+    </div>
+    ${p.observaciones?`<div class="et-section"><div class="et-stitle">Observaciones</div><div class="et-sub">${p.observaciones}</div></div>`:''}
+    <div class="et-footer">FlexiFloor · Sistema Logístico · ${new Date().toLocaleDateString("es-AR")}</div>
+  </div>`;
+  document.getElementById("etiqueta-preview-wrap").innerHTML = html;
+}
+function imprimirEtiqueta(){
+  const target = document.getElementById("etiqueta-print-target");
+  target.innerHTML = document.getElementById("etiqueta-preview-wrap").innerHTML;
+  target.style.display = "block";
+  window.print();
+  target.style.display = "none";
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  EDITAR / NUEVO PEDIDO (admin)
+// ═══════════════════════════════════════════════════════════════════
+function abrirModalNuevoPedido(){
+  document.getElementById("ep-id").value = "";
+  document.getElementById("ep-cliente").value = "";
+  document.getElementById("ep-telefono").value = "";
+  document.getElementById("ep-ciudad").value = "";
+  document.getElementById("ep-direccion").value = "";
+  document.getElementById("ep-obs").value = "";
+  document.getElementById("ep-productos").innerHTML = "";
+  document.getElementById("ep-error").style.display = "none";
+  document.getElementById("modal-pedido-title").textContent = "✚ Nuevo Pedido";
+  addProdRow();
+  document.getElementById("modal-pedido").classList.add("on");
+}
+function abrirEditarPedido(id){
+  const p = allPedidos.find(x=>x.id===id);
+  if(!p) return;
+  document.getElementById("ep-id").value = p.id;
+  document.getElementById("ep-cliente").value = p.cliente||"";
+  document.getElementById("ep-telefono").value = p.telefono||"";
+  document.getElementById("ep-ciudad").value = "";
+  document.getElementById("ep-direccion").value = p.direccion||"";
+  document.getElementById("ep-obs").value = p.observaciones||"";
+  document.getElementById("ep-productos").innerHTML = "";
+  document.getElementById("ep-error").style.display = "none";
+  document.getElementById("modal-pedido-title").textContent = `✏ Editar Pedido #${p.numero}`;
+  (p.productos||[]).forEach(pr=>addProdRow(pr));
+  if(!(p.productos||[]).length) addProdRow();
+  document.getElementById("modal-pedido").classList.add("on");
+}
+function addProdRow(pr={}){
+  const el = document.getElementById("ep-productos");
+  const row = document.createElement("div");
+  row.className = "prod-row";
+  row.innerHTML=`<input class="prod-input" placeholder="Producto" value="${pr.nombre||''}">
+    <input class="prod-input" type="number" min="1" placeholder="1" value="${pr.cantidad||1}">
+    <input class="prod-input" type="number" step="0.1" min="0" placeholder="kg" value="${pr.peso||''}">
+    <input class="prod-input" type="number" step="0.01" min="0" placeholder="$" value="${pr.precio||''}">
+    <button class="prod-del" onclick="this.closest('.prod-row').remove()">✕</button>`;
+  el.appendChild(row);
+}
+// ─── DRAG & DROP PRIORIDAD ──────────────────────────────────────────────────
+let dragPedidoId = null;
+let dragEstado = null;
+
+function onDragStart(e, id, estado){
+  if(currentUser.rol !== "admin"){ e.preventDefault(); return; }
+  dragPedidoId = id;
+  dragEstado = estado;
+  e.dataTransfer.effectAllowed = "move";
+  e.currentTarget.style.opacity = "0.5";
+}
+function onDragEnd(e){
+  e.currentTarget.style.opacity = "1";
+  dragPedidoId = null;
+}
+function onDragOver(e, id){
+  if(currentUser.rol !== "admin") return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+}
+async function onDrop(e, targetId, targetEstado){
+  if(currentUser.rol !== "admin") return;
+  e.preventDefault();
+  if(!dragPedidoId || dragPedidoId === targetId || dragEstado !== targetEstado) return;
+  // Reordenar: poner dragPedidoId antes de targetId en la misma columna
+  const enEstado = allPedidos.filter(p=>p.estado===targetEstado);
+  const dragIdx = enEstado.findIndex(p=>p.id===dragPedidoId);
+  const targetIdx = enEstado.findIndex(p=>p.id===targetId);
+  if(dragIdx===-1||targetIdx===-1) return;
+  // Reasignar prioridades
+  const reordenados = [...enEstado];
+  const [moved] = reordenados.splice(dragIdx,1);
+  reordenados.splice(targetIdx,0,moved);
+  // Guardar nuevas prioridades en Supabase
+  try{
+    await Promise.all(reordenados.map((p,i)=>
+      db.from("pedidos").update({prioridad:i+1}).eq("id",p.id)
+    ));
+    await syncAll();
+  }catch(e){ toast("Error al reordenar","err"); }
+}
+
+async function cambiarPrioridad(id, nuevaPrioridad){
+  const val = parseInt(nuevaPrioridad);
+  if(isNaN(val)||val<1) return;
+  try{
+    await db.from("pedidos").update({prioridad:val}).eq("id",id);
+    await syncAll();
+    toast("Prioridad actualizada ✓","ok");
+  }catch(e){ toast("Error","err"); }
+}
+
+async function guardarPedidoEditado(){
+  const id = document.getElementById("ep-id").value;
+  const cliente = document.getElementById("ep-cliente").value.trim();
+  const telefono = document.getElementById("ep-telefono").value.trim();
+  const direccion = document.getElementById("ep-direccion").value.trim();
+  const obs = document.getElementById("ep-obs").value.trim();
+  const errEl = document.getElementById("ep-error");
+  if(!cliente||!telefono){errEl.textContent="⚠ Completá cliente y teléfono.";errEl.style.display="block";return;}
+  const filas = document.getElementById("ep-productos").querySelectorAll(".prod-row");
+  const productos = [];
+  filas.forEach(row=>{
+    const ins = row.querySelectorAll("input");
+    if(ins[0].value) productos.push({nombre:ins[0].value,cantidad:ins[1].value||1,peso:ins[2].value||0,precio:ins[3].value||0});
+  });
+  if(!productos.length){errEl.textContent="⚠ Agregá al menos un producto.";errEl.style.display="block";return;}
+  errEl.style.display="none";
+  try{
+    if(id){
+      await db.from("pedidos").update({cliente,telefono,direccion,observaciones:obs,productos,updated_at:new Date().toISOString()}).eq("id",id);
+      toast("Pedido actualizado ✓","ok");
+    } else {
+      const {data:ult} = await db.from("pedidos").select("numero").order("numero",{ascending:false}).limit(1);
+      const numero = ((ult&&ult[0]&&ult[0].numero)||1000)+1;
+      await db.from("pedidos").insert({
+        id:Date.now().toString(), numero, estado:"pendiente",
+        fecha:new Date().toLocaleDateString("es-AR"),
+        creado_por:currentUser.nombre, cliente, telefono, direccion,
+        observaciones:obs, productos, origen_flexi:false, historial_estados:[]
+      });
+      toast("Pedido creado ✓","ok");
+    }
+    cerrarModal("modal-pedido");
+    await syncAll();
+  }catch(e){errEl.textContent="Error al guardar: "+e.message;errEl.style.display="block";}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  LOGIFLOW DESDE FLEXI
+// ═══════════════════════════════════════════════════════════════════
+function abrirModalLogiflow(){
+  const nombre = document.getElementById("cNombre").value||"";
+  const tel = document.getElementById("cTel").value||"";
+  const ciudad = document.getElementById("cCiudad").value||"";
+  const email = document.getElementById("cEmail").value||"";
+  const nota = document.getElementById("cNota").value||"";
+  const dirEl = document.getElementById("cDireccion");
+  const dir = dirEl?dirEl.value:"";
+  document.getElementById("lf-cliente").value = nombre;
+  document.getElementById("lf-telefono").value = tel;
+  document.getElementById("lf-ciudad").value = ciudad;
+  document.getElementById("lf-direccion").value = dir||ciudad;
+  document.getElementById("lf-obs").value = nota||(email?"Email: "+email:"");
+  document.getElementById("lf-entrega").value = FS.delivery||"retiro";
+  // Preview productos
+  const prods = buildProductosLogi();
+  const prev = document.getElementById("lf-productos-preview");
+  if(!prods.length){
+    prev.innerHTML='<div style="color:var(--red);font-size:12px;">⚠ Pintá el diseño antes de enviar.</div>';
+  } else {
+    const UxCaja=64;
+    prev.innerHTML = prods.map(pr=>{
+      const pz=parseInt(pr.cantidad);const cj=Math.floor(pz/UxCaja),su=pz%UxCaja;
+      const nombreColor=pr.nombre.replace(/^(Baldosa |FlexiFloor )/i,"");
+      const cajasStr=cj>0?cj+(cj===1?" Caja":" Cajas"):"";
+      const sueltasStr=su>0?su+" Unid":"";
+      const emb=[cajasStr,sueltasStr].filter(Boolean).join(" + ");
+      const pesoTotalPrev=(parseFloat(pr.peso||0)*pz);return`<div class="m-prod-preview-row">
+        <span style="color:#F1F5F9;font-weight:700;">${nombreColor}</span>
+        <span style="color:#6C63FF;font-weight:800;">${emb||fmtNum(pz)+" u"} <span style="color:#64748B;font-weight:400;">· ${fmtKg(pesoTotalPrev)}</span></span>
+      </div>`;
+    }).join("") + `<div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px;padding-top:6px;border-top:1px solid #1E293B;">
+      <span style="color:#64748B;">Total</span>
+      <span style="color:#00C9A7;font-weight:700;">${prods.reduce((s,p)=>s+parseInt(p.cantidad),0)} pz · ${prods.reduce((s,p)=>s+parseFloat(p.peso),0).toFixed(1)} kg</span>
+    </div>`;
+  }
+  document.getElementById("lf-error").style.display = "none";
+  document.getElementById("modal-logi").classList.add("on");
+}
+
+function buildProductosLogi(){
+  const cnt=getTotalCounts();
+  const data=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+  if(!data.length) return [];
+  const pm2=parseFloat(document.getElementById("pM2").value)||0;
+  const ppz=parseFloat(document.getElementById("pPz").value)||0;
+  const pintadas=getPzasPintadas();
+  const pzasBase=pintadas>0?pintadas:FS.pzas;
+  const precioPorPieza=ppz>0?ppz:(pm2>0&&pzasBase>0?((pzasBase/16)*pm2/pzasBase):0);
+  const KgxPieza=0.22;
+  return data.map(([ci,pzas])=>{
+    const c=COLS[+ci];
+    return{nombre:c.n,cantidad:pzas,peso:(pzas*KgxPieza).toFixed(1),precio:precioPorPieza>0?(precioPorPieza*pzas).toFixed(2):""};
+  });
+}
+
+async function confirmarEnvioLogiflow(){
+  const cliente=document.getElementById("lf-cliente").value.trim();
+  const telefono=document.getElementById("lf-telefono").value.trim();
+  const ciudad=document.getElementById("lf-ciudad").value.trim();
+  const direccion=document.getElementById("lf-direccion").value.trim();
+  const obs=document.getElementById("lf-obs").value.trim();
+  const entrega=document.getElementById("lf-entrega").value;
+  const errEl=document.getElementById("lf-error");
+  if(!cliente||!telefono){errEl.textContent="⚠ Completá cliente y teléfono.";errEl.style.display="block";return;}
+  const prods=buildProductosLogi();
+  if(!prods.length){errEl.textContent="⚠ Sin productos. Pintá el diseño primero.";errEl.style.display="block";return;}
+  errEl.style.display="none";
+  try{
+    const {data:ult}=await db.from("pedidos").select("numero").order("numero",{ascending:false}).limit(1);
+    const numero=((ult&&ult[0]&&ult[0].numero)||1000)+1;
+    const dim=FS.lR>0?FS.lR.toFixed(2)+"×"+FS.aR.toFixed(2)+"m":(FS.m2cot+"m²");
+    const pm2=parseFloat(document.getElementById("pM2").value)||0;
+    const ppz=parseFloat(document.getElementById("pPz").value)||0;
+    const total=pm2>0?FS.m2cot*pm2:(ppz>0?FS.pzas*ppz:0);
+    const obsCompleto=[obs,"Diseño: "+dim,entrega==="envio"?"🚚 Envío"+(direccion?" → "+direccion:""):"📦 Retira en local",total>0?"Total: $"+total.toFixed(0):""].filter(Boolean).join(" | ");
+    await db.from("pedidos").insert({
+      id:Date.now().toString(),numero,estado:"pendiente",
+      fecha:new Date().toLocaleDateString("es-AR"),
+      creado_por:currentUser?.nombre||"FlexiFloor",
+      cliente,telefono,direccion:direccion||ciudad,
+      observaciones:obsCompleto,productos:prods,origen_flexi:true,historial_estados:[]
+    });
+    cerrarModal("modal-logi");
+    toast("Pedido #"+numero+" enviado a LogiFlow ✓","ok");
+    await syncAll();
+  }catch(e){errEl.textContent="Error: "+e.message;errEl.style.display="block";}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  USUARIOS
+// ═══════════════════════════════════════════════════════════════════
+function renderUsuarios(){
+  const el=document.getElementById("usuarios-grid");
+  el.innerHTML=allUsuarios.map(u=>`
+    <div class="usuario-card ${u.activo?'':'u-inactive'}">
+      <div class="u-info">
+        <div class="u-icon" style="background:${ROL_COLORS[u.rol]||'#334155'}22;color:${ROL_COLORS[u.rol]||'#94A3B8'};">${ROL_ICONS[u.rol]||'·'}</div>
+        <div><div class="u-name">${u.nombre}</div><div class="u-rol">${u.rol} ${!u.activo?'· INACTIVO':''}</div></div>
+      </div>
+      <div class="u-actions">
+        <button class="u-btn" onclick="abrirModalUsuario('${u.id}')">✏ Editar</button>
+        <button class="u-btn danger" onclick="toggleUsuario('${u.id}',${u.activo})">${u.activo?'Desactivar':'Activar'}</button>
+      </div>
+    </div>`).join("");
+}
+function abrirModalUsuario(id){
+  const u = id?allUsuarios.find(x=>x.id===id):null;
+  document.getElementById("u-id-orig").value = id||"";
+  document.getElementById("u-id").value = u?u.id:"";
+  document.getElementById("u-nombre").value = u?u.nombre:"";
+  document.getElementById("u-pass").value = u?u.password:"";
+  document.getElementById("u-rol").value = u?u.rol:"deposito";
+  document.getElementById("u-error").style.display = "none";
+  document.getElementById("modal-usuario-title").textContent = u?"✏ Editar Usuario":"+ Nuevo Usuario";
+  document.getElementById("modal-usuario").classList.add("on");
+}
+async function guardarUsuario(){
+  const orig=document.getElementById("u-id-orig").value;
+  const uid=document.getElementById("u-id").value.trim().toLowerCase().replace(/\s+/g,"_");
+  const nombre=document.getElementById("u-nombre").value.trim();
+  const pass=document.getElementById("u-pass").value;
+  const rol=document.getElementById("u-rol").value;
+  const errEl=document.getElementById("u-error");
+  if(!uid||!nombre||!pass){errEl.textContent="⚠ Completá todos los campos.";errEl.style.display="block";return;}
+  errEl.style.display="none";
+  try{
+    if(orig){
+      await db.from("usuarios").update({id:uid,nombre,password:pass,rol}).eq("id",orig);
+    } else {
+      await db.from("usuarios").insert({id:uid,nombre,password:pass,rol,activo:true});
+    }
+    cerrarModal("modal-usuario");
+    toast("Usuario guardado ✓","ok");
+    await syncAll();
+  }catch(e){errEl.textContent="Error: "+e.message;errEl.style.display="block";}
+}
+async function toggleUsuario(id,activo){
+  await db.from("usuarios").update({activo:!activo}).eq("id",id);
+  await syncAll();
+  toast(activo?"Usuario desactivado":"Usuario activado","ok");
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  HELPERS MODALES
+// ═══════════════════════════════════════════════════════════════════
+// ═══ MODAL DESPACHO ═══════════════════════════════════════════════════════
+function abrirModalDespacho(id){
+  // Desde embalado → listo_despachar
+  document.getElementById("desp-id").value = id;
+  document.getElementById("desp-confirmar").value = "listo";
+  document.getElementById("desp-desc").textContent = "Ingresá los datos del transporte para marcar este pedido como Listo para Despachar.";
+  document.getElementById("desp-btn").textContent = "🚚 Marcar Listo para Despachar";
+  document.getElementById("desp-transporte").value = "";
+  document.getElementById("desp-numero").value = "";
+  document.getElementById("desp-obs").value = "";
+  document.getElementById("desp-error").style.display = "none";
+  // Prellenar si el pedido ya tiene datos de despacho
+  const p = allPedidos.find(x=>x.id===id);
+  if(p && p.despacho_transporte) document.getElementById("desp-transporte").value = p.despacho_transporte;
+  if(p && p.despacho_numero) document.getElementById("desp-numero").value = p.despacho_numero;
+  document.getElementById("modal-despacho").classList.add("on");
+}
+
+function abrirModalDespachoConfirm(id){
+  // Desde listo_despachar → despachado
+  document.getElementById("desp-id").value = id;
+  document.getElementById("desp-confirmar").value = "despachar";
+  document.getElementById("desp-desc").textContent = "Confirmá los datos del transporte para registrar el despacho definitivo.";
+  document.getElementById("desp-btn").textContent = "✈ Confirmar Despachado";
+  document.getElementById("desp-transporte").value = "";
+  document.getElementById("desp-numero").value = "";
+  document.getElementById("desp-obs").value = "";
+  document.getElementById("desp-error").style.display = "none";
+  const p = allPedidos.find(x=>x.id===id);
+  if(p && p.despacho_transporte) document.getElementById("desp-transporte").value = p.despacho_transporte;
+  if(p && p.despacho_numero) document.getElementById("desp-numero").value = p.despacho_numero;
+  document.getElementById("modal-despacho").classList.add("on");
+}
+
+async function confirmarDespacho(){
+  const id = document.getElementById("desp-id").value;
+  const accion = document.getElementById("desp-confirmar").value;
+  const transporte = document.getElementById("desp-transporte").value.trim();
+  const numero = document.getElementById("desp-numero").value.trim();
+  const obs = document.getElementById("desp-obs").value.trim();
+  const errEl = document.getElementById("desp-error");
+  if(!transporte){errEl.textContent="⚠ Ingresá el nombre del transporte.";errEl.style.display="block";return;}
+  errEl.style.display="none";
+  const nuevoEstado = accion==="despachar" ? "despachado" : "listo_despachar";
+  try{
+    const ahora = new Date().toISOString();
+    const pedido = allPedidos.find(p=>p.id===id);
+    const hist = pedido?.historial_estados||[];
+    hist.push({estado:nuevoEstado, fecha:ahora, usuario:currentUser.nombre, transporte, numero});
+    // Guardar datos de despacho en observaciones y campos extra
+    const obsExtra = obs ? " | "+obs : "";
+    const obsDespacho = `🚚 ${transporte}${numero?" · Ref: "+numero:""}${obsExtra}`;
+    await db.from("pedidos").update({
+      estado: nuevoEstado,
+      historial_estados: hist,
+      despacho_transporte: transporte,
+      despacho_numero: numero,
+      observaciones: (pedido?.observaciones||"") + " | " + obsDespacho,
+      updated_at: ahora
+    }).eq("id",id);
+    cerrarModal("modal-despacho");
+    toast(nuevoEstado==="despachado"?"✈ Pedido despachado ✓":"🚚 Listo para despachar ✓","ok");
+    await syncAll();
+  }catch(e){errEl.textContent="Error: "+e.message;errEl.style.display="block";}
+}
+
+function abrirCalculadora(){
+  window.open("calculadora-covin.html","_blank");
+}
+function cerrarModal(id){document.getElementById(id).classList.remove("on");}
+function toast(msg,tipo=""){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.className="toast "+(tipo||"")+" on";
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("on"),2500);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  FLEXI — LÓGICA ORIGINAL (con prefijo F para no colisionar)
+// ═══════════════════════════════════════════════════════════════════
+const COLS=[
+  {n:"Negro",h:"#1F1F1F"},{n:"Gris Oscuro",h:"#3F4244"},{n:"Gris Medio",h:"#9C9C93"},
+  {n:"Gris Claro",h:"#D0D3D4"},{n:"Blanco",h:"#FFFFFF"},{n:"Amarillo",h:"#FFD100"},
+  {n:"Naranja",h:"#FF6A00"},{n:"Rojo",h:"#ED1C24"},{n:"Fucsia",h:"#EC008C"},
+  {n:"Violeta",h:"#6B2DBD"},{n:"Azul Electrico",h:"#0057FF"},{n:"Azul Pastel",h:"#2D76B8"},
+  {n:"Celeste",h:"#18BDEB"},{n:"Verde Agua",h:"#27C7BD"},{n:"Verde",h:"#69BE28"},
+];
+const PxM2=16,UxCaja=64;
+let FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retiro"};
+let fadj={};
+let fcv,fctx,CELL=0,fpainting=false;
+let ZOOM=100,BASE_CELL=32;
+let gridHistory=[]; // historial para deshacer
+const MAX_HISTORY=30;
+
+function pushHistory(){
+  gridHistory.push([...FS.grid]);
+  if(gridHistory.length>MAX_HISTORY) gridHistory.shift();
+}
+function undoGrid(){
+  if(gridHistory.length===0){toast("No hay más pasos para deshacer");return;}
+  FS.grid=gridHistory.pop();
+  drawAll();
+  toast("↩ Deshecho","ok");
+}
+
+
+function fpg(id,btn){
+  document.querySelectorAll(".fpg").forEach(p=>p.classList.remove("on"));
+  document.querySelectorAll(".flexi-nav button").forEach(b=>b.classList.remove("on"));
+  document.getElementById(id).classList.add("on");
+  if(btn)btn.classList.add("on");
+  document.getElementById("sec-flexi").scrollTop=0;
+}
+function setDelivery(tipo){
+  FS.delivery=tipo;
+  document.getElementById("dtog-retiro").classList.toggle("on",tipo==="retiro");
+  document.getElementById("dtog-envio").classList.toggle("on",tipo==="envio");
+  document.getElementById("dir-wrap").style.display=tipo==="envio"?"block":"none";
+}
+function embStr(pz){
+  if(!pz||pz<=0)return"0 unidades";
+  const cj=Math.floor(pz/UxCaja),su=pz%UxCaja;
+  let s="";if(cj>0)s+=cj+" caja"+(cj!==1?"s":"");
+  if(su>0)s+=(cj>0?" y ":"")+su+" unidad"+(su!==1?"es":"");
+  return s||"0 unidades";
+}
+function r025(v){return Math.ceil(v/0.25)*0.25;}
+function calcDims(){
+  const l=parseFloat(document.getElementById("dL").value)||0;
+  const a=parseFloat(document.getElementById("dA").value)||0;
+  document.getElementById("dM2").value="";
+  if(l>0&&a>0){FS.lR=r025(l);FS.aR=r025(a);FS.m2real=+(l*a).toFixed(4);FS.m2cot=Math.ceil(FS.lR*FS.aR);showDims();}
+  else resetD();
+}
+function calcM2(){
+  const v=parseFloat(document.getElementById("dM2").value)||0;
+  document.getElementById("dL").value="";document.getElementById("dA").value="";
+  if(v>0){FS.lR=0;FS.aR=0;FS.m2real=v;FS.m2cot=Math.ceil(v);showDims();}else resetD();
+}
+function resetD(){FS.m2cot=FS.m2real=FS.pzas=0;document.getElementById("dims-card").style.display="none";}
+function showDims(){
+  FS.pzas=FS.m2cot*PxM2;
+  const d=FS.lR>0?FS.lR.toFixed(2)+" × "+FS.aR.toFixed(2)+" m":"—";
+  document.getElementById("r-dim").textContent=d;
+  document.getElementById("r-mreal").textContent=FS.m2real.toFixed(2)+" m²";
+  document.getElementById("r-mcot").textContent=FS.m2cot+" m²";
+  document.getElementById("r-pzas").textContent=fmtNum(FS.pzas);
+  document.getElementById("r-cajas").textContent=embStr(FS.pzas)+" · "+fmtKg(Math.floor(FS.pzas/64)*14+(FS.pzas%64)*0.22);
+  document.getElementById("dims-card").style.display="block";
+  calcPrice();
+}
+const fmt=n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n);
+const fmtKg=n=>new Intl.NumberFormat("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+" kg";
+const fmtNum=n=>new Intl.NumberFormat("es-AR",{maximumFractionDigits:2}).format(n);
+function getPzasPintadas(){
+  // Total de baldosas pintadas (grilla + ajuste sobrante)
+  const cnt=getGridCounts();
+  const gridPzas=Object.values(cnt).reduce((s,v)=>s+v,0);
+  const adjPzas=Object.values(fadj).reduce((s,v)=>s+v,0);
+  return gridPzas+adjPzas;
+}
+function calcPrice(){
+  const pm2=parseFloat(document.getElementById("pM2").value)||0;
+  const ppz=parseFloat(document.getElementById("pPz").value)||0;
+  const pintadas=getPzasPintadas();
+  // Cotizar por pintadas: si hay diseño usamos pintadas, sino usamos total
+  const pzasBase=pintadas>0?pintadas:FS.pzas;
+  const m2base=pzasBase/16; // 16 pzas por m²
+  const tm2=pm2>0?m2base*pm2:null;
+  const tpz=ppz>0?pzasBase*ppz:null;
+  const fin=tm2!==null?tm2:tpz;
+  document.getElementById("p-tm2").textContent=tm2!==null?fmt(tm2):"—";
+  document.getElementById("p-tpz").textContent=tpz!==null?fmt(tpz):"—";
+  document.getElementById("p-total").textContent=fin!==null?fmt(fin):"—";
+  // Aviso si hay baldosas sin pintar
+  const sinPintar=FS.pzas-pzasBase;
+  const avisoEl=document.getElementById("price-aviso");
+  if(avisoEl){
+    if(sinPintar>0&&pintadas>0){
+      avisoEl.innerHTML=`⚠ Hay <strong>${sinPintar} baldosas sin pintar</strong> en el diseño. El precio se calculó sobre <strong>${pzasBase} pintadas</strong> de ${FS.pzas} totales.`;
+      avisoEl.style.display="block";
+    } else {
+      avisoEl.style.display="none";
+    }
+  }
+}
+function startPaint(){
+  if(FS.m2cot<=0){document.getElementById("no-dims").style.display="block";document.getElementById("paint-wrap").style.display="none";document.getElementById("zoom-bar").style.display="none";return;}
+  document.getElementById("no-dims").style.display="none";
+  document.getElementById("paint-wrap").style.display="block";
+  document.getElementById("zoom-bar").style.display="flex";
+  fcv=document.getElementById("fcv");fctx=fcv.getContext("2d");
+  if(FS.lR>0&&FS.aR>0){FS.cols=Math.round(FS.lR/0.25);FS.rows=Math.round(FS.aR/0.25);}
+  else{const t=FS.m2cot*PxM2;FS.cols=Math.ceil(Math.sqrt(t));FS.rows=Math.ceil(t/FS.cols);}
+  if(FS.cols<1)FS.cols=1;if(FS.rows<1)FS.rows=1;
+  const wrap=document.getElementById("paint-wrap");
+  const maxW=wrap.clientWidth-4;
+  BASE_CELL=Math.max(18,Math.min(44,Math.floor(maxW/FS.cols)));
+  ZOOM=100;applyZoom();
+  if(FS.grid.length!==FS.cols*FS.rows){FS.grid=new Array(FS.cols*FS.rows).fill(-1);paintHistory=[];}
+  buildPaintColors();buildPredColors();selectColor(FS.ci);setTool(FS.tool);drawAll();bindEvents();
+  document.getElementById("paint-info").textContent=FS.lR>0?FS.cols+"×"+FS.rows+" baldosas ("+FS.pzas+" a pedir)":FS.cols+"×"+FS.rows+" baldosas";
+}
+function applyZoom(){CELL=Math.max(8,Math.round(BASE_CELL*ZOOM/100));fcv.width=FS.cols*CELL;fcv.height=FS.rows*CELL;document.getElementById("zoom-label").textContent=ZOOM+"%";document.getElementById("zoom-slider").value=ZOOM;drawAll();}
+function zoomChange(delta){ZOOM=Math.max(20,Math.min(200,ZOOM+delta));applyZoom();}
+function zoomSet(val){ZOOM=parseInt(val);applyZoom();}
+function zoomFit(){const wrap=document.getElementById("paint-wrap");BASE_CELL=Math.max(8,Math.floor((wrap.clientWidth-4)/FS.cols));ZOOM=100;applyZoom();}
+function buildPredColors(){
+  const el=document.getElementById("pred-colors");
+  if(!el)return;
+  el.innerHTML="";
+  COLS.forEach((c,i)=>{
+    const b=document.createElement("button");
+    b.title="Rellenar todo con "+c.n;
+    b.style.cssText=`width:32px;height:32px;border-radius:4px;border:2px solid transparent;cursor:pointer;background:${c.h};${c.h==="#f0f0f0"||c.h==="#a8d8f0"?"border-color:#555;":""}position:relative;`;
+    const isLight=["#FFFFFF","#D0D3D4","#9C9C93","#FFD100","#18BDEB","#27C7BD","#69BE28"].includes(c.h);
+    b.innerHTML=`<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${isLight?'#333':'#fff'};opacity:.85;letter-spacing:-.3px;overflow:hidden;padding:1px;">${c.n.split(" ")[0]}</span>`;
+    b.onclick=()=>setPredominante(i);
+    el.appendChild(b);
+  });
+}
+function setPredominante(ci){
+  const c=COLS[ci];
+  const confirmar=FS.grid.some(v=>v>=0);
+  if(confirmar&&!window.confirm("Esto va a reemplazar todo el diseño con "+c.n+". ¿Continuás?")){return;}
+  pushHistory();
+  FS.grid.fill(ci);
+  selectColor(ci);
+  setTool("p");
+  drawAll();
+}
+function buildPaintColors(){
+  const el=document.getElementById("paint-colors");el.innerHTML="";
+  COLS.forEach((c,i)=>{const b=document.createElement("button");b.className="pc-btn"+(i===FS.ci?" on":"");b.style.background=c.h;if(c.h==="#f0f0f0"||c.h==="#c8c8c8")b.style.border="2px solid #555";b.title=c.n;b.onclick=()=>{selectColor(i);if(FS.tool==="b")setTool("p");};el.appendChild(b);});
+}
+function selectColor(i){FS.ci=i;document.querySelectorAll(".pc-btn").forEach((b,j)=>b.classList.toggle("on",j===i));const c=COLS[i];const dot=document.getElementById("sel-dot");dot.style.background=c.h;dot.style.border=c.h==="#f0f0f0"?"1px solid #555":"none";document.getElementById("sel-name").textContent=c.n;}
+function setTool(t){
+  FS.tool=t;
+  document.getElementById("tb-p").classList.toggle("on",t==="p");
+  document.getElementById("tb-b").classList.toggle("on",t==="b");
+  document.getElementById("tb-m").classList.toggle("on",t==="m");
+  const wrap=document.getElementById("paint-wrap");
+  if(t==="m"){fcv.style.cursor="grab";wrap.style.cursor="grab";}else{fcv.style.cursor="crosshair";wrap.style.cursor="default";}
+}
+function drawAll(){fctx.clearRect(0,0,fcv.width,fcv.height);for(let r=0;r<FS.rows;r++)for(let c=0;c<FS.cols;c++)drawCell(c,r,FS.grid[r*FS.cols+c]);updateLegendLive();}
+function drawCell(c,r,ci){fctx.fillStyle=ci>=0?COLS[ci].h:"#f0f0f0";fctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);if(ci>=0&&CELL>=32){const nm=COLS[ci].n.split(" ")[0];const fs=Math.min(CELL*0.22,9);fctx.font="bold "+fs+"px sans-serif";fctx.fillStyle="rgba(0,0,0,0.35)";fctx.textAlign="center";fctx.textBaseline="middle";fctx.fillText(nm,c*CELL+CELL/2,r*CELL+CELL/2);}}
+function getCell(e){const rect=fcv.getBoundingClientRect();const sx=fcv.width/rect.width,sy=fcv.height/rect.height;let x,y;if(e.touches&&e.touches.length){x=e.touches[0].clientX;y=e.touches[0].clientY;}else{x=e.clientX;y=e.clientY;}return{c:Math.floor((x-rect.left)*sx/CELL),r:Math.floor((y-rect.top)*sy/CELL)};}
+let _lastPaintIdx=-1; // evitar push duplicado por arrastre
+function fpaint(e){const{c,r}=getCell(e);if(c<0||c>=FS.cols||r<0||r>=FS.rows)return;const idx=r*FS.cols+c;const nci=FS.tool==="p"?FS.ci:-1;if(FS.grid[idx]===nci)return;if(_lastPaintIdx===-1)pushHistory();_lastPaintIdx=idx;FS.grid[idx]=nci;drawCell(c,r,nci);updateLegendLive();}
+let scrollStart={x:0,y:0,sl:0,st:0};
+function bindEvents(){
+  const wrap=document.getElementById("paint-wrap");
+  fcv.onmousedown=e=>{if(FS.tool==="m"){fpainting=true;scrollStart={x:e.clientX,y:e.clientY,sl:wrap.scrollLeft,st:wrap.scrollTop};fcv.style.cursor="grabbing";}else{fpainting=true;fpaint(e);}};
+  fcv.onmousemove=e=>{if(!fpainting)return;if(FS.tool==="m"){wrap.scrollLeft=scrollStart.sl-(e.clientX-scrollStart.x);wrap.scrollTop=scrollStart.st-(e.clientY-scrollStart.y);}else{fpaint(e);}};
+  fcv.onmouseup=fcv.onmouseleave=()=>{fpainting=false;_lastPaintIdx=-1;if(FS.tool==="m")fcv.style.cursor="grab";};
+  fcv.ontouchstart=e=>{if(FS.tool==="m"){fpainting=true;scrollStart={x:e.touches[0].clientX,y:e.touches[0].clientY,sl:wrap.scrollLeft,st:wrap.scrollTop};}else{e.preventDefault();fpainting=true;fpaint(e);}};
+  fcv.ontouchmove=e=>{if(!fpainting)return;if(FS.tool==="m"){wrap.scrollLeft=scrollStart.sl-(e.touches[0].clientX-scrollStart.x);wrap.scrollTop=scrollStart.st-(e.touches[0].clientY-scrollStart.y);}else{e.preventDefault();fpaint(e);}};
+  fcv.ontouchend=e=>{if(FS.tool!=="m")e.preventDefault();fpainting=false;_lastPaintIdx=-1;};
+}
+function clearGrid(){pushHistory();FS.grid.fill(-1);drawAll();}
+function getGridCounts(){const cnt={};FS.grid.forEach(ci=>{if(ci>=0)cnt[ci]=(cnt[ci]||0)+1;});return cnt;}
+function getTotalCounts(){const cnt=getGridCounts();Object.entries(fadj).forEach(([ci,x])=>{if(x>0)cnt[ci]=(cnt[ci]||0)+x;});return cnt;}
+function updateLegendLive(){
+  const cnt=getGridCounts();const data=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+  const el=document.getElementById("legend-live");if(!el)return;
+  if(!data.length){el.innerHTML='<div style="color:var(--muted);font-size:12px;">Pintá las baldosas para ver el resumen.</div>';return;}
+  const totalGrid=data.reduce((s,[,p])=>s+p,0);
+  el.innerHTML=data.map(([ci,pz])=>{const c=COLS[+ci];
+    return`<div class="leg-row"><div class="leg-top"><div class="leg-dot" style="background:${c.h};${c.h==="#f0f0f0"?"border:1px solid #555":""}"></div><div class="leg-name">${c.n}</div><div class="leg-pzas">${fmtNum(pz)} pz</div></div><div class="leg-emb">En diseño: <strong>${pz} piezas</strong></div></div>`;
+  }).join("")+`<div class="total-emb"><div class="tl">Total en diseño</div><div class="tv">${totalGrid} piezas <span style="font-size:11px;font-weight:400;color:var(--muted);">de ${FS.pzas} a pedir</span></div></div>`;
+}
+function startAjuste(){
+  const cnt=getGridCounts();const gridPzas=Object.values(cnt).reduce((s,v)=>s+v,0);const sobrante=FS.pzas-gridPzas;
+  if(FS.m2cot<=0||gridPzas===0){document.getElementById("ajuste-nodims").style.display="block";document.getElementById("ajuste-ok").style.display="none";document.getElementById("ajuste-preview").style.display="none";return;}
+  document.getElementById("ajuste-nodims").style.display="none";
+  document.getElementById("ajuste-ok").style.display="block";document.getElementById("ajuste-preview").style.display="block";
+  const colUsados=Object.keys(cnt).map(Number);const newAdj={};colUsados.forEach(ci=>{newAdj[ci]=fadj[ci]||0;});fadj=newAdj;
+  const banner=document.getElementById("sob-banner");
+  if(sobrante<=0){banner.innerHTML=`<div class="sb-ok">✓ Sin sobrante</div><div class="sb-lbl">Las piezas coinciden exactamente</div>`;}
+  else{banner.innerHTML=`<div class="sb-num">${sobrante}</div><div class="sb-lbl">baldosa${sobrante!==1?"s":""} sobrante${sobrante!==1?"s":""} para repartir</div>`;}
+  renderAdjRows(cnt,sobrante);renderAdjPreview();
+}
+function renderAdjRows(cnt,sobrante){
+  const el=document.getElementById("adj-rows");el.innerHTML="";
+  Object.keys(cnt).map(Number).forEach(ci=>{const c=COLS[ci];const row=document.createElement("div");row.className="adj-row";row.innerHTML=`<div class="adj-dot" style="background:${c.h};${c.h==="#f0f0f0"?"border:1px solid #555":""}"></div><div class="adj-name">${c.n}</div><div class="adj-controls"><button class="adj-btn" onclick="changeAdj(${ci},-1)">−</button><div class="adj-val" id="adj-val-${ci}">${fadj[ci]||0}</div><button class="adj-btn" onclick="changeAdj(${ci},1)">+</button></div>`;el.appendChild(row);});
+  updateSobNum(sobrante);
+}
+function changeAdj(ci,delta){
+  const cnt=getGridCounts();const gridPzas=Object.values(cnt).reduce((s,v)=>s+v,0);const sobrante=FS.pzas-gridPzas;
+  const totalAdj=Object.values(fadj).reduce((s,v)=>s+v,0);const nuevo=(fadj[ci]||0)+delta;
+  if(nuevo<0)return;if(delta>0&&totalAdj>=sobrante){toast("Ya repartiste todo el sobrante");return;}
+  fadj[ci]=nuevo;const el=document.getElementById("adj-val-"+ci);if(el)el.textContent=nuevo;
+  updateSobNum(sobrante);renderAdjPreview();
+}
+function updateSobNum(sobrante){const totalAdj=Object.values(fadj).reduce((s,v)=>s+v,0);const rest=sobrante-totalAdj;const el=document.getElementById("sob-num");if(el){el.textContent=rest;el.style.color=rest===0?"var(--green)":"var(--accent)";}}
+function renderAdjPreview(){
+  const el=document.getElementById("legend-ajuste");if(!el)return;
+  const cnt=getGridCounts();const totalCnt=getTotalCounts();const data=Object.entries(totalCnt).sort((a,b)=>b[1]-a[1]);
+  if(!data.length){el.innerHTML="";return;}
+  const totalPz=data.reduce((s,[,p])=>s+p,0);
+  el.innerHTML=data.map(([ci,pzT])=>{const c=COLS[+ci];const pzG=cnt[ci]||0;const pzE=fadj[ci]||0;
+    return`<div class="leg-row"><div class="leg-top"><div class="leg-dot" style="background:${c.h};${c.h==="#f0f0f0"?"border:1px solid #555":""}"></div><div class="leg-name">${c.n}</div><div class="leg-pzas">${fmtNum(pzT)} pz</div></div><div class="leg-emb">Diseño: <strong>${pzG}</strong>${pzE>0?" + sobrante: <strong>"+pzE+"</strong>":""} · Embalaje: <strong>${embStr(pzT)}</strong></div></div>`;
+  }).join("")+`<div class="total-emb"><div class="tl">Total pedido embalado</div><div class="tv">${embStr(totalPz)} <span style="font-size:11px;font-weight:400;color:var(--muted);">(${totalPz} piezas)</span></div></div>`;
+}
+function buildResult(){
+  const n=document.getElementById("cNombre").value||"—";
+  const t=document.getElementById("cTel").value||"—";
+  const ci=document.getElementById("cCiudad").value||"—";
+  const em=document.getElementById("cEmail").value||"—";
+  const no=document.getElementById("cNota").value;
+  const dir=document.getElementById("cDireccion")?document.getElementById("cDireccion").value:"";
+  const entrega=FS.delivery==="envio"?"🚚 Envío"+(dir?" → "+dir:""):"📦 Retira en local";
+  document.getElementById("sum-client").innerHTML=`<b>${n}</b><br>${t} &nbsp;·&nbsp; ${ci}<br>${em}<br><span style="color:var(--muted);font-size:12px;">${entrega}</span>`+(no?`<br><i style="color:var(--muted);font-size:12px;">${no}</i>`:"");
+  const dim=FS.lR>0?FS.lR.toFixed(2)+"×"+FS.aR.toFixed(2)+" m":(FS.m2cot?FS.m2cot+" m²":"—");
+  document.getElementById("sum-dim").textContent=dim;
+  document.getElementById("sum-mcot").textContent=FS.m2cot?FS.m2cot+" m²":"—";
+  const pintadas=getPzasPintadas();
+  const pzasBase=pintadas>0?pintadas:FS.pzas;
+  const sinPintar=FS.pzas-pzasBase;
+  document.getElementById("sum-pzas").textContent=pintadas>0?fmtNum(pintadas)+(sinPintar>0?" ("+fmtNum(sinPintar)+" sin pintar)":""):FS.pzas||"—";
+  document.getElementById("sum-emb").textContent=pzasBase?embStr(pzasBase):"—";
+  const pm2=parseFloat(document.getElementById("pM2").value)||0,ppz=parseFloat(document.getElementById("pPz").value)||0;
+  const m2base=pzasBase/16;
+  const tm2=pm2>0?m2base*pm2:null,tpz=ppz>0?pzasBase*ppz:null,fin=tm2!==null?tm2:tpz;
+  document.getElementById("sum-total").textContent=fin!==null?fmt(fin):"—";
+  // Aviso en resumen si hay sin pintar
+  const resAviso=document.getElementById("sum-aviso-pintar");
+  if(resAviso){
+    if(sinPintar>0&&pintadas>0){resAviso.innerHTML=`⚠ <strong>${sinPintar} baldosas sin pintar</strong> en el diseño. Precio calculado sobre ${pzasBase} pintadas.`;resAviso.style.display="block";}
+    else{resAviso.style.display="none";}
+  }
+  buildLegendResult();
+}
+function buildLegendResult(){
+  const el=document.getElementById("legend-result");if(!el)return;
+  const cnt=getGridCounts();const totalCnt=getTotalCounts();const data=Object.entries(totalCnt).sort((a,b)=>b[1]-a[1]);
+  if(!data.length){el.innerHTML='<div style="color:var(--muted);font-size:12px;">Sin diseño pintado.</div>';return;}
+  const totalPz=data.reduce((s,[,p])=>s+p,0);
+  el.innerHTML=data.map(([ci,pzT])=>{const c=COLS[+ci];const pzG=cnt[ci]||0;const pzE=fadj[ci]||0;
+    return`<div class="leg-row"><div class="leg-top"><div class="leg-dot" style="background:${c.h};${c.h==="#f0f0f0"?"border:1px solid #555":""}"></div><div class="leg-name">${c.n}</div><div class="leg-pzas">${fmtNum(pzT)} pz</div></div><div class="leg-emb">${pzE>0?pzG+" diseño + "+pzE+" sobrante = "+pzT+" piezas<br>":""}Embalaje: <strong>${embStr(pzT)}</strong></div></div>`;
+  }).join("")+`<div class="total-emb"><div class="tl">Total pedido embalado</div><div class="tv">${embStr(totalPz)} <span style="font-size:11px;font-weight:400;color:var(--muted);">(${totalPz} piezas)</span></div></div>`;
+}
+function genPDF(){
+  const num="FF-"+Date.now().toString().slice(-6);
+  const dt=new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
+  const n=document.getElementById("cNombre").value||"—";
+  const t=document.getElementById("cTel").value||"—";
+  const city=document.getElementById("cCiudad").value||"—";
+  const em=document.getElementById("cEmail").value||"—";
+  const no=document.getElementById("cNota").value||"";
+  const dirEl=document.getElementById("cDireccion");
+  const dir=dirEl?dirEl.value:"";
+  const entrega=FS.delivery==="envio"?"Envio"+(dir?": "+dir:""):"Retira en local";
+  const dim=FS.lR>0?FS.lR.toFixed(2)+" x "+FS.aR.toFixed(2)+" m":FS.m2cot+" m2";
+
+  // Calcular precio CORRECTO por pintadas
+  const pm2=parseFloat(document.getElementById("pM2").value)||0;
+  const ppz=parseFloat(document.getElementById("pPz").value)||0;
+  const cnt=getGridCounts();
+  const totalCnt=getTotalCounts();
+  const pintadas=Object.values(totalCnt).reduce((s,v)=>s+v,0);
+  const sinPintar=FS.pzas-Object.values(cnt).reduce((s,v)=>s+v,0);
+  const m2pintado=pintadas/16;
+  const usarPintadas=pintadas>0;
+  const tm2=pm2>0?(usarPintadas?m2pintado*pm2:FS.m2cot*pm2):null;
+  const tpz=ppz>0?pintadas*ppz:null;
+  const fin=tm2!==null?tm2:tpz;
+
+  const data=Object.entries(totalCnt).sort((a,b)=>b[1]-a[1]);
+  const totalPz=data.reduce((s,[,p])=>s+p,0);
+
+  // Canvas con patrón de baldosa y marca de agua
+  let canvasDataUrl="";
+  if(fcv&&FS.grid.length>0){
+    const pc=document.createElement("canvas");
+    // Escalar al tamaño máximo para PDF (max 800x600px)
+    const MAX_W=800, MAX_H=560;
+    const scaleW=Math.min(1,MAX_W/fcv.width);
+    const scaleH=Math.min(1,MAX_H/fcv.height);
+    const scale=Math.min(scaleW,scaleH);
+    const drawW=Math.round(fcv.width*scale);
+    const drawH=Math.round(fcv.height*scale);
+    pc.width=drawW;pc.height=drawH;
+    const pctx=pc.getContext("2d");
+    pctx.scale(scale,scale);
+    pctx.fillStyle="#f8f8f8";pctx.fillRect(0,0,fcv.width,fcv.height);
+
+    // Dibujar baldosas
+    for(let r=0;r<FS.rows;r++){
+      for(let c=0;c<FS.cols;c++){
+        const ci=FS.grid[r*FS.cols+c];
+        const x=c*CELL,y=r*CELL; // scale ya aplicado en pctx.scale
+        if(ci>=0){
+          // Color base
+          pctx.fillStyle=COLS[ci].h;
+          pctx.fillRect(x+1,y+1,CELL-2,CELL-2);
+          // Patrón tejido sutil
+          pctx.save();
+          pctx.globalAlpha=0.12;
+          pctx.strokeStyle="#000";
+          pctx.lineWidth=0.6;
+          const step=Math.max(3,CELL/5);
+          for(let d=0;d<CELL*2;d+=step){
+            pctx.beginPath();pctx.moveTo(x+1,y+1+d);pctx.lineTo(x+1+d,y+1);pctx.stroke();
+            pctx.beginPath();pctx.moveTo(x+CELL-1-d,y+CELL-1);pctx.lineTo(x+CELL-1,y+CELL-1-d);pctx.stroke();
+          }
+          for(let d=0;d<CELL*2;d+=step){
+            pctx.beginPath();pctx.moveTo(x+1+d,y+CELL-1);pctx.lineTo(x+CELL-1,y+1+d);pctx.stroke();
+          }
+          pctx.restore();
+          // Borde
+          pctx.strokeStyle="rgba(0,0,0,0.12)";pctx.lineWidth=0.5;
+          pctx.strokeRect(x+1,y+1,CELL-2,CELL-2);
+        } else {
+          // Sin pintar — gris muy claro con borde
+          pctx.fillStyle="#ebebeb";
+          pctx.fillRect(x+1,y+1,CELL-2,CELL-2);
+          pctx.strokeStyle="rgba(0,0,0,0.06)";pctx.lineWidth=0.4;
+          pctx.strokeRect(x+1,y+1,CELL-2,CELL-2);
+          // Marca X en las sin pintar
+          if(CELL>=16){
+            pctx.save();pctx.globalAlpha=0.15;pctx.strokeStyle="#888";pctx.lineWidth=0.8;
+            pctx.beginPath();pctx.moveTo(x+4,y+4);pctx.lineTo(x+CELL-4,y+CELL-4);pctx.stroke();
+            pctx.beginPath();pctx.moveTo(x+CELL-4,y+4);pctx.lineTo(x+4,y+CELL-4);pctx.stroke();
+            pctx.restore();
+          }
+        }
+      }
+    }
+
+    // Grilla
+    pctx.strokeStyle="rgba(0,0,0,0.07)";pctx.lineWidth=0.3;
+    for(let r=0;r<=FS.rows;r++){pctx.beginPath();pctx.moveTo(0,r*CELL);pctx.lineTo(fcv.width,r*CELL);pctx.stroke();}
+    for(let c=0;c<=FS.cols;c++){pctx.beginPath();pctx.moveTo(c*CELL,0);pctx.lineTo(c*CELL,fcv.height);pctx.stroke();}
+
+    // MARCA DE AGUA: texto "FlexiFloor" diagonal, sutil y limpio
+    pctx.save();
+    pctx.globalAlpha=0.06;
+    pctx.fillStyle="#000";
+    const fsize=Math.max(12,Math.min(24,CELL*1.5));
+    pctx.font="bold "+fsize+"px Arial";
+    pctx.translate(fcv.width/2,fcv.height/2);
+    pctx.rotate(-Math.PI/5);
+    const spacingX=fsize*6, spacingY=fsize*3.5;
+    for(let dx=-fcv.width*2;dx<fcv.width*2;dx+=spacingX){
+      for(let dy=-fcv.height*2;dy<fcv.height*2;dy+=spacingY){
+        pctx.fillText("FlexiFloor",dx,dy);
+      }
+    }
+    pctx.restore();
+
+    canvasDataUrl=pc.toDataURL("image/png");
+  }
+
+  // Leyenda por colores
+  const legendHTML=data.map(([ci,pzT])=>{
+    const c=COLS[+ci];
+    const pzG=cnt[ci]||0;const pzE=(fadj[ci]||0);
+    const cj=Math.floor(pzT/64),su=pzT%64;
+    const emb=[cj>0?cj+" cj":"",su>0?su+" u":""].filter(Boolean).join(" + ");
+    const isLight=["#FFFFFF","#D0D3D4","#9C9C93","#FFD100","#18BDEB","#27C7BD","#69BE28"].includes(c.h);
+    return "<div style='display:flex;align-items:center;gap:5px;padding:4px 6px;background:#f9f9f9;border:1px solid #ddd;border-radius:3px;margin:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;'>"
+      +"<div style='width:14px;height:14px;border-radius:2px;background:"+c.h+";flex-shrink:0;border:1px solid rgba(0,0,0,.15);-webkit-print-color-adjust:exact;print-color-adjust:exact;'></div>"
+      +"<span style='font-size:11px;font-weight:700;color:#333;'>"+c.n+"</span>"
+      +"<span style='font-size:11px;color:#cc3300;font-weight:700;'>"+new Intl.NumberFormat("es-AR").format(pzT)+"pz</span>"
+      +"<span style='font-size:9px;color:#888;'>"+emb+"</span>"
+      +"</div>";
+  }).join("");
+
+  const avisoSinPintar = sinPintar>0
+    ? "<div style='background:#fff8e6;border:1px solid #f59e0b;border-radius:4px;padding:5px 8px;font-size:10px;color:#92400e;margin-top:4px;'>"
+      +"<strong>"+sinPintar+" baldosas sin pintar</strong>. Precio calculado sobre "+pintadas+" pintadas."
+      +"</div>" : "";
+
+  let detPrecio="";
+  if(pm2>0&&usarPintadas) detPrecio="Por m2: "+fmt(pm2)+" x "+m2pintado.toFixed(2)+" m2 pintados";
+  else if(pm2>0) detPrecio="Por m2: "+fmt(pm2)+" x "+FS.m2cot+" m2";
+  if(ppz>0) detPrecio+=(detPrecio?" / ":"")+"Por pieza: "+fmt(ppz)+" x "+new Intl.NumberFormat("es-AR").format(pintadas)+" pzas";
+
+  const printHTML="<!DOCTYPE html><html><head><meta charset='UTF-8'>"
+  +"<style>"
+  +"@page{size:A4 landscape;margin:12mm 14mm;}"
+  +"*{box-sizing:border-box;margin:0;padding:0;}"
+  +"html,body{width:100%;height:100%;overflow:hidden;}"
+  +"body{font-family:'Segoe UI',Arial,sans-serif;color:#111;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}"
+  +".sheet{display:grid;grid-template-columns:3fr 1fr;gap:0;width:269mm;height:183mm;overflow:hidden;page-break-inside:avoid;}"
+  +".col-left{border-right:2px dashed #ccc;padding-right:6mm;display:flex;flex-direction:column;overflow:hidden;height:183mm;}"
+  +".col-right{padding-left:6mm;display:flex;flex-direction:column;overflow:hidden;height:183mm;}"
+  +".hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #2D76B8;padding-bottom:5px;margin-bottom:6px;}"
+  +".logo-text{font-size:22px;font-weight:900;letter-spacing:-1px;}"
+  +".logo-text span{color:#2D76B8;}"
+  +".logo-sub{font-size:8px;color:#888;letter-spacing:1px;text-transform:uppercase;display:block;}"
+  +".hdr-num{font-size:10px;font-weight:700;color:#cc3300;text-align:right;}"
+  +".hdr-dt{font-size:7px;color:#888;text-align:right;}"
+  +".cv-wrap{flex:1;border:1px solid #ddd;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:4px;background:#fafafa;max-height:110mm;}"
+  +".cv-wrap img{max-width:100%;max-height:100%;object-fit:contain;}"
+  +".legend-wrap{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px;}"
+  +".total-emb{background:#f0fff0;border:1px solid #3a9000;border-radius:3px;padding:4px 7px;margin-top:3px;width:100%;}"
+  +".total-emb-lbl{font-size:7px;letter-spacing:1px;text-transform:uppercase;color:#888;}"
+  +".total-emb-val{font-size:12px;font-weight:700;color:#226600;}"
+  +".sec{margin-bottom:7px;}"
+  +".sec-title{font-size:7px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#2D76B8;margin-bottom:3px;padding-bottom:2px;border-bottom:1px solid #eee;}"
+  +".line{font-size:13px;line-height:1.5;font-weight:600;}"
+  +".line-sm{font-size:11px;line-height:1.5;color:#444;}"
+  +".dgrid{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:5px;}"
+  +".dbox{background:#f5f5f5;border:1px solid #ddd;border-radius:2px;padding:4px 6px;}"
+  +".dbox .v{font-size:13px;font-weight:700;line-height:1.2;}"
+  +".dbox .v.ac{color:#cc3300;}"
+  +".dbox .v.gr{color:#226600;}"
+  +".dbox .l{font-size:7px;letter-spacing:.5px;text-transform:uppercase;color:#888;}"
+  +".total-box{background:#f0f7ff;border:1.5px solid #2D76B8;border-radius:3px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}"
+  +".total-box .l{font-size:7px;letter-spacing:1px;text-transform:uppercase;color:#888;}"
+  +".total-box .v{font-size:18px;font-weight:700;color:#cc3300;}"
+  +".footer{font-size:7px;color:#aaa;text-align:center;margin-top:auto;border-top:1px solid #eee;padding-top:4px;}"
+  +"</style></head><body>"
+  +"<div class='sheet'>"
+  +"<div class='col-left'>"
+  +"<div class='hdr'>"
+  +"<div><span class='logo-text'>Flexi<span>Floor</span><sup style='font-size:10px;'>®</sup></span><span class='logo-sub'>Baldosas Plasticas Encastrables</span></div>"
+  +"<div><div class='hdr-num'>N° "+num+"</div><div class='hdr-dt'>Fecha: "+dt+"</div></div>"
+  +"</div>"
+  +"<div style='font-size:9px;color:#888;margin-bottom:4px;'>"+dim+" &middot; "+new Intl.NumberFormat("es-AR").format(FS.pzas)+" piezas del espacio</div>"
+  +"<div class='cv-wrap'>"+(canvasDataUrl?"<img src='"+canvasDataUrl+"'/>":"<div style='color:#ccc;font-size:12px;padding:40px;'>Sin diseno</div>")+"</div>"
+  +(sinPintar>0?"<div style='font-size:8px;color:#666;margin-top:2px;'>Las celdas con X son baldosas sin pintar ("+sinPintar+" baldosas)</div>":"")
+  +"<div class='legend-wrap'>"+legendHTML
+  +"<div class='total-emb'><div class='total-emb-lbl'>Total pedido embalado</div>"
+  +"<div class='total-emb-val'>"+embStr(totalPz)+" &middot; "+new Intl.NumberFormat("es-AR").format(totalPz)+" piezas</div></div>"
+  +"</div>"
+  +"</div>"
+  +"<div class='col-right'>"
+  +"<div class='hdr'><span style='font-size:10px;font-weight:700;color:#2D76B8;letter-spacing:1px;'>PRESUPUESTO</span>"
+  +"<div><div class='hdr-num'>N° "+num+"</div><div class='hdr-dt'>"+dt+"</div></div></div>"
+  +"<div class='sec'><div class='sec-title'>Cliente</div>"
+  +"<div class='line'><b>"+n+"</b></div>"
+  +"<div class='line'>"+t+" &middot; "+city+"</div>"
+  +"<div class='line-sm'>"+em+"</div>"
+  +"<div class='line-sm' style='margin-top:4px;'>"+entrega+"</div>"
+  +"</div>"
+  +"<div class='sec'><div class='sec-title'>Medidas</div>"
+  +"<div class='dgrid'>"
+  +"<div class='dbox'><div class='v'>"+dim+"</div><div class='l'>Dimensiones</div></div>"
+  +"<div class='dbox'><div class='v ac'>"+FS.m2cot+" m2</div><div class='l'>M2 cotizados</div></div>"
+  +"<div class='dbox'><div class='v gr'>"+new Intl.NumberFormat("es-AR").format(pintadas)+"</div><div class='l'>Piezas cotizadas</div></div>"
+  +"<div class='dbox'><div class='v gr'>"+embStr(pintadas)+"</div><div class='l'>Embalaje</div></div>"
+  +"</div>"
+  +(sinPintar>0?"<div style='background:#fff8e6;border:1px solid #f59e0b;border-radius:3px;padding:4px 7px;font-size:9px;color:#92400e;margin-bottom:5px;'><strong>"+sinPintar+" baldosas sin pintar</strong>. Precio sobre "+pintadas+" pintadas.</div>":"")
+  +"</div>"
+  +"<div class='sec'><div class='sec-title'>Precio</div>"
+  +"<div class='total-box'><div class='l'>Total estimado</div><div class='v'>"+(fin!==null?fmt(fin):"—")+"</div></div>"
+  +"<div style='font-size:9px;color:#888;line-height:1.6;'>"+detPrecio+"</div>"
+  +"</div>"
+  +(no?"<div class='sec'><div class='sec-title'>Observaciones</div><div style='font-size:11px;color:#444;line-height:1.6;'>"+no+"</div></div>":"")
+  +"<div class='footer'>FlexiFloor® &mdash; Baldosas Plasticas Encastrables<br>Validez del presupuesto: 7 dias corridos</div>"
+  +"</div></div></body></html>";
+
+  const win=window.open("","_blank");
+  win.document.write(printHTML);
+  win.document.close();
+  win.onload=()=>{win.print();};
+}
+function nuevoPresup(){
+  ["cNombre","cTel","cCiudad","cEmail","cNota","dL","dA","dM2","pM2","pPz","cDireccion"].forEach(id=>{const e=document.getElementById(id);if(e)e.value="";});
+  FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retiro"};
+  fadj={};setDelivery("retiro");
+  document.getElementById("dims-card").style.display="none";
+  fpg("fpg-client",document.querySelectorAll(".flexi-nav button")[0]);
+  toast("Nuevo presupuesto listo","ok");
+}
+</script>
+
+</body>
+</html>
