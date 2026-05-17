@@ -481,7 +481,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
             <button class="tool-btn on" id="tb-p" onclick="setTool('p')">✏ Pintar</button>
             <button class="tool-btn" id="tb-b" onclick="setTool('b')">✕ Borrar</button>
             <button class="tool-btn" id="tb-m" onclick="setTool('m')" style="font-size:16px;">✋ Mover</button>
-            <button class="tool-btn" onclick="undoPaint()" title="Deshacer último trazo (Ctrl+Z)">↩ Deshacer</button>
+            
             <button class="tool-btn" onclick="undoGrid()">↩ Deshacer</button>
             <button class="tool-btn" onclick="clearGrid()">⟳ Limpiar</button>
           </div>
@@ -570,6 +570,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
         </div>
         <button class="fbtn fbtn-pri" onclick="genPDF()" style="margin-top:8px;">⬇ Imprimir / Guardar PDF</button>
         <button class="fbtn fbtn-logi" onclick="abrirModalLogiflow()">◈ Confirmar y enviar a LogiFlow</button>
+        <button class="fbtn" onclick="guardarPresupuestoActual()" style="background:linear-gradient(135deg,#00C9A7,#00a085);color:#fff;border:none;">💾 Guardar presupuesto</button>
         <button class="fbtn fbtn-sec" onclick="nuevoPresup()">✕ Nuevo presupuesto</button>
       </div>
 
@@ -577,7 +578,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div><!-- /sec-flexi -->
 
   <!-- SECCIÓN: PRESUPUESTOS GUARDADOS -->
-  <div class="section" id="sec-presupuestos">
+  <div class="section" id="sec-presupuestos"><a id="top-presupuestos"></a>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
       <div>
         <h2 style="font-size:18px;font-weight:800;color:#F1F5F9;">💾 Presupuestos Guardados</h2>
@@ -596,7 +597,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div>
 
   <!-- SECCIÓN: CALCULADORA -->
-  <div class="section" id="sec-calc">
+  <div class="section" id="sec-calc"><a id="top-calc"></a>
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:20px;">
       <div style="font-size:48px;">🧮</div>
       <div style="text-align:center;">
@@ -611,7 +612,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div></div>
 
   <!-- SECCIÓN: KANBAN -->
-  <div class="section" id="sec-kanban">
+  <div class="section" id="sec-kanban"><a id="top-kanban"></a>
     <div class="kanban-stats" id="kanban-stats"></div>
     <div class="kanban-board" id="kanban-board">
       <div style="color:#475569;padding:40px;font-size:13px;">Cargando pedidos...</div>
@@ -619,7 +620,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div>
 
   <!-- SECCIÓN: HISTORIAL -->
-  <div class="section" id="sec-historial">
+  <div class="section" id="sec-historial"><a id="top-historial"></a>
     <div class="historial-filters">
       <input class="hist-input" id="hist-search" placeholder="Buscar cliente, N° pedido..." oninput="renderHistorial()" style="flex:1;min-width:200px;">
       <input class="hist-input" id="hist-fecha" type="date" onchange="renderHistorial()" style="width:150px;">
@@ -633,7 +634,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div>
 
   <!-- SECCIÓN: USUARIOS (solo admin) -->
-  <div class="section" id="sec-usuarios">
+  <div class="section" id="sec-usuarios"><a id="top-usuarios"></a>
     <button class="btn-add-user" onclick="abrirModalUsuario()">+ Nuevo usuario</button>
     <div class="usuarios-grid" id="usuarios-grid">Cargando...</div>
   </div>
@@ -821,9 +822,9 @@ const SIG_ESTADO = {pendiente:"preparado",preparado:"embalado",listo_retirar:"en
 const ANT_ESTADO = {preparado:"pendiente",embalado:"preparado",listo_retirar:"embalado",listo_despachar:"embalado",entregado:"listo_retirar",despachado:"listo_despachar"};
 const LABEL_ACCION = {pendiente:"▶ Iniciar Preparación",preparado:"⬡ Marcar Embalado",listo_retirar:"◎ Confirmar Entrega",listo_despachar:"✈ Confirmar Despacho"};
 const ROL_TABS = {
-  admin:   [{id:"sec-flexi",label:"◈ Presupuesto"},{id:"sec-presupuestos",label:"💾 Guardados"},{id:"sec-kanban",label:"⬡ Kanban"},{id:"sec-historial",label:"📋 Historial"},{id:"sec-calc",label:"🧮 Calculadora"},{id:"sec-usuarios",label:"👤 Usuarios"}],
-  deposito:[{id:"sec-kanban",label:"⬡ Kanban"},{id:"sec-historial",label:"📋 Historial"}],
-  entrega: [{id:"sec-kanban",label:"⬡ Kanban"},{id:"sec-historial",label:"📋 Historial"}],
+  admin:   [{id:"sec-flexi",label:"◈ Presupuesto"},{id:"sec-presupuestos",label:"💾 Guardados"},{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"},{id:"sec-calc",label:"🧮 Calculadora"},{id:"sec-usuarios",label:"👤 Usuarios"}],
+  deposito:[{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"}],
+  entrega: [{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"}],
 };
 const ROL_ICONS = {admin:"◈",deposito:"⬡",entrega:"◎"};
 const ROL_COLORS = {admin:"#6C63FF",deposito:"#00C9A7",entrega:"#FF6B6B"};
@@ -954,14 +955,15 @@ function showSection(id, btn){
   document.getElementById(id).classList.add("on");
   if(btn) btn.classList.add("on");
   currentSection = id;
-  // Scroll inmediato al tope
-  window.scrollTo(0,0);
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
-  if(id==="sec-kanban"){ syncAll().then(()=>{ renderKanban(); window.scrollTo(0,0); }); }
-  else if(id==="sec-historial"){ syncAll().then(()=>{ renderHistorial(); window.scrollTo(0,0); }); }
-  else if(id==="sec-usuarios"){ syncAll().then(()=>{ renderUsuarios(); window.scrollTo(0,0); }); }
-  else if(id==="sec-presupuestos"){ syncAll().then(()=>{ renderPresupuestos(); window.scrollTo(0,0); }); }
+  // Scroll al tope usando el anchor de la sección
+  const anchorId = "top-"+id.replace("sec-","");
+  const anchor = document.getElementById(anchorId);
+  if(anchor) anchor.scrollIntoView({block:"start",behavior:"instant"});
+  else { window.scrollTo(0,0); document.documentElement.scrollTop=0; }
+  if(id==="sec-kanban"){ syncAll().then(()=>{ renderKanban(); if(anchor) anchor.scrollIntoView({block:"start",behavior:"instant"}); }); }
+  else if(id==="sec-historial"){ syncAll().then(()=>{ renderHistorial(); if(anchor) anchor.scrollIntoView({block:"start",behavior:"instant"}); }); }
+  else if(id==="sec-usuarios"){ syncAll().then(()=>{ renderUsuarios(); }); }
+  else if(id==="sec-presupuestos"){ syncAll().then(()=>{ renderPresupuestos(); }); }
   // calc abre en ventana nueva
 }
 
