@@ -15,7 +15,7 @@
   --blue:#6C63FF;--teal:#00C9A7;--red:#FF6B6B;--yellow:#F59E0B;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{min-height:100%;font-family:system-ui,-apple-system,sans-serif;}
+html{scroll-padding-top:55px;}html,body{min-height:100%;font-family:system-ui,-apple-system,sans-serif;}
 body{background:var(--bg);color:var(--white);}
 #app{min-height:100vh;display:flex;flex-direction:column;}
 button,input,select,textarea{font-family:inherit;}
@@ -84,7 +84,7 @@ html,body{height:100%;}
 /* ══════════════════════════════════════════════════════
    SECCIONES PRINCIPALES
 ══════════════════════════════════════════════════════ */
-.section{display:none;padding:16px 16px 40px;min-height:calc(100vh - 55px);}
+.section{display:none;padding:16px 16px 40px;}
 .section.on{display:block;}
 
 /* ══════════════════════════════════════════════════════
@@ -178,12 +178,12 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 /* ══════════════════════════════════════════════════════
    KANBAN
 ══════════════════════════════════════════════════════ */
-.kanban-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.kanban-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;margin-top:0;}
 .kstat{background:#1E293B;border:1px solid #334155;border-radius:10px;padding:10px 14px;
   display:flex;align-items:center;gap:8px;}
 .kstat-num{font-size:22px;font-weight:900;font-family:monospace;}
 .kstat-lbl{font-size:10px;color:#64748B;line-height:1.3;}
-.kanban-board{display:flex;gap:14px;overflow-x:auto;align-items:flex-start;padding-bottom:20px;}
+.kanban-board{display:flex;gap:14px;overflow-x:auto;align-items:flex-start;padding-bottom:20px;margin-top:0;}
 .k-col{flex:0 0 290px;background:#111827;border-radius:12px;border:1px solid #1E293B;overflow:hidden;}
 .k-col-header{padding:12px 14px;border-bottom:1px solid #1E293B;display:flex;justify-content:space-between;align-items:center;}
 .k-col-title{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.5px;}
@@ -716,11 +716,17 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
       <button class="modal-close" onclick="cerrarModal('modal-etiqueta')">✕</button>
     </div>
     <div class="modal-body">
-      <div style="display:flex;gap:10px;margin-bottom:16px;">
-        <select id="et-tipo" class="m-select" style="flex:1;margin-bottom:0;" onchange="renderEtiquetaPreview()">
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <select id="et-tipo" class="m-select" style="flex:1;min-width:160px;margin-bottom:0;" onchange="renderEtiquetaPreview()">
           <option value="privado">Envío privado</option>
           <option value="transporte">Via transporte / micro</option>
         </select>
+        <div style="display:flex;align-items:center;gap:6px;background:#0F172A;border:1px solid #334155;border-radius:8px;padding:0 12px;">
+          <span style="font-size:12px;color:#64748B;white-space:nowrap;">Bultos:</span>
+          <input id="et-bultos" type="number" min="1" max="99" value="1"
+            oninput="renderEtiquetaPreview()"
+            style="width:48px;background:transparent;border:none;color:#F1F5F9;font-size:14px;font-weight:700;text-align:center;outline:none;">
+        </div>
         <button onclick="imprimirEtiqueta()" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:0 16px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;">🖨 Imprimir</button>
       </div>
       <div id="etiqueta-preview-wrap"></div>
@@ -948,7 +954,12 @@ function showSection(id, btn){
   document.getElementById(id).classList.add("on");
   if(btn) btn.classList.add("on");
   currentSection = id;
-  window.scrollTo(0,0);
+  // Scroll al tope de la sección
+  setTimeout(()=>{
+    window.scrollTo({top:0, left:0, behavior:"instant"});
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, 50);
   if(id==="sec-kanban"){ syncAll().then(()=>renderKanban()); }
   else if(id==="sec-historial"){ syncAll().then(()=>renderHistorial()); }
   else if(id==="sec-usuarios"){ syncAll().then(()=>renderUsuarios()); }
@@ -1121,6 +1132,7 @@ function cardHTML(p, est){
       ` : ""}
       ${puedeRetroceder?`<button class="pc-btn-editar" onclick="cambiarEstado('${p.id}','${antEst}')" title="Volver estado anterior" style="font-size:11px;padding:8px;">← Volver</button>`:''}
       ${puedeEtiqueta?`<button class="pc-btn-etiqueta" onclick="abrirEtiqueta('${p.id}')" title="Imprimir etiqueta">🖨</button>`:''}
+      ${p.imagen_diseno?`<button class="pc-btn-etiqueta" onclick="verDiseno('${p.id}')" title="Ver diseño" style="font-size:13px;">🖼</button>`:''}
       ${puedeEditar?`<button class="pc-btn-editar" onclick="abrirEditarPedido('${p.id}')" title="Editar">✏</button>`:''}
       ${puedeEditar?`<button class="pc-btn-editar" onclick="eliminarPedido('${p.id}','${p.numero}')" title="Eliminar" style="color:#FF6B6B;" onmouseenter="this.style.borderColor='#FF6B6B'" onmouseleave="this.style.borderColor='#334155'">🗑</button>`:''}
     </div>
@@ -1332,6 +1344,9 @@ function renderHistorial(){
 function abrirEtiqueta(id){
   etiquetaPedidoActual = allPedidos.find(p=>p.id===id);
   if(!etiquetaPedidoActual) return;
+  // Resetear bultos
+  const bultoInput = document.getElementById("et-bultos");
+  if(bultoInput) bultoInput.value = "1";
   renderEtiquetaPreview();
   document.getElementById("modal-etiqueta").classList.add("on");
 }
@@ -1339,6 +1354,7 @@ function renderEtiquetaPreview(){
   const p = etiquetaPedidoActual;
   if(!p) return;
   const tipo = document.getElementById("et-tipo").value;
+  const totalBultos = parseInt(document.getElementById("et-bultos")?.value)||1;
   const UxCaja=64, KgxCaja=14;
   const totalPzas = (p.productos||[]).reduce((s,pr)=>s+parseInt(pr.cantidad||1),0);
   const totalCajas = Math.floor(totalPzas/UxCaja);
@@ -1388,7 +1404,19 @@ function renderEtiquetaPreview(){
     ${p.observaciones?`<div class="et-section"><div class="et-stitle">Observaciones</div><div class="et-sub">${p.observaciones}</div></div>`:''}
     <div class="et-footer">FlexiFloor · Sistema Logístico · ${new Date().toLocaleDateString("es-AR")}</div>
   </div>`;
-  document.getElementById("etiqueta-preview-wrap").innerHTML = html;
+
+  // Generar todas las etiquetas (una por bulto)
+  let allHtml = "";
+  for(let b=1; b<=totalBultos; b++){
+    const bultoTag = '<div style="font-size:10px;font-weight:700;color:#cc3300;margin-top:2px;">BULTO '+b+' de '+totalBultos+'</div>';
+    const bHtml = html.replace(
+      '<div class="et-num"><div class="num">#'+p.numero+'</div>',
+      '<div class="et-num"><div class="num">#'+p.numero+'</div>'+bultoTag
+    );
+    allHtml += bHtml;
+    if(b < totalBultos) allHtml += '<div style="border-top:2px dashed #ccc;margin:10px 0;page-break-after:always;"></div>';
+  }
+  document.getElementById("etiqueta-preview-wrap").innerHTML = allHtml;
 }
 function imprimirEtiqueta(){
   const target = document.getElementById("etiqueta-print-target");
@@ -1600,6 +1628,78 @@ async function confirmarEnvioLogiflow(){
   const prods=buildProductosLogi();
   if(!prods.length){errEl.textContent="⚠ Sin productos. Pintá el diseño primero.";errEl.style.display="block";return;}
   errEl.style.display="none";
+  // Capturar imagen del diseño + datos del presupuesto
+  let imagenDiseno="";
+  let datosPresupuesto=null;
+  if(fcv&&FS.grid.some(v=>v>=0)){
+    try{
+      const pc=document.createElement("canvas");
+      const MAX=800;
+      const sc=Math.min(1,MAX/Math.max(fcv.width,fcv.height));
+      pc.width=Math.round(fcv.width*sc);pc.height=Math.round(fcv.height*sc);
+      const pctx=pc.getContext("2d");
+      pctx.scale(sc,sc);
+      pctx.fillStyle="#f8f8f8";pctx.fillRect(0,0,fcv.width,fcv.height);
+      for(let r=0;r<FS.rows;r++)for(let c=0;c<FS.cols;c++){
+        const ci=FS.grid[r*FS.cols+c];
+        if(ci>=0){
+          pctx.fillStyle=COLS[ci].h;
+          pctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);
+          // Patrón tejido
+          pctx.save();pctx.globalAlpha=0.12;pctx.strokeStyle="#000";pctx.lineWidth=0.6;
+          const step=Math.max(3,CELL/5);
+          for(let d=0;d<CELL*2;d+=step){
+            pctx.beginPath();pctx.moveTo(c*CELL+1,r*CELL+1+d);pctx.lineTo(c*CELL+1+d,r*CELL+1);pctx.stroke();
+            pctx.beginPath();pctx.moveTo(c*CELL+1+d,r*CELL+CELL-1);pctx.lineTo(c*CELL+CELL-1,r*CELL+1+d);pctx.stroke();
+          }
+          pctx.restore();
+          pctx.strokeStyle="rgba(0,0,0,0.1)";pctx.lineWidth=0.5;
+          pctx.strokeRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);
+        } else {
+          pctx.fillStyle="#ebebeb";pctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);
+        }
+      }
+      // Grilla
+      pctx.strokeStyle="rgba(0,0,0,0.06)";pctx.lineWidth=0.3;
+      for(let r2=0;r2<=FS.rows;r2++){pctx.beginPath();pctx.moveTo(0,r2*CELL);pctx.lineTo(fcv.width,r2*CELL);pctx.stroke();}
+      for(let c2=0;c2<=FS.cols;c2++){pctx.beginPath();pctx.moveTo(c2*CELL,0);pctx.lineTo(c2*CELL,fcv.height);pctx.stroke();}
+      // Marca de agua
+      pctx.save();pctx.globalAlpha=0.05;pctx.fillStyle="#000";
+      const fsize=Math.max(12,Math.min(20,CELL*1.2));
+      pctx.font="bold "+fsize+"px Arial";
+      pctx.translate(fcv.width/2,fcv.height/2);pctx.rotate(-Math.PI/5);
+      for(let dx=-fcv.width*2;dx<fcv.width*2;dx+=fsize*6)
+        for(let dy=-fcv.height*2;dy<fcv.height*2;dy+=fsize*3.5)
+          pctx.fillText("FlexiFloor",dx,dy);
+      pctx.restore();
+      imagenDiseno=pc.toDataURL("image/jpeg",0.75);
+    }catch(e){console.log("Error capturando canvas:",e);}
+  }
+  // Datos completos del presupuesto para re-generar PDF desde kanban
+  const pm2v=parseFloat(document.getElementById("pM2").value)||0;
+  const ppzv=parseFloat(document.getElementById("pPz").value)||0;
+  const cntv=getGridCounts(),totalCntv=getTotalCounts();
+  const pintadasv=Object.values(totalCntv).reduce((s,v)=>s+v,0);
+  const sinPintarv=FS.pzas-Object.values(cntv).reduce((s,v)=>s+v,0);
+  const m2pintadov=pintadasv/16;
+  const finv=pm2v>0?(sinPintarv<FS.pzas?m2pintadov*pm2v:FS.m2cot*pm2v):ppzv>0?pintadasv*ppzv:null;
+  datosPresupuesto={
+    num:"FF-"+Date.now().toString().slice(-6),
+    dt:new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"}),
+    cliente:document.getElementById("lf-cliente").value||document.getElementById("cNombre").value||"",
+    tel:document.getElementById("lf-telefono").value||document.getElementById("cTel").value||"",
+    ciudad:document.getElementById("lf-ciudad").value||document.getElementById("cCiudad").value||"",
+    email:document.getElementById("cEmail").value||"",
+    obs:document.getElementById("cNota").value||"",
+    entrega:FS.delivery==="envio"?"Envio"+(document.getElementById("cDireccion")?.value?" → "+document.getElementById("cDireccion").value:""):"Retira en local",
+    dim:FS.lR>0?FS.lR.toFixed(2)+" x "+FS.aR.toFixed(2)+" m":FS.m2cot+" m2",
+    m2cot:FS.m2cot, pzas:FS.pzas, pintadas:pintadasv, sinPintar:sinPintarv,
+    pm2:pm2v, ppz:ppzv, total:finv,
+    colores:Object.entries(totalCntv).sort((a,b)=>b[1]-a[1]).map(([ci,pzT])=>({
+      nombre:COLS[+ci].n, hex:COLS[+ci].h, cantidad:pzT,
+      cajas:Math.floor(pzT/64), sueltas:pzT%64
+    }))
+  };
   try{
     const {data:ult}=await db.from("pedidos").select("numero").order("numero",{ascending:false}).limit(1);
     const numero=((ult&&ult[0]&&ult[0].numero)||1000)+1;
@@ -1613,7 +1713,9 @@ async function confirmarEnvioLogiflow(){
       fecha:new Date().toLocaleDateString("es-AR"),
       creado_por:currentUser?.nombre||"FlexiFloor",
       cliente,telefono,direccion:direccion||ciudad,
-      observaciones:obsCompleto,productos:prods,origen_flexi:true,historial_estados:[]
+      observaciones:obsCompleto,productos:prods,origen_flexi:true,historial_estados:[],
+      imagen_diseno:imagenDiseno||null,
+      datos_presupuesto:datosPresupuesto||null
     });
     cerrarModal("modal-logi");
     toast("Pedido #"+numero+" enviado a LogiFlow ✓","ok");
@@ -1746,6 +1848,104 @@ async function confirmarDespacho(){
 
 function abrirCalculadora(){
   window.open("calculadora-covin.html","_blank");
+}
+
+function verDiseno(id){
+  const p = allPedidos.find(x=>x.id===id);
+  if(!p||!p.imagen_diseno) return;
+  const d = p.datos_presupuesto||{};
+  const img = p.imagen_diseno;
+  const fmtAR = n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n);
+  const embStr2 = pz=>{const cj=Math.floor(pz/64),su=pz%64;return[cj>0?cj+" cj":"",su>0?su+" u":""].filter(Boolean).join(" + ")||"0 u";};
+
+  const legendHTML = (d.colores||[]).map(c=>{
+    const isLight=["#FFFFFF","#D0D3D4","#9C9C93","#FFD100","#18BDEB","#27C7BD","#69BE28"].includes(c.hex);
+    return "<div style='display:flex;align-items:center;gap:5px;padding:4px 6px;background:#f9f9f9;border:1px solid #ddd;border-radius:3px;margin:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;'>"
+      +"<div style='width:14px;height:14px;border-radius:2px;background:"+c.hex+";flex-shrink:0;border:1px solid rgba(0,0,0,.15);-webkit-print-color-adjust:exact;print-color-adjust:exact;'></div>"
+      +"<span style='font-size:11px;font-weight:700;color:#333;'>"+c.nombre+"</span>"
+      +"<span style='font-size:11px;color:#cc3300;font-weight:700;'>"+new Intl.NumberFormat("es-AR").format(c.cantidad)+"pz</span>"
+      +"<span style='font-size:9px;color:#888;'>"+embStr2(c.cantidad)+"</span>"
+      +"</div>";
+  }).join("");
+
+  const totalPz = (d.colores||[]).reduce((s,c)=>s+c.cantidad,0);
+  const sinPintar = d.sinPintar||0;
+
+  const printHTML="<!DOCTYPE html><html><head><meta charset='UTF-8'>"
+  +"<style>"
+  +"@page{size:A4 landscape;margin:12mm 14mm;}"
+  +"*{box-sizing:border-box;margin:0;padding:0;}"
+  +"html,body{width:100%;height:100%;overflow:hidden;}"
+  +"body{font-family:'Segoe UI',Arial,sans-serif;color:#111;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}"
+  +".sheet{display:grid;grid-template-columns:3fr 1fr;gap:0;width:269mm;height:183mm;overflow:hidden;}"
+  +".col-left{border-right:2px dashed #ccc;padding-right:6mm;display:flex;flex-direction:column;overflow:hidden;}"
+  +".col-right{padding-left:6mm;display:flex;flex-direction:column;overflow:hidden;}"
+  +".hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #2D76B8;padding-bottom:5px;margin-bottom:6px;}"
+  +".logo{font-size:22px;font-weight:900;letter-spacing:-1px;}"
+  +".logo span{color:#2D76B8;}"
+  +".logo small{display:block;font-size:8px;color:#888;letter-spacing:1px;text-transform:uppercase;font-weight:400;}"
+  +".num{font-size:10px;font-weight:700;color:#cc3300;text-align:right;}"
+  +".dt{font-size:7px;color:#888;text-align:right;}"
+  +".cv{flex:1;border:1px solid #ddd;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:4px;background:#fafafa;max-height:110mm;}"
+  +".cv img{max-width:100%;max-height:100%;object-fit:contain;}"
+  +".legend{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px;}"
+  +".emb-total{background:#f0fff0;border:1px solid #3a9000;border-radius:3px;padding:4px 7px;margin-top:3px;width:100%;}"
+  +".sec{margin-bottom:7px;}"
+  +".stitle{font-size:7px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#2D76B8;margin-bottom:3px;padding-bottom:2px;border-bottom:1px solid #eee;}"
+  +".line{font-size:13px;line-height:1.5;font-weight:600;}"
+  +".lsm{font-size:11px;line-height:1.5;color:#444;}"
+  +".dgrid{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:5px;}"
+  +".dbox{background:#f5f5f5;border:1px solid #ddd;border-radius:2px;padding:4px 6px;}"
+  +".dbox .v{font-size:13px;font-weight:700;line-height:1.2;}"
+  +".dbox .ac{color:#cc3300;}.dbox .gr{color:#226600;}"
+  +".dbox .l{font-size:7px;letter-spacing:.5px;text-transform:uppercase;color:#888;}"
+  +".tbox{background:#f0f7ff;border:1.5px solid #2D76B8;border-radius:3px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}"
+  +".tbox .l{font-size:7px;letter-spacing:1px;text-transform:uppercase;color:#888;}"
+  +".tbox .v{font-size:18px;font-weight:700;color:#cc3300;}"
+  +".footer{font-size:7px;color:#aaa;text-align:center;margin-top:auto;border-top:1px solid #eee;padding-top:4px;}"
+  +"@media print{button{display:none;}}"
+  +"</style></head><body>"
+  +"<button onclick='window.print()' style='position:fixed;top:10px;right:10px;background:#2D76B8;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:14px;font-weight:700;z-index:999;'>🖨 Imprimir PDF</button>"
+  +"<div class='sheet'>"
+  +"<div class='col-left'>"
+  +"<div class='hdr'><div class='logo'>Flexi<span>Floor</span><sup style='font-size:10px;'>®</sup><small>Baldosas Plasticas Encastrables</small></div>"
+  +"<div><div class='num'>N° "+(d.num||"FF-"+p.numero)+"</div><div class='dt'>Fecha: "+(d.dt||p.fecha)+"</div></div></div>"
+  +"<div style='font-size:9px;color:#888;margin-bottom:4px;'>"+(d.dim||"")+" · "+new Intl.NumberFormat("es-AR").format(d.pzas||0)+" piezas del espacio</div>"
+  +"<div class='cv'><img src='"+img+"'></div>"
+  +(sinPintar>0?"<div style='font-size:8px;color:#666;margin-top:2px;'>Las celdas claras son baldosas sin pintar ("+sinPintar+" baldosas)</div>":"")
+  +"<div class='legend'>"+legendHTML
+  +"<div class='emb-total'><div style='font-size:7px;letter-spacing:1px;text-transform:uppercase;color:#888;'>Total pedido embalado</div>"
+  +"<div style='font-size:12px;font-weight:700;color:#226600;'>"+embStr2(totalPz)+" · "+new Intl.NumberFormat("es-AR").format(totalPz)+" piezas</div></div>"
+  +"</div></div>"
+  +"<div class='col-right'>"
+  +"<div class='hdr'><span style='font-size:10px;font-weight:700;color:#2D76B8;letter-spacing:1px;'>PRESUPUESTO</span>"
+  +"<div><div class='num'>N° "+(d.num||"FF-"+p.numero)+"</div><div class='dt'>"+(d.dt||p.fecha)+"</div></div></div>"
+  +"<div class='sec'><div class='stitle'>Cliente</div>"
+  +"<div class='line'><b>"+(d.cliente||p.cliente)+"</b></div>"
+  +"<div class='line'>"+(d.tel||p.telefono||"")+(d.ciudad?" · "+d.ciudad:"")+"</div>"
+  +(d.email?"<div class='lsm'>"+d.email+"</div>":"")
+  +"<div class='lsm' style='margin-top:4px;'>"+(d.entrega||"")+"</div></div>"
+  +"<div class='sec'><div class='stitle'>Medidas</div>"
+  +"<div class='dgrid'>"
+  +"<div class='dbox'><div class='v'>"+(d.dim||"")+"</div><div class='l'>Dimensiones</div></div>"
+  +"<div class='dbox'><div class='v ac'>"+(d.m2cot||0)+" m2</div><div class='l'>M2 cotizados</div></div>"
+  +"<div class='dbox'><div class='v gr'>"+new Intl.NumberFormat("es-AR").format(d.pintadas||totalPz)+"</div><div class='l'>Piezas cotizadas</div></div>"
+  +"<div class='dbox'><div class='v gr'>"+embStr2(d.pintadas||totalPz)+"</div><div class='l'>Embalaje</div></div>"
+  +"</div>"
+  +(sinPintar>0?"<div style='background:#fff8e6;border:1px solid #f59e0b;border-radius:3px;padding:4px 7px;font-size:9px;color:#92400e;margin-bottom:5px;'><strong>"+sinPintar+" baldosas sin pintar</strong>. Precio sobre "+(d.pintadas||totalPz)+" pintadas.</div>":"")
+  +"</div>"
+  +"<div class='sec'><div class='stitle'>Precio</div>"
+  +"<div class='tbox'><div class='l'>Total estimado</div><div class='v'>"+(d.total!==null&&d.total!==undefined?fmtAR(d.total):"—")+"</div></div>"
+  +(d.pm2>0?"<div style='font-size:9px;color:#888;'>Por m2: "+fmtAR(d.pm2)+" x "+(d.pintadas?((d.pintadas/16).toFixed(2)):d.m2cot)+" m2</div>":"")
+  +(d.ppz>0?"<div style='font-size:9px;color:#888;'>Por pieza: "+fmtAR(d.ppz)+" x "+new Intl.NumberFormat("es-AR").format(d.pintadas||0)+" pzas</div>":"")
+  +"</div>"
+  +(d.obs?"<div class='sec'><div class='stitle'>Observaciones</div><div style='font-size:11px;color:#444;line-height:1.6;'>"+d.obs+"</div></div>":"")
+  +"<div class='footer'>FlexiFloor® — Baldosas Plasticas Encastrables<br>Validez del presupuesto: 7 dias corridos</div>"
+  +"</div></div></body></html>";
+
+  const win=window.open("","_blank");
+  win.document.write(printHTML);
+  win.document.close();
 }
 function cerrarModal(id){document.getElementById(id).classList.remove("on");}
 function toast(msg,tipo=""){
