@@ -730,6 +730,10 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
         </div>
         <button onclick="imprimirEtiqueta()" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:0 16px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;">🖨 Imprimir</button>
       </div>
+      <div style="margin-bottom:12px;">
+        <label class="m-label">Observaciones para la etiqueta <span style="color:#64748B;font-weight:400;">(solo aparece en la etiqueta)</span></label>
+        <textarea id="et-obs-etiqueta" class="m-input" style="min-height:52px;resize:vertical;" placeholder="Ej: Llamar antes de entregar, dejar en portería..." oninput="renderEtiquetaPreview()"></textarea>
+      </div>
       <div id="etiqueta-preview-wrap"></div>
     </div>
   </div>
@@ -1359,6 +1363,8 @@ function abrirEtiqueta(id){
   // Resetear bultos
   const bultoInput = document.getElementById("et-bultos");
   if(bultoInput) bultoInput.value = "1";
+  const obsEt = document.getElementById("et-obs-etiqueta");
+  if(obsEt) obsEt.value = "";
   renderEtiquetaPreview();
   document.getElementById("modal-etiqueta").classList.add("on");
 }
@@ -1367,66 +1373,77 @@ function renderEtiquetaPreview(){
   if(!p) return;
   const tipo = document.getElementById("et-tipo").value;
   const totalBultos = parseInt(document.getElementById("et-bultos")?.value)||1;
-  const UxCaja=64, KgxCaja=14;
-  const totalPzas = (p.productos||[]).reduce((s,pr)=>s+parseInt(pr.cantidad||1),0);
-  const totalCajas = Math.floor(totalPzas/UxCaja);
-  const totalSueltas = totalPzas%UxCaja;
-  const totalPeso = (p.productos||[]).reduce((s,pr)=>s+parseFloat(pr.peso||0)*parseInt(pr.cantidad||1),0);
-  const totalPrecio = (p.productos||[]).reduce((s,pr)=>s+parseFloat(pr.precio||0)*parseInt(pr.cantidad||1),0);
+  const obsEtiqueta = document.getElementById("et-obs-etiqueta")?.value||"";
 
+  const UxCajaE=64;
+  const totalPzas = (p.productos||[]).reduce((s,pr)=>s+parseInt(pr.cantidad||1),0);
+  const totalCajas = Math.floor(totalPzas/UxCajaE);
+  const totalSueltas = totalPzas%UxCajaE;
+
+  // Filas de productos — solo nombre, piezas y embalaje (sin peso ni precio)
   const prodRows = (p.productos||[]).map(pr=>{
     const pz=parseInt(pr.cantidad||1);
-    const cj=Math.floor(pz/UxCaja), su=pz%UxCaja;
-    const pesoLn=parseFloat(pr.peso||0)*pz; const pesoLnFmt=typeof fmtKg==='function'?fmtKg(pesoLn):pesoLn.toFixed(1)+' kg';
+    const cj=Math.floor(pz/UxCajaE), su=pz%UxCajaE;
+    const cajasStr=cj>0?cj+(cj===1?" Cj":" Cj"):"";
+    const sueltasStr=su>0?su+" u":"";
+    const emb=[cajasStr,sueltasStr].filter(Boolean).join(" + ")||pz+" u";
     return`<tr>
-      <td>${pr.nombre}</td>
-      <td style="text-align:center;">${pz}</td>
-      <td style="text-align:center;">${cj>0?cj+'cj':''}${cj>0&&su>0?' + ':''}${su>0?su+'u':''}</td>
-      <td style="text-align:right;">${fmtKg(pesoLn)}</td>
+      <td style="padding:5px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">${pr.nombre.replace(/^(Baldosa |FlexiFloor )/i,"")}</td>
+      <td style="padding:5px 0;border-bottom:1px solid #f0f0f0;text-align:center;font-size:13px;">${new Intl.NumberFormat("es-AR").format(pz)}</td>
+      <td style="padding:5px 0;border-bottom:1px solid #f0f0f0;text-align:right;font-size:13px;font-weight:700;">${emb}</td>
     </tr>`;
   }).join("");
 
   const html = `<div class="etiqueta-preview">
     <div class="et-header">
-      <div class="et-brand">FlexiFloor<small>DESPACHO DE PEDIDO</small></div>
+      <div class="et-brand">FlexiFloor<sup style="font-size:10px;">®</sup><small>DESPACHO DE PEDIDO</small></div>
       <div class="et-num"><div class="num">#${p.numero}</div><div class="fecha">${p.fecha}</div></div>
     </div>
     <div class="et-section">
       <div class="et-stitle">Destinatario</div>
-      <div class="et-name">${p.cliente}</div>
-      <div class="et-sub">${p.direccion||''}<br>☎ ${p.telefono||''}</div>
+      <div style="font-size:18px;font-weight:900;color:#111;margin-bottom:4px;">${p.cliente}</div>
+      <div style="font-size:14px;color:#333;line-height:1.6;">${p.direccion||""}</div>
+      <div style="font-size:14px;color:#333;">☎ ${p.telefono||""}</div>
     </div>
-    ${tipo==="transporte"?`<div class="et-section"><div class="et-stitle">Transporte</div><div class="et-sub">_______________________<br>Destino: ${p.direccion||''}</div></div>`:''}
+    ${tipo==="transporte"?`<div class="et-section"><div class="et-stitle">Transporte</div><div style="font-size:13px;color:#444;">_______________________<br>Destino: ${p.direccion||""}</div></div>`:""}
     <div class="et-section">
       <div class="et-stitle">Detalle de productos</div>
-      <table class="et-table">
-        <thead><tr><th>Producto</th><th style="text-align:center;">Pzas</th><th style="text-align:center;">Embalaje</th><th style="text-align:right;">Peso</th></tr></thead>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr>
+          <th style="text-align:left;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;padding:3px 0;border-bottom:1px solid #eee;">Producto</th>
+          <th style="text-align:center;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;padding:3px 0;border-bottom:1px solid #eee;">Pzas</th>
+          <th style="text-align:right;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;padding:3px 0;border-bottom:1px solid #eee;">Embalaje</th>
+        </tr></thead>
         <tbody>${prodRows}</tbody>
       </table>
     </div>
     <div class="et-section">
-      <div class="et-stitle">Totales del pedido</div>
-      <div class="et-totales">
-        <div class="et-tot-box"><div class="v">${totalPzas}</div><div class="l">Piezas totales</div></div>
-        <div class="et-tot-box"><div class="v ac">${totalCajas} cj${totalSueltas>0?' + '+totalSueltas+' u':''}</div><div class="l">Embalaje</div></div>
-        <div class="et-tot-box"><div class="v gr">${fmtKg(totalPeso)}</div><div class="l">Peso estimado</div></div>
-        ${totalPrecio>0?`<div class="et-tot-box"><div class="v ac">$${totalPrecio.toFixed(0)}</div><div class="l">Total</div></div>`:''}
+      <div class="et-stitle">Total del pedido</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div style="background:#f5f5f5;border:1px solid #ddd;border-radius:4px;padding:6px 12px;flex:1;text-align:center;">
+          <div style="font-size:20px;font-weight:900;color:#111;">${new Intl.NumberFormat("es-AR").format(totalPzas)}</div>
+          <div style="font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#888;">Piezas totales</div>
+        </div>
+        <div style="background:#f5f5f5;border:1px solid #cc3300;border-radius:4px;padding:6px 12px;flex:1;text-align:center;">
+          <div style="font-size:20px;font-weight:900;color:#cc3300;">${totalCajas>0?totalCajas+" Cj":""} ${totalSueltas>0?totalSueltas+" u":""}</div>
+          <div style="font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#888;">Embalaje total</div>
+        </div>
       </div>
     </div>
-    ${p.observaciones?`<div class="et-section"><div class="et-stitle">Observaciones</div><div class="et-sub">${p.observaciones}</div></div>`:''}
-    <div class="et-footer">FlexiFloor · Sistema Logístico · ${new Date().toLocaleDateString("es-AR")}</div>
+    ${obsEtiqueta?`<div class="et-section"><div class="et-stitle">Observaciones</div><div style="font-size:13px;color:#333;line-height:1.6;">${obsEtiqueta}</div></div>`:""}
+    <div class="et-footer">FlexiFloor® · Sistema Logístico · ${new Date().toLocaleDateString("es-AR")}</div>
   </div>`;
 
   // Generar todas las etiquetas (una por bulto)
   let allHtml = "";
   for(let b=1; b<=totalBultos; b++){
-    const bultoTag = '<div style="font-size:10px;font-weight:700;color:#cc3300;margin-top:2px;">BULTO '+b+' de '+totalBultos+'</div>';
+    const bultoTag = '<div style="font-size:11px;font-weight:700;color:#cc3300;margin-top:2px;">BULTO '+b+' de '+totalBultos+'</div>';
     const bHtml = html.replace(
-      '<div class="et-num"><div class="num">#'+p.numero+'</div>',
-      '<div class="et-num"><div class="num">#'+p.numero+'</div>'+bultoTag
+      '<div class="num">#'+p.numero+'</div>',
+      '<div class="num">#'+p.numero+'</div>'+bultoTag
     );
     allHtml += bHtml;
-    if(b < totalBultos) allHtml += '<div style="border-top:2px dashed #ccc;margin:10px 0;page-break-after:always;"></div>';
+    if(b < totalBultos) allHtml += '<div style="border-top:2px dashed #ccc;margin:16px 0;page-break-after:always;"></div>';
   }
   document.getElementById("etiqueta-preview-wrap").innerHTML = allHtml;
 }
