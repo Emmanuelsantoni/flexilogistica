@@ -1358,15 +1358,26 @@ function renderHistorial(){
 //  ETIQUETA
 // ═══════════════════════════════════════════════════════════════════
 function abrirEtiqueta(id){
-  etiquetaPedidoActual = allPedidos.find(p=>p.id===id);
-  if(!etiquetaPedidoActual) return;
-  // Resetear bultos
-  const bultoInput = document.getElementById("et-bultos");
-  if(bultoInput) bultoInput.value = "1";
-  const obsEt = document.getElementById("et-obs-etiqueta");
-  if(obsEt) obsEt.value = "";
-  renderEtiquetaPreview();
-  document.getElementById("modal-etiqueta").classList.add("on");
+  const p = allPedidos.find(x=>x.id===id);
+  if(!p) return;
+  // Determinar tipo según observaciones del pedido
+  let tipo = "privado";
+  if(p.observaciones && p.observaciones.includes("Retira en local")) tipo = "retira";
+  else if(p.despacho_transporte) tipo = "micro";
+  // Armar URL con datos del pedido
+  const params = new URLSearchParams({
+    pedido: "#"+p.numero,
+    nombre: p.cliente||"",
+    tel: p.telefono||"",
+    dir: p.direccion||"",
+    loc: "",
+    tipo: tipo,
+    transporte: p.despacho_transporte||"",
+    obs: p.despacho_numero ? "Ref: "+p.despacho_numero : ""
+  });
+  // Intentar abrir el sistema de etiquetas
+  const etiquetasURL = "FlexiFloor_Envios.html?"+params.toString();
+  window.open(etiquetasURL, "_blank");
 }
 function renderEtiquetaPreview(){
   const p = etiquetaPedidoActual;
