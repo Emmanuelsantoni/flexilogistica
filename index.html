@@ -766,6 +766,17 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div>
 </div>
 
+<!-- MODAL DETALLE PEDIDO (historial) -->
+<div class="modal-bg" id="modal-detalle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-detalle-title">📋 Detalle del pedido</span>
+      <button class="modal-close" onclick="cerrarModal('modal-detalle')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-detalle-body"></div>
+  </div>
+</div>
+
 <!-- MODAL DESPACHO -->
 <div class="modal-bg" id="modal-despacho">
   <div class="modal-box">
@@ -1345,12 +1356,16 @@ function renderHistorial(){
   const el = document.getElementById("historial-rows");
   if(!entregados.length){el.innerHTML='<div style="padding:20px;color:#475569;font-size:13px;">Sin resultados.</div>';return;}
   el.innerHTML = entregados.map(p=>`
-    <div class="hist-row">
+    <div class="hist-row" style="cursor:pointer;" onclick="verDetalleHistorial('${p.id}')"
+      onmouseenter="this.style.background='#1E293B44'" onmouseleave="this.style.background='transparent'">
       <div style="font-family:monospace;font-weight:700;color:#6C63FF;">#${p.numero}</div>
       <div><div style="font-weight:600;color:#F1F5F9;">${p.cliente}</div><div style="font-size:10px;color:#64748B;">${p.telefono||''}</div></div>
-      <div style="color:#94A3B8;font-size:11px;">${(p.productos||[]).map(pr=>pr.nombre+' ×'+pr.cantidad).join(', ')}</div>
+      <div style="color:#94A3B8;font-size:11px;">${(p.productos||[]).map(pr=>pr.nombre.replace(/^(Baldosa |FlexiFloor )/i,'')+' ×'+pr.cantidad).join(', ')}</div>
       <div style="color:#64748B;">${p.fecha}</div>
-      <div>${p.origen_flexi?'<span style="color:#6C63FF;font-size:10px;">◈ Flexi</span>':'<span style="color:#64748B;font-size:10px;">Manual</span>'}</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        ${p.origen_flexi?'<span style="color:#6C63FF;font-size:10px;">◈ Flexi</span>':'<span style="color:#64748B;font-size:10px;">Manual</span>'}
+        <span style="color:#94A3B8;font-size:13px;">👁</span>
+      </div>
     </div>`).join("");
 }
 
@@ -1786,6 +1801,92 @@ async function confirmarEnvioLogiflow(){
 // ═══════════════════════════════════════════════════════════════════
 //  USUARIOS
 // ═══════════════════════════════════════════════════════════════════
+// ═══ DETALLE HISTORIAL ══════════════════════════════════════════════════════
+function verDetalleHistorial(id){
+  const p = allPedidos.find(x=>x.id===id);
+  if(!p) return;
+
+  const ESTADO_LABELS = {
+    pendiente:"Pendiente", preparado:"En Preparación", embalado:"Embalado",
+    listo_retirar:"Listo para Retirar", listo_despachar:"Listo para Despachar",
+    entregado:"Entregado", despachado:"Despachado"
+  };
+  const ESTADO_COLORS = {
+    pendiente:"#94A3B8", preparado:"#F59E0B", embalado:"#6C63FF",
+    listo_retirar:"#00C9A7", listo_despachar:"#F97316",
+    entregado:"#10B981", despachado:"#8B5CF6"
+  };
+
+  // Timeline de estados
+  const hist = p.historial_estados || [];
+  // Agregar el estado inicial (creación)
+  const timeline = [
+    {estado:"pendiente", fecha:p.created_at||p.fecha, usuario:p.creado_por||"Sistema", esCreacion:true},
+    ...hist
+  ];
+
+  const timelineHTML = timeline.map((h,i)=>{
+    const color = ESTADO_COLORS[h.estado]||"#94A3B8";
+    const label = ESTADO_LABELS[h.estado]||h.estado;
+    // Formatear fecha
+    let fechaStr = h.fecha||"";
+    try {
+      if(fechaStr.includes("T")||fechaStr.includes("-")){
+        const d = new Date(fechaStr);
+        fechaStr = d.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"})
+          +" "+d.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
+      }
+    } catch(e){}
+    return `<div style="display:flex;gap:12px;margin-bottom:16px;">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+        <div style="width:14px;height:14px;border-radius:50%;background:${color};flex-shrink:0;margin-top:2px;"></div>
+        ${i<timeline.length-1?'<div style="width:2px;flex:1;background:#1E293B;margin:4px 0;"></div>':""}
+      </div>
+      <div style="flex:1;padding-bottom:8px;">
+        <div style="font-size:13px;font-weight:700;color:#F1F5F9;">${h.esCreacion?"Pedido creado":label}</div>
+        <div style="font-size:11px;color:#64748B;margin-top:2px;">${fechaStr}</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:1px;">👤 ${h.usuario||"—"}</div>
+        ${h.transporte?`<div style="font-size:11px;color:#F97316;margin-top:2px;">🚚 ${h.transporte}${h.numero?" · Ref: "+h.numero:""}</div>`:""}
+      </div>
+    </div>`;
+  }).join("");
+
+  // Productos
+  const prodsHTML = (p.productos||[]).map(pr=>{
+    const n=pr.nombre.replace(/^(Baldosa |FlexiFloor )/i,"");
+    const pz=parseInt(pr.cantidad||1);
+    const cj=Math.floor(pz/64),su=pz%64;
+    const emb=[cj>0?cj+" Cj":"",su>0?su+" u":""].filter(Boolean).join(" + ")||pz+" u";
+    return `<div style="display:flex;justify-content:space-between;font-size:12px;color:#94A3B8;padding:4px 0;border-bottom:1px solid #1E293B;">
+      <span style="color:#F1F5F9;">${n}</span>
+      <span>${new Intl.NumberFormat("es-AR").format(pz)} pz &nbsp;·&nbsp; ${emb}</span>
+    </div>`;
+  }).join("");
+
+  document.getElementById("modal-detalle-title").textContent = `📋 Pedido #${p.numero} — ${p.cliente}`;
+  document.getElementById("modal-detalle-body").innerHTML = `
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;color:#64748B;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Datos del pedido</div>
+      <div style="background:#0F172A;border-radius:8px;padding:12px 14px;">
+        <div style="font-size:15px;font-weight:700;color:#F1F5F9;margin-bottom:4px;">${p.cliente}</div>
+        <div style="font-size:12px;color:#64748B;">${p.direccion||""} ${p.telefono?"· ☎ "+p.telefono:""}</div>
+        <div style="font-size:12px;color:#64748B;margin-top:4px;">📅 ${p.fecha} ${p.origen_flexi?'· <span style="color:#6C63FF;">◈ Flexi</span>':''}</div>
+        ${p.observaciones?`<div style="font-size:11px;color:#94A3B8;margin-top:6px;padding-top:6px;border-top:1px solid #1E293B;line-height:1.6;">${p.observaciones}</div>`:""}
+        ${p.despacho_transporte?`<div style="font-size:12px;color:#F97316;margin-top:6px;">🚚 ${p.despacho_transporte}${p.despacho_numero?" · Ref: "+p.despacho_numero:""}</div>`:""}
+      </div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;color:#64748B;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Productos</div>
+      <div style="background:#0F172A;border-radius:8px;padding:12px 14px;">${prodsHTML}</div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:#64748B;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Timeline de estados</div>
+      <div style="background:#0F172A;border-radius:8px;padding:16px 14px;">${timelineHTML}</div>
+    </div>
+  `;
+  document.getElementById("modal-detalle").classList.add("on");
+}
+
 function renderUsuarios(){
   const el=document.getElementById("usuarios-grid");
   el.innerHTML=allUsuarios.map(u=>`
@@ -1933,7 +2034,7 @@ function verDiseno(id){
 
   const printHTML="<!DOCTYPE html><html><head><meta charset='UTF-8'>"
   +"<style>"
-  +"@page{size:A4 landscape;margin:12mm 14mm;}"
+  +"@page{size:A4 landscape;margin:12mm 14mm;size:297mm 210mm;}"
   +"*{box-sizing:border-box;margin:0;padding:0;}"
   +"html,body{width:100%;height:100%;overflow:hidden;}"
   +"body{font-family:'Segoe UI',Arial,sans-serif;color:#111;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}"
@@ -2006,6 +2107,7 @@ function verDiseno(id){
   const win=window.open("","_blank");
   win.document.write(printHTML);
   win.document.close();
+  win.onload=()=>{ /* auto-print desactivado para verDiseno — usar botón */ };
 }
 function cerrarModal(id){document.getElementById(id).classList.remove("on");}
 function toast(msg,tipo=""){
@@ -2419,7 +2521,7 @@ function genPDF(){
 
   const printHTML="<!DOCTYPE html><html><head><meta charset='UTF-8'>"
   +"<style>"
-  +"@page{size:A4 landscape;margin:12mm 14mm;}"
+  +"@page{size:A4 landscape;margin:12mm 14mm;size:297mm 210mm;}"
   +"*{box-sizing:border-box;margin:0;padding:0;}"
   +"html,body{width:100%;height:100%;overflow:hidden;}"
   +"body{font-family:'Segoe UI',Arial,sans-serif;color:#111;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}"
@@ -2496,7 +2598,10 @@ function genPDF(){
   const win=window.open("","_blank");
   win.document.write(printHTML);
   win.document.close();
-  win.onload=()=>{win.print();};
+  win.onload=()=>{
+    // Dar tiempo para que cargue la imagen
+    setTimeout(()=>win.print(), 300);
+  };
 }
 function nuevoPresup(){
   ["cNombre","cTel","cCiudad","cEmail","cNota","dL","dA","dM2","pM2","pPz","cDireccion"].forEach(id=>{const e=document.getElementById(id);if(e)e.value="";});
