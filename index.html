@@ -340,6 +340,18 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   .et-color-dot{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
 
+/* FULLSCREEN DISEÑO */
+#fpg-paint.fullscreen-mode{
+  position:fixed;inset:0;z-index:500;background:var(--bg);
+  overflow-y:auto;padding:16px;display:block!important;
+}
+#fpg-paint.fullscreen-mode .paint-wrap{max-height:calc(100vh - 280px);}
+.fullscreen-close-btn{
+  position:fixed;top:12px;right:12px;z-index:600;
+  background:var(--accent);color:#fff;border:none;border-radius:8px;
+  padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;
+}
+
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:#0F172A;}
@@ -422,9 +434,11 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
           </div>
           <label>Email</label><input id="cEmail" type="email" placeholder="cliente@mail.com">
           <label>Tipo de entrega</label>
-          <div class="delivery-toggle">
-            <button class="dtog on" id="dtog-retiro" onclick="setDelivery('retiro')">📦 Retira en local</button>
-            <button class="dtog" id="dtog-envio" onclick="setDelivery('envio')">🚚 Envío</button>
+          <div class="delivery-toggle" style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+            <button class="dtog on" id="dtog-retira_fabrica" onclick="setDelivery('retira_fabrica')" style="font-size:10px;">🏭 Retira en Fábrica</button>
+            <button class="dtog" id="dtog-retira_santoni" onclick="setDelivery('retira_santoni')" style="font-size:10px;">🏪 Retira en Santoni</button>
+            <button class="dtog" id="dtog-envio_interior" onclick="setDelivery('envio_interior')" style="font-size:10px;">📦 Envío Interior</button>
+            <button class="dtog" id="dtog-envio_privado" onclick="setDelivery('envio_privado')" style="font-size:10px;">🚚 Envío Privado</button>
           </div>
           <div id="dir-wrap" style="display:none;">
             <label>Dirección de envío</label><input id="cDireccion" type="text" placeholder="Calle 1234, Piso 2, Depto B">
@@ -481,9 +495,10 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
             <button class="tool-btn on" id="tb-p" onclick="setTool('p')">✏ Pintar</button>
             <button class="tool-btn" id="tb-b" onclick="setTool('b')">✕ Borrar</button>
             <button class="tool-btn" id="tb-m" onclick="setTool('m')" style="font-size:16px;">✋ Mover</button>
-            
+            <button class="tool-btn" id="tb-pat" onclick="togglePatternMode()" title="Pintar con patrón repetido">🔲 Patrón</button>
             <button class="tool-btn" onclick="undoGrid()">↩ Deshacer</button>
             <button class="tool-btn" onclick="clearGrid()">⟳ Limpiar</button>
+            <button class="tool-btn" onclick="toggleFullscreenDesign()" title="Pantalla completa">⛶ Full</button>
           </div>
           <div id="no-dims" style="background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;color:var(--muted);font-size:12px;margin-bottom:10px;">⚠ Primero ingresá las medidas en el paso 2.</div>
           <div id="zoom-bar" style="display:none;align-items:center;gap:8px;margin-bottom:8px;background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;">
@@ -493,6 +508,36 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
             <button onclick="zoomChange(10)" style="width:32px;height:32px;background:#222;border:1px solid var(--border);color:var(--white);font-size:18px;font-weight:700;border-radius:4px;cursor:pointer;flex-shrink:0;">+</button>
             <span id="zoom-label" style="font-size:12px;font-weight:700;color:var(--accent);min-width:38px;text-align:right;white-space:nowrap;">100%</span>
             <button onclick="zoomFit()" style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:#222;border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;flex-shrink:0;">↔ Ajustar</button>
+          </div>
+          <!-- Patrón -->
+          <div id="pattern-bar" style="display:none;background:#0d1117;border:1px solid var(--accent);border-radius:var(--radius);padding:14px;margin-bottom:10px;">
+            <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;font-weight:700;">🔲 Diseñá el patrón a repetir</div>
+            <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+              <!-- Tamaño del patrón -->
+              <div>
+                <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Tamaño</div>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <select id="pat-cols" onchange="reconstruirPatronUI()" style="background:#111;border:1px solid var(--border);color:var(--white);padding:5px 8px;border-radius:4px;font-size:13px;">
+                    <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option>
+                  </select>
+                  <span style="color:var(--muted);">×</span>
+                  <select id="pat-rows" onchange="reconstruirPatronUI()" style="background:#111;border:1px solid var(--border);color:var(--white);padding:5px 8px;border-radius:4px;font-size:13px;">
+                    <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option>
+                  </select>
+                  <span style="color:var(--muted);font-size:11px;">baldosas</span>
+                </div>
+              </div>
+              <!-- Grid del patrón -->
+              <div>
+                <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Tocá cada celda para asignar el color activo</div>
+                <div id="patron-grid-ui" style="display:inline-grid;gap:3px;"></div>
+              </div>
+              <!-- Acciones -->
+              <div style="display:flex;flex-direction:column;gap:6px;margin-top:18px;">
+                <button onclick="aplicarPatron()" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:9px 16px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;">✓ Aplicar patrón</button>
+                <button onclick="cancelarPatron()" style="background:transparent;border:1px solid #444;color:#888;border-radius:6px;padding:9px 16px;cursor:pointer;font-size:12px;">✕ Cancelar</button>
+              </div>
+            </div>
           </div>
           <div class="paint-wrap" id="paint-wrap" style="display:none;">
             <div id="cv-sizer" style="display:inline-block;"><canvas id="fcv" style="display:block;cursor:crosshair;touch-action:none;"></canvas></div>
@@ -825,17 +870,31 @@ let syncInterval = null;
 
 const TODOS = ["deposito","entrega","admin"];
 const ESTADOS = [
-  {id:"pendiente",        label:"Pendiente",           color:"#94A3B8", roles:TODOS},
-  {id:"preparado",        label:"En Preparación",       color:"#F59E0B", roles:TODOS},
-  {id:"embalado",         label:"Embalado",              color:"#6C63FF", roles:TODOS},
-  {id:"listo_retirar",    label:"Listo para Retirar",   color:"#00C9A7", roles:TODOS},
-  {id:"listo_despachar",  label:"Listo para Despachar", color:"#F97316", roles:TODOS},
-  {id:"entregado",        label:"Entregado",             color:"#10B981", roles:TODOS},
-  {id:"despachado",       label:"Despachado",            color:"#8B5CF6", roles:TODOS},
+  {id:"pendiente",          label:"Pendiente",               color:"#94A3B8", roles:TODOS},
+  {id:"preparado",          label:"En Preparación",           color:"#F59E0B", roles:TODOS},
+  {id:"embalado",           label:"Embalado",                 color:"#6C63FF", roles:TODOS},
+  {id:"listo_fabrica",      label:"Listo — Retira Fábrica",  color:"#00C9A7", roles:TODOS},
+  {id:"listo_santoni",      label:"Listo — Retira Santoni",  color:"#06B6D4", roles:TODOS},
+  {id:"listo_transporte",   label:"Listo — Envío Interior",  color:"#F97316", roles:TODOS},
+  {id:"listo_privado",      label:"Listo — Envío Privado",   color:"#A855F7", roles:TODOS},
+  {id:"entregado",          label:"Entregado / Despachado",  color:"#10B981", roles:TODOS},
 ];
-const SIG_ESTADO = {pendiente:"preparado",preparado:"embalado",listo_retirar:"entregado",listo_despachar:"despachado"};
-const ANT_ESTADO = {preparado:"pendiente",embalado:"preparado",listo_retirar:"embalado",listo_despachar:"embalado",entregado:"listo_retirar",despachado:"listo_despachar"};
-const LABEL_ACCION = {pendiente:"▶ Iniciar Preparación",preparado:"⬡ Marcar Embalado",listo_retirar:"◎ Confirmar Entrega",listo_despachar:"✈ Confirmar Despacho"};
+const SIG_ESTADO = {
+  pendiente:"preparado", preparado:"embalado",
+  listo_fabrica:"entregado", listo_santoni:"entregado",
+  listo_transporte:"entregado", listo_privado:"entregado"
+};
+const ANT_ESTADO = {
+  preparado:"pendiente", embalado:"preparado",
+  listo_fabrica:"embalado", listo_santoni:"embalado",
+  listo_transporte:"embalado", listo_privado:"embalado",
+  entregado:"embalado"
+};
+const LABEL_ACCION = {
+  pendiente:"▶ Iniciar Preparación", preparado:"⬡ Marcar Embalado",
+  listo_fabrica:"✓ Confirmar Retiro", listo_santoni:"✓ Confirmar Retiro",
+  listo_transporte:"✈ Confirmar Despacho", listo_privado:"🚗 Confirmar Entrega"
+};
 const ROL_TABS = {
   admin:   [{id:"sec-flexi",label:"◈ Presupuesto"},{id:"sec-presupuestos",label:"💾 Guardados"},{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"},{id:"sec-calc",label:"🧮 Calculadora"},{id:"sec-usuarios",label:"👤 Usuarios"}],
   deposito:[{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"}],
@@ -1028,17 +1087,17 @@ function renderKanban(){
     if(stats) stats.innerHTML = "";
     return;
   }
-  const activos = allPedidos.filter(p=>p.estado!=="entregado" && p.estado!=="despachado");
+  const activos = allPedidos.filter(p=>p.estado!=="entregado");
   // Stats
   const statsEl = document.getElementById("kanban-stats");
-  statsEl.innerHTML = ESTADOS.filter(e=>e.id!=="entregado"&&e.id!=="despachado").map(e=>{
+  statsEl.innerHTML = ESTADOS.filter(e=>e.id!=="entregado").map(e=>{
     const n = activos.filter(p=>p.estado===e.id).length;
     return`<div class="kstat"><span class="kstat-num" style="color:${e.color}">${n}</span><span class="kstat-lbl">${e.label}</span></div>`;
   }).join("") + `<div class="kstat" style="margin-left:auto;"><span class="kstat-num" style="color:#F1F5F9">${activos.length}</span><span class="kstat-lbl">Total activos</span></div>`;
   // Board
   const board = document.getElementById("kanban-board");
   board.innerHTML = "";
-  ESTADOS.filter(e=>e.id!=="entregado"&&e.id!=="despachado").forEach(est=>{
+  ESTADOS.filter(e=>e.id!=="entregado").forEach(est=>{
     const pedsRaw = activos.filter(p=>p.estado===est.id).sort((a,b)=>{
       const pa=a.prioridad||9999, pb=b.prioridad||9999;
       return pa-pb;
@@ -1074,7 +1133,7 @@ function cardHTML(p, est){
   const esAdmin = currentUser.rol==="admin";
   const puedeAvanzar = !!sigEst; // todos pueden avanzar
   const puedeRetroceder = !!antEst && esAdmin; // solo admin retrocede
-  const puedeEtiqueta = ["embalado","listo_retirar","listo_despachar","entregado","despachado"].includes(p.estado);
+  const puedeEtiqueta = ["embalado","listo_fabrica","listo_santoni","listo_transporte","listo_privado","entregado"].includes(p.estado);
   const puedeEditar = esAdmin;
 
   // Calcular cajas/sueltas por producto — vista por color con peso
@@ -1143,14 +1202,24 @@ function cardHTML(p, est){
     ${p.observaciones?`<div class="pc-obs">${p.observaciones}</div>`:''}
     <div class="pc-actions" style="flex-wrap:wrap;">
       ${p.estado==="embalado" ? `
-        <button class="pc-btn-avanzar" style="background:#00C9A722;color:#00C9A7;border-color:#00C9A744;flex:1;"
-          onmouseenter="this.style.background='#00C9A7';this.style.color='#fff';"
-          onmouseleave="this.style.background='#00C9A722';this.style.color='#00C9A7';"
-          onclick="cambiarEstado('${p.id}','listo_retirar')">🏪 Para Retirar</button>
-        <button class="pc-btn-avanzar" style="background:#F9731622;color:#F97316;border-color:#F9731644;flex:1;"
-          onmouseenter="this.style.background='#F97316';this.style.color='#fff';"
-          onmouseleave="this.style.background='#F9731622';this.style.color='#F97316';"
-          onclick="abrirModalDespacho('${p.id}')">🚚 Para Despachar</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;width:100%;">
+          <button class="pc-btn-avanzar" style="background:#00C9A722;color:#00C9A7;border-color:#00C9A744;font-size:10px;"
+            onmouseenter="this.style.background='#00C9A7';this.style.color='#fff';"
+            onmouseleave="this.style.background='#00C9A722';this.style.color='#00C9A7';"
+            onclick="cambiarEstado('${p.id}','listo_fabrica')">🏭 Retira Fábrica</button>
+          <button class="pc-btn-avanzar" style="background:#06B6D422;color:#06B6D4;border-color:#06B6D444;font-size:10px;"
+            onmouseenter="this.style.background='#06B6D4';this.style.color='#fff';"
+            onmouseleave="this.style.background='#06B6D422';this.style.color='#06B6D4';"
+            onclick="cambiarEstado('${p.id}','listo_santoni')">🏪 Retira Santoni</button>
+          <button class="pc-btn-avanzar" style="background:#F9731622;color:#F97316;border-color:#F9731644;font-size:10px;"
+            onmouseenter="this.style.background='#F97316';this.style.color='#fff';"
+            onmouseleave="this.style.background='#F9731622';this.style.color='#F97316';"
+            onclick="abrirModalDespachoParaEstado('${p.id}','listo_transporte')">📦 Envío Interior</button>
+          <button class="pc-btn-avanzar" style="background:#A855F722;color:#A855F7;border-color:#A855F744;font-size:10px;"
+            onmouseenter="this.style.background='#A855F7';this.style.color='#fff';"
+            onmouseleave="this.style.background='#A855F722';this.style.color='#A855F7';"
+            onclick="abrirModalDespachoParaEstado('${p.id}','listo_privado')">🚗 Envío Privado</button>
+        </div>
       ` : puedeAvanzar ? `
         <button class="pc-btn-avanzar" style="background:${est.color}22;color:${est.color};border-color:${est.color}44;"
           onmouseenter="this.style.background='${est.color}';this.style.color='#fff';"
@@ -1164,6 +1233,36 @@ function cardHTML(p, est){
       ${puedeEditar?`<button class="pc-btn-editar" onclick="eliminarPedido('${p.id}','${p.numero}')" title="Eliminar" style="color:#FF6B6B;" onmouseenter="this.style.borderColor='#FF6B6B'" onmouseleave="this.style.borderColor='#334155'">🗑</button>`:''}
     </div>
   </div>`;
+}
+
+async function cambiarEstadoConTipo(id, nuevoEstado, tipoEntrega){
+  // Cambiar estado y guardar el tipo de entrega en observaciones
+  try{
+    const ahora = new Date().toISOString();
+    const pedido = allPedidos.find(p=>p.id===id);
+    const hist = pedido?.historial_estados||[];
+    hist.push({estado:nuevoEstado, fecha:ahora, usuario:currentUser.nombre, tipoEntrega});
+    const tipoLabels={"retira_fabrica":"🏭 Retira en Fábrica","retira_santoni":"🏪 Retira en Santoni"};
+    const obsExtra = tipoLabels[tipoEntrega]||tipoEntrega;
+    // Agregar tipo de entrega a observaciones si no está ya
+    let obs = pedido?.observaciones||"";
+    if(!obs.includes(obsExtra)) obs = obs ? obs+" | "+obsExtra : obsExtra;
+    await db.from("pedidos").update({estado:nuevoEstado, historial_estados:hist, observaciones:obs, updated_at:ahora}).eq("id",id);
+    await syncAll();
+    toast(obsExtra+" ✓","ok");
+  }catch(e){toast("Error al actualizar","err");}
+}
+
+function abrirModalDespachoConTipo(id, tipoEntrega){
+  abrirModalDespachoParaEstado(id, tipoEntrega==="envio_interior"?"listo_transporte":"listo_privado");
+}
+
+function abrirModalDespachoParaEstado(id, estadoDestino){
+  abrirModalDespacho(id);
+  const labels={"listo_transporte":"📦 Envío Interior","listo_privado":"🚗 Envío Privado"};
+  const desc = document.getElementById("desp-desc");
+  if(desc) desc.textContent = (labels[estadoDestino]||"Despacho")+" — Ingresá los datos del transporte.";
+  document.getElementById("desp-id").dataset.estadoDestino = estadoDestino;
 }
 
 async function cambiarEstado(id, nuevoEstado){
@@ -1348,7 +1447,7 @@ function renderHistorial(){
   const search = document.getElementById("hist-search").value.toLowerCase();
   const fecha = document.getElementById("hist-fecha").value;
   const entregados = allPedidos.filter(p=>{
-    if(p.estado!=="entregado" && p.estado!=="despachado") return false;
+    if(p.estado!=="entregado") return false;
     if(search && !p.cliente?.toLowerCase().includes(search) && !String(p.numero).includes(search)) return false;
     if(fecha && p.fecha && !p.fecha.includes(fecha.split("-").reverse().join("/"))) return false;
     return true;
@@ -1377,8 +1476,9 @@ function abrirEtiqueta(id){
   if(!p) return;
   // Determinar tipo según observaciones del pedido
   let tipo = "privado";
-  if(p.observaciones && p.observaciones.includes("Retira en local")) tipo = "retira";
-  else if(p.despacho_transporte) tipo = "micro";
+  if(p.estado==="listo_fabrica"||p.estado==="listo_santoni") tipo = "retira";
+  else if(p.estado==="listo_transporte"||p.despacho_transporte) tipo = "micro";
+  else if(p.estado==="listo_privado") tipo = "privado";
   // Armar URL con datos del pedido
   const params = new URLSearchParams({
     pedido: "#"+p.numero,
@@ -1648,7 +1748,8 @@ function abrirModalLogiflow(){
   document.getElementById("lf-ciudad").value = ciudad;
   document.getElementById("lf-direccion").value = dir||ciudad;
   document.getElementById("lf-obs").value = nota||(email?"Email: "+email:"");
-  document.getElementById("lf-entrega").value = FS.delivery||"retiro";
+  const tipoEntrega = (FS.delivery==="envio_interior"||FS.delivery==="envio_privado") ? "envio" : "retiro";
+  document.getElementById("lf-entrega").value = tipoEntrega;
   // Preview productos
   const prods = buildProductosLogi();
   const prev = document.getElementById("lf-productos-preview");
@@ -1984,7 +2085,8 @@ async function confirmarDespacho(){
   const errEl = document.getElementById("desp-error");
   if(!transporte){errEl.textContent="⚠ Ingresá el nombre del transporte.";errEl.style.display="block";return;}
   errEl.style.display="none";
-  const nuevoEstado = accion==="despachar" ? "despachado" : "listo_despachar";
+  const estadoDestino = document.getElementById("desp-id")?.dataset?.estadoDestino||"listo_transporte";
+  const nuevoEstado = accion==="despachar" ? "entregado" : estadoDestino;
   try{
     const ahora = new Date().toISOString();
     const pedido = allPedidos.find(p=>p.id===id);
@@ -1992,7 +2094,9 @@ async function confirmarDespacho(){
     hist.push({estado:nuevoEstado, fecha:ahora, usuario:currentUser.nombre, transporte, numero});
     // Guardar datos de despacho en observaciones y campos extra
     const obsExtra = obs ? " | "+obs : "";
-    const obsDespacho = `🚚 ${transporte}${numero?" · Ref: "+numero:""}${obsExtra}`;
+    const tipoDesp = document.getElementById("desp-id")?.dataset?.tipoEntrega||"";
+    const tipoLabel = {"envio_interior":"📦 Envío Interior","envio_privado":"🚚 Envío Privado"}[tipoDesp]||"";
+    const obsDespacho = `${tipoLabel?tipoLabel+" · ":""}🚚 ${transporte}${numero?" · Ref: "+numero:""}${obsExtra}`;
     await db.from("pedidos").update({
       estado: nuevoEstado,
       historial_estados: hist,
@@ -2127,7 +2231,7 @@ const COLS=[
   {n:"Celeste",h:"#18BDEB"},{n:"Verde Agua",h:"#27C7BD"},{n:"Verde",h:"#69BE28"},
 ];
 const PxM2=16,UxCaja=64;
-let FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retiro"};
+let FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retira_fabrica"};
 let fadj={};
 let fcv,fctx,CELL=0,fpainting=false;
 let ZOOM=100,BASE_CELL=32;
@@ -2155,9 +2259,12 @@ function fpg(id,btn){
 }
 function setDelivery(tipo){
   FS.delivery=tipo;
-  document.getElementById("dtog-retiro").classList.toggle("on",tipo==="retiro");
-  document.getElementById("dtog-envio").classList.toggle("on",tipo==="envio");
-  document.getElementById("dir-wrap").style.display=tipo==="envio"?"block":"none";
+  ["retira_fabrica","retira_santoni","envio_interior","envio_privado"].forEach(t=>{
+    const el=document.getElementById("dtog-"+t);
+    if(el) el.classList.toggle("on",tipo===t);
+  });
+  const necesitaDir = tipo==="envio_interior"||tipo==="envio_privado";
+  document.getElementById("dir-wrap").style.display=necesitaDir?"block":"none";
 }
 function embStr(pz){
   if(!pz||pz<=0)return"0 unidades";
@@ -2247,6 +2354,119 @@ function applyZoom(){CELL=Math.max(8,Math.round(BASE_CELL*ZOOM/100));fcv.width=F
 function zoomChange(delta){ZOOM=Math.max(20,Math.min(200,ZOOM+delta));applyZoom();}
 function zoomSet(val){ZOOM=parseInt(val);applyZoom();}
 function zoomFit(){const wrap=document.getElementById("paint-wrap");BASE_CELL=Math.max(8,Math.floor((wrap.clientWidth-4)/FS.cols));ZOOM=100;applyZoom();}
+// ─── PANTALLA COMPLETA DISEÑO ────────────────────────────────────────────────
+function toggleFullscreenDesign(){
+  const pg = document.getElementById("fpg-paint");
+  const isFs = pg.classList.contains("fullscreen-mode");
+  if(isFs){
+    pg.classList.remove("fullscreen-mode");
+    const btn = document.getElementById("fs-close-btn");
+    if(btn) btn.remove();
+    document.body.style.overflow = "";
+  } else {
+    pg.classList.add("fullscreen-mode");
+    document.body.style.overflow = "hidden";
+    const btn = document.createElement("button");
+    btn.id = "fs-close-btn";
+    btn.className = "fullscreen-close-btn";
+    btn.textContent = "✕ Salir de pantalla completa";
+    btn.onclick = toggleFullscreenDesign;
+    document.body.appendChild(btn);
+    setTimeout(()=>zoomFit(), 100);
+  }
+}
+
+// ─── PATRÓN TIPO AJEDREZ ──────────────────────────────────────────────────────
+let patronData = []; // Array 2D de índices de color [-1 = vacío]
+let patronCols = 2, patronRows = 2;
+let patronActivo = false;
+
+function togglePatternMode(){
+  const bar = document.getElementById("pattern-bar");
+  const btn = document.getElementById("tb-pat");
+  if(patronActivo){
+    cancelarPatron();
+  } else {
+    patronActivo = false; // aún en modo edición
+    patronCols = parseInt(document.getElementById("pat-cols").value)||2;
+    patronRows = parseInt(document.getElementById("pat-rows").value)||2;
+    reconstruirPatronUI();
+    bar.style.display = "block";
+    btn.classList.add("on");
+  }
+}
+
+function reconstruirPatronUI(){
+  patronCols = parseInt(document.getElementById("pat-cols").value)||2;
+  patronRows = parseInt(document.getElementById("pat-rows").value)||2;
+  // Inicializar patronData con el color activo en diagonal (patrón ajedrez por defecto)
+  patronData = [];
+  for(let r=0;r<patronRows;r++){
+    patronData[r]=[];
+    for(let c=0;c<patronCols;c++){
+      patronData[r][c] = (r+c)%2===0 ? FS.ci : -1;
+    }
+  }
+  renderPatronUI();
+}
+
+function renderPatronUI(){
+  const grid = document.getElementById("patron-grid-ui");
+  if(!grid) return;
+  const cellSize = 44;
+  grid.style.gridTemplateColumns = `repeat(${patronCols},${cellSize}px)`;
+  grid.innerHTML = "";
+  for(let r=0;r<patronRows;r++){
+    for(let c=0;c<patronCols;c++){
+      const ci = patronData[r][c];
+      const hex = ci>=0 ? COLS[ci].h : "#1a1a2e";
+      const isLight = ci>=0 && ["#FFFFFF","#D0D3D4","#9C9C93","#FFD100","#18BDEB","#27C7BD","#69BE28"].includes(COLS[ci].h);
+      const cell = document.createElement("div");
+      cell.style.cssText = `width:${cellSize}px;height:${cellSize}px;background:${hex};border-radius:4px;cursor:pointer;border:2px solid ${ci>=0?"rgba(255,255,255,0.2)":"#334155"};display:flex;align-items:center;justify-content:center;transition:transform .1s;`;
+      if(ci>=0){
+        cell.innerHTML = `<span style="font-size:9px;font-weight:700;color:${isLight?"#333":"#fff"};opacity:.8;">${COLS[ci].n.split(" ")[0]}</span>`;
+      } else {
+        cell.innerHTML = `<span style="font-size:16px;color:#334155;">+</span>`;
+      }
+      cell.title = `Clic: asignar ${COLS[FS.ci].n} | Clic derecho: limpiar`;
+      cell.onclick = ()=>{ patronData[r][c] = FS.ci; renderPatronUI(); };
+      cell.oncontextmenu = (e)=>{ e.preventDefault(); patronData[r][c] = -1; renderPatronUI(); };
+      cell.onmouseenter = ()=>{ cell.style.transform="scale(1.08)"; };
+      cell.onmouseleave = ()=>{ cell.style.transform="scale(1)"; };
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function aplicarPatron(){
+  // Verificar que haya al menos una celda con color
+  const tieneCeldas = patronData.some(row=>row.some(ci=>ci>=0));
+  if(!tieneCeldas){ toast("Asigná al menos un color al patrón","err"); return; }
+  patronActivo = true;
+  FS.tool = "patron";
+  document.getElementById("pattern-bar").style.display = "none";
+  document.querySelectorAll(".tool-btn").forEach(b=>b.classList.remove("on"));
+  document.getElementById("tb-pat").classList.add("on");
+  toast("✓ Patrón activo — arrastrá para pintar","ok");
+}
+
+function cancelarPatron(){
+  patronActivo = false;
+  patronData = [];
+  document.getElementById("tb-pat").classList.remove("on");
+  document.getElementById("pattern-bar").style.display = "none";
+  setTool("p");
+}
+
+function getPatternColor(c, r){
+  if(!patronData.length) return FS.ci;
+  const pr = ((r%patronRows)+patronRows)%patronRows;
+  const pc = ((c%patronCols)+patronCols)%patronCols;
+  return patronData[pr][pc]; // puede ser -1 (no pintar)
+}
+
+function updatePatternPreview(){} // no-op, ya no se usa
+
 function buildPredColors(){
   const el=document.getElementById("pred-colors");
   if(!el)return;
@@ -2281,14 +2501,43 @@ function setTool(t){
   document.getElementById("tb-p").classList.toggle("on",t==="p");
   document.getElementById("tb-b").classList.toggle("on",t==="b");
   document.getElementById("tb-m").classList.toggle("on",t==="m");
+  const tbpat=document.getElementById("tb-pat");
+  if(tbpat) tbpat.classList.toggle("on",t==="patron");
   const wrap=document.getElementById("paint-wrap");
   if(t==="m"){fcv.style.cursor="grab";wrap.style.cursor="grab";}else{fcv.style.cursor="crosshair";wrap.style.cursor="default";}
+  // Al cambiar de herramienta, cancelar selección de patrón si estaba activa
+  if(patternMode && t!=="p"){ cancelarPatron(); }
 }
 function drawAll(){fctx.clearRect(0,0,fcv.width,fcv.height);for(let r=0;r<FS.rows;r++)for(let c=0;c<FS.cols;c++)drawCell(c,r,FS.grid[r*FS.cols+c]);updateLegendLive();}
 function drawCell(c,r,ci){fctx.fillStyle=ci>=0?COLS[ci].h:"#f0f0f0";fctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);if(ci>=0&&CELL>=32){const nm=COLS[ci].n.split(" ")[0];const fs=Math.min(CELL*0.22,9);fctx.font="bold "+fs+"px sans-serif";fctx.fillStyle="rgba(0,0,0,0.35)";fctx.textAlign="center";fctx.textBaseline="middle";fctx.fillText(nm,c*CELL+CELL/2,r*CELL+CELL/2);}}
 function getCell(e){const rect=fcv.getBoundingClientRect();const sx=fcv.width/rect.width,sy=fcv.height/rect.height;let x,y;if(e.touches&&e.touches.length){x=e.touches[0].clientX;y=e.touches[0].clientY;}else{x=e.clientX;y=e.clientY;}return{c:Math.floor((x-rect.left)*sx/CELL),r:Math.floor((y-rect.top)*sy/CELL)};}
 let _lastPaintIdx=-1; // evitar push duplicado por arrastre
-function fpaint(e){const{c,r}=getCell(e);if(c<0||c>=FS.cols||r<0||r>=FS.rows)return;const idx=r*FS.cols+c;const nci=FS.tool==="p"?FS.ci:-1;if(FS.grid[idx]===nci)return;if(_lastPaintIdx===-1)pushHistory();_lastPaintIdx=idx;FS.grid[idx]=nci;drawCell(c,r,nci);updateLegendLive();}
+function fpaint(e){
+  const{c,r}=getCell(e);
+  if(c<0||c>=FS.cols||r<0||r>=FS.rows)return;
+  const idx=r*FS.cols+c;
+
+  // Modo patrón: replicar el bloque definido
+  if(FS.tool==="patron"){
+    const nci=getPatternColor(c,r);
+    if(nci<0||FS.grid[idx]===nci)return; // -1 = no pintar esa celda
+    if(_lastPaintIdx===-1)pushHistory();
+    _lastPaintIdx=idx;
+    FS.grid[idx]=nci;
+    drawCell(c,r,nci);
+    updateLegendLive();
+    return;
+  }
+
+  // Modo normal
+  const nci=FS.tool==="p"?FS.ci:-1;
+  if(FS.grid[idx]===nci)return;
+  if(_lastPaintIdx===-1)pushHistory();
+  _lastPaintIdx=idx;
+  FS.grid[idx]=nci;
+  drawCell(c,r,nci);
+  updateLegendLive();
+}
 let scrollStart={x:0,y:0,sl:0,st:0};
 function bindEvents(){
   const wrap=document.getElementById("paint-wrap");
@@ -2351,7 +2600,8 @@ function buildResult(){
   const em=document.getElementById("cEmail").value||"—";
   const no=document.getElementById("cNota").value;
   const dir=document.getElementById("cDireccion")?document.getElementById("cDireccion").value:"";
-  const entrega=FS.delivery==="envio"?"🚚 Envío"+(dir?" → "+dir:""):"📦 Retira en local";
+  const dlabels={"retira_fabrica":"🏭 Retira en Fábrica","retira_santoni":"🏪 Retira en Santoni","envio_interior":"📦 Envío Interior"+(dir?" → "+dir:""),"envio_privado":"🚚 Envío Privado"+(dir?" → "+dir:"")};
+  const entrega=dlabels[FS.delivery]||"🏭 Retira en Fábrica";
   document.getElementById("sum-client").innerHTML=`<b>${n}</b><br>${t} &nbsp;·&nbsp; ${ci}<br>${em}<br><span style="color:var(--muted);font-size:12px;">${entrega}</span>`+(no?`<br><i style="color:var(--muted);font-size:12px;">${no}</i>`:"");
   const dim=FS.lR>0?FS.lR.toFixed(2)+"×"+FS.aR.toFixed(2)+" m":(FS.m2cot?FS.m2cot+" m²":"—");
   document.getElementById("sum-dim").textContent=dim;
@@ -2392,7 +2642,8 @@ function genPDF(){
   const no=document.getElementById("cNota").value||"";
   const dirEl=document.getElementById("cDireccion");
   const dir=dirEl?dirEl.value:"";
-  const entrega=FS.delivery==="envio"?"Envio"+(dir?": "+dir:""):"Retira en local";
+  const deliveryLabels2={"retira_fabrica":"Retira en Fabrica","retira_santoni":"Retira en Santoni","envio_interior":"Envio Interior"+(dir?" → "+dir:""),"envio_privado":"Envio Privado"+(dir?" → "+dir:"")};
+  const entrega=deliveryLabels2[FS.delivery]||"Retira en Fabrica";
   const dim=FS.lR>0?FS.lR.toFixed(2)+" x "+FS.aR.toFixed(2)+" m":FS.m2cot+" m2";
 
   // Calcular precio CORRECTO por pintadas
@@ -2605,7 +2856,7 @@ function genPDF(){
 }
 function nuevoPresup(){
   ["cNombre","cTel","cCiudad","cEmail","cNota","dL","dA","dM2","pM2","pPz","cDireccion"].forEach(id=>{const e=document.getElementById(id);if(e)e.value="";});
-  FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retiro"};
+  FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retira_fabrica"};
   fadj={};setDelivery("retiro");
   document.getElementById("dims-card").style.display="none";
   fpg("fpg-client",document.querySelectorAll(".flexi-nav button")[0]);
