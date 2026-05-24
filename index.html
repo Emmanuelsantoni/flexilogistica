@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>FlexiFloor · Sistema Logístico</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <style>
 /* ══════════════════════════════════════════════════════
    VARIABLES Y RESET
@@ -382,6 +383,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
       <label class="lf-label">Contraseña</label>
       <input id="login-pass" type="password" class="lf-input" placeholder="••••••••">
       <div id="login-error" class="login-error" style="display:none;"></div>
+      <div id="cf-turnstile" class="cf-turnstile" data-sitekey="0x4AAAAAADVj8z8AE0f3kwYZ" data-theme="dark" style="margin:12px auto;display:flex;justify-content:center;"></div>
       <button class="btn-login" onclick="doLogin()">INGRESAR →</button>
       <div class="login-hint" id="login-hint"></div>
     </div>
@@ -955,12 +957,19 @@ async function doLogin(){
   const uid = document.getElementById("login-user").value;
   const pass = document.getElementById("login-pass").value;
   const errEl = document.getElementById("login-error");
+  // Verificar Turnstile captcha
+  const tsInput = document.querySelector('[name="cf-turnstile-response"]');
+  if(!tsInput || !tsInput.value){
+    errEl.textContent = "⚠ Completá la verificación de seguridad antes de ingresar.";
+    errEl.style.display = "block";
+    return;
+  }
   errEl.style.display = "none";
   if(!uid){errEl.textContent="Seleccioná un usuario.";errEl.style.display="block";return;}
   if(!pass){errEl.textContent="Ingresá la contraseña.";errEl.style.display="block";return;}
   const {data,error} = await db.from("usuarios").select("*").eq("id",uid).eq("activo",true).single();
   if(error||!data||data.password!==pass){
-    errEl.textContent="Usuario o contraseña incorrectos.";errEl.style.display="block";return;
+    errEl.textContent="Usuario o contraseña incorrectos.";errEl.style.display="block";if(typeof turnstile!=="undefined")turnstile.reset();return;
   }
   localStorage.setItem("flexi-session",JSON.stringify({id:data.id,password:data.password}));
   await iniciarSesion(data);
@@ -2524,39 +2533,31 @@ function setTool(t){
   if(patternMode && t!=="p"){ cancelarPatron(); }
 }
 function drawAll(){
-  // Fondo gris claro para celdas vacías
-  fctx.fillStyle="#f5f5f5";
-  fctx.fillRect(0,0,fcv.width,fcv.height);
-  // Agrupar por color para minimizar cambios de fillStyle
-  const byColor={};
-  for(let r=0;r<FS.rows;r++)for(let c2=0;c2<FS.cols;c2++){
-    const ci=FS.grid[r*FS.cols+c2];
-    if(ci>=0){if(!byColor[ci])byColor[ci]=[];byColor[ci].push({c:c2,r});}
-  }
-  Object.entries(byColor).forEach(([ci,cells])=>{
-    fctx.fillStyle=COLS[+ci].h;
-    cells.forEach(({c:c2,r})=>fctx.fillRect(c2*CELL+1,r*CELL+1,CELL-2,CELL-2));
-  });
-  // Grilla
-  fctx.strokeStyle="rgba(0,0,0,0.07)";fctx.lineWidth=0.3;
-  fctx.beginPath();
-  for(let r=0;r<=FS.rows;r++){fctx.moveTo(0,r*CELL);fctx.lineTo(fcv.width,r*CELL);}
-  for(let c2=0;c2<=FS.cols;c2++){fctx.moveTo(c2*CELL,0);fctx.lineTo(c2*CELL,fcv.height);}
-  fctx.stroke();
-  // Labels solo si CELL es grande
-  if(CELL>=28){
-    Object.entries(byColor).forEach(([ci,cells])=>{
-      const nm=COLS[+ci].n.split(" ")[0];
-      const fs=Math.min(CELL*0.22,9);
-      fctx.font="bold "+fs+"px sans-serif";
-      fctx.fillStyle="rgba(0,0,0,0.3)";
-      fctx.textAlign="center";fctx.textBaseline="middle";
-      cells.forEach(({c:c2,r})=>fctx.fillText(nm,c2*CELL+CELL/2,r*CELL+CELL/2));
-    });
-  }
+  fctx.clearRect(0,0,fcv.width,fcv.height);
+  for(let r=0;r<FS.rows;r++)
+    for(let c=0;c<FS.cols;c++)
+      drawCell(c,r,FS.grid[r*FS.cols+c]);
   updateLegendLive();
 }
-function drawCell(c,r,ci){fctx.fillStyle=ci>=0?COLS[ci].h:"#f0f0f0";fctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);if(ci>=0&&CELL>=32){const nm=COLS[ci].n.split(" ")[0];const fs=Math.min(CELL*0.22,9);fctx.font="bold "+fs+"px sans-serif";fctx.fillStyle="rgba(0,0,0,0.35)";fctx.textAlign="center";fctx.textBaseline="middle";fctx.fillText(nm,c*CELL+CELL/2,r*CELL+CELL/2);}}
+function drawCell(c,r,ci){
+  // Limpiar celda
+  fctx.fillStyle=ci>=0?COLS[ci].h:"#f5f5f5";
+  fctx.fillRect(c*CELL,r*CELL,CELL,CELL);
+  // Borde sutil
+  fctx.strokeStyle="rgba(0,0,0,0.07)";
+  fctx.lineWidth=0.3;
+  fctx.strokeRect(c*CELL,r*CELL,CELL,CELL);
+  // Label
+  if(ci>=0&&CELL>=28){
+    const nm=COLS[ci].n.split(" ")[0];
+    const fs=Math.min(CELL*0.22,9);
+    fctx.font="bold "+fs+"px sans-serif";
+    fctx.fillStyle="rgba(0,0,0,0.3)";
+    fctx.textAlign="center";
+    fctx.textBaseline="middle";
+    fctx.fillText(nm,c*CELL+CELL/2,r*CELL+CELL/2);
+  }
+}
 function getCell(e){const rect=fcv.getBoundingClientRect();const sx=fcv.width/rect.width,sy=fcv.height/rect.height;let x,y;if(e.touches&&e.touches.length){x=e.touches[0].clientX;y=e.touches[0].clientY;}else{x=e.clientX;y=e.clientY;}return{c:Math.floor((x-rect.left)*sx/CELL),r:Math.floor((y-rect.top)*sy/CELL)};}
 let _lastPaintIdx=-1; // evitar push duplicado por arrastre
 let _patronPainted = false; // flag para pushHistory solo una vez por arrastre
