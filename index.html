@@ -1093,6 +1093,7 @@ async function iniciarSesion(u){
   currentUser = u;
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("app").style.display = "flex";
+  setTimeout(ajustarMarginSection, 100);
   // Topbar
   document.getElementById("user-icon-top").textContent = ROL_ICONS[u.rol]||"·";
   document.getElementById("user-name-top").textContent = u.nombre;
@@ -1143,12 +1144,19 @@ function buildTabs(){
   });
   showSection(tabs[0].id, nav.children[0]);
 }
+function ajustarMarginSection(){
+  const topbar = document.querySelector(".topbar");
+  const h = topbar ? topbar.offsetHeight : 55;
+  document.querySelectorAll(".section").forEach(s => s.style.marginTop = h+"px");
+}
+
 function showSection(id, btn){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("on"));
   document.getElementById(id).classList.add("on");
   if(btn) btn.classList.add("on");
   currentSection = id;
+  ajustarMarginSection();
   window.scrollTo(0,0);
   if(id==="sec-kanban"){ renderKanban(); syncAll().then(renderKanban); }
   else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
@@ -2603,83 +2611,46 @@ function zoomFit(){
 
 // ── Dibujo ────────────────────────────────────────────────────────────────────
 function drawAll(){
-  if(!fctx) return;
-  const W = FS.cols * CELL, H = FS.rows * CELL;
-
-  // Fondo para celdas vacías
+  if(!fctx || CELL<=0) return;
+  // Fondo gris
   fctx.fillStyle = "#d8d8d8";
-  fctx.fillRect(0, 0, W, H);
-
-  // Celdas con color
-  for(let r = 0; r < FS.rows; r++){
-    for(let c = 0; c < FS.cols; c++){
-      const ci = FS.grid[r * FS.cols + c];
+  fctx.fillRect(0, 0, fcv.width, fcv.height);
+  // Celdas
+  for(let r=0; r<FS.rows; r++){
+    for(let c=0; c<FS.cols; c++){
+      const ci = FS.grid[r*FS.cols+c];
       if(ci >= 0){
         fctx.fillStyle = COLS[ci].h;
-        fctx.fillRect(c*CELL+1, r*CELL+1, CELL-2, CELL-2);
+        fctx.fillRect(Math.round(c*CELL), Math.round(r*CELL), Math.round(CELL), Math.round(CELL));
       }
     }
   }
-
   // Grilla
-  fctx.strokeStyle = "rgba(0,0,0,0.15)";
-  fctx.lineWidth = 0.5;
+  fctx.strokeStyle = "rgba(0,0,0,0.2)";
+  fctx.lineWidth = 1;
   fctx.beginPath();
-  for(let r = 0; r <= FS.rows; r++){
-    fctx.moveTo(0, r*CELL);
-    fctx.lineTo(W, r*CELL);
+  for(let r=0; r<=FS.rows; r++){
+    const y = Math.round(r*CELL)+0.5;
+    fctx.moveTo(0,y); fctx.lineTo(fcv.width,y);
   }
-  for(let c = 0; c <= FS.cols; c++){
-    fctx.moveTo(c*CELL, 0);
-    fctx.lineTo(c*CELL, H);
+  for(let c=0; c<=FS.cols; c++){
+    const x = Math.round(c*CELL)+0.5;
+    fctx.moveTo(x,0); fctx.lineTo(x,fcv.height);
   }
   fctx.stroke();
-
-  // Labels de color (solo si las celdas son suficientemente grandes)
-  if(CELL >= 30){
-    fctx.textAlign = "center";
-    fctx.textBaseline = "middle";
-    for(let r = 0; r < FS.rows; r++){
-      for(let c = 0; c < FS.cols; c++){
-        const ci = FS.grid[r * FS.cols + c];
-        if(ci >= 0){
-          const nm = COLS[ci].n.split(" ")[0];
-          const fs = Math.min(Math.floor(CELL * 0.22), 9);
-          fctx.font = "bold " + fs + "px sans-serif";
-          fctx.fillStyle = "rgba(0,0,0,0.28)";
-          fctx.fillText(nm, c*CELL + CELL/2, r*CELL + CELL/2);
-        }
-      }
-    }
-  }
-
   updateLegendLive();
 }
 
 function drawCell(c, r, ci){
-  if(!fctx) return;
-  // Limpiar celda con fondo gris
-  fctx.fillStyle = "#d8d8d8";
-  fctx.fillRect(c*CELL, r*CELL, CELL, CELL);
-  // Pintar color
-  if(ci >= 0){
-    fctx.fillStyle = COLS[ci].h;
-    fctx.fillRect(c*CELL+1, r*CELL+1, CELL-2, CELL-2);
-    // Label
-    if(CELL >= 30){
-      const nm = COLS[ci].n.split(" ")[0];
-      const fs = Math.min(Math.floor(CELL * 0.22), 9);
-      fctx.font = "bold " + fs + "px sans-serif";
-      fctx.fillStyle = "rgba(0,0,0,0.28)";
-      fctx.textAlign = "center";
-      fctx.textBaseline = "middle";
-      fctx.fillText(nm, c*CELL + CELL/2, r*CELL + CELL/2);
-    }
-  }
+  if(!fctx || CELL<=0) return;
+  const x = Math.round(c*CELL), y = Math.round(r*CELL), sz = Math.round(CELL);
+  // Fondo
+  fctx.fillStyle = ci>=0 ? COLS[ci].h : "#d8d8d8";
+  fctx.fillRect(x, y, sz, sz);
   // Borde de grilla
-  fctx.strokeStyle = "rgba(0,0,0,0.15)";
-  fctx.lineWidth = 0.5;
-  fctx.strokeRect(c*CELL, r*CELL, CELL, CELL);
+  fctx.strokeStyle = "rgba(0,0,0,0.2)";
+  fctx.lineWidth = 1;
+  fctx.strokeRect(x+0.5, y+0.5, sz-1, sz-1);
 }
 
 // ── Coordenada celda desde evento ─────────────────────────────────────────────
