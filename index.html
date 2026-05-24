@@ -1037,6 +1037,29 @@ window.addEventListener("DOMContentLoaded", async () => {
   await cargarUsuariosLogin();
 });
 
+
+
+async function syncAll(){
+  try{
+    setSyncState("syncing");
+    const [{data:p},{data:u}] = await Promise.all([
+      db.from("pedidos").select("*").order("numero",{ascending:false}),
+      db.from("usuarios").select("*").order("nombre"),
+    ]);
+    allPedidos = p||[];
+    allUsuarios = u||[];
+    setSyncState("ok");
+    if(currentSection==="sec-kanban") renderKanban();
+    else if(currentSection==="sec-historial") renderHistorial();
+    else if(currentSection==="sec-usuarios") renderUsuarios();
+    else if(currentSection==="sec-presupuestos") renderPresupuestos();
+  }catch(e){
+    setSyncState("err");
+    if(currentSection==="sec-kanban") renderKanban();
+    console.error("syncAll error:",e);
+  }
+}
+
 async function cargarUsuariosLogin(){
   document.getElementById("login-loading").style.display = "block";
   document.getElementById("login-form").style.display = "none";
@@ -2528,9 +2551,9 @@ function undoGrid(){
 
 // ── Inicializar canvas ────────────────────────────────────────────────────────
 function fpg(id, btn){
-  document.querySelectorAll(".fpg").forEach(p=>p.style.display="none");
+  document.querySelectorAll(".fpg").forEach(p=>{p.classList.remove("on");p.style.display="";});
   const el = document.getElementById(id);
-  if(el) el.style.display="block";
+  if(el){el.classList.add("on");el.style.display="block";}
   document.querySelectorAll(".flexi-nav button").forEach(b=>b.classList.remove("on"));
   if(btn) btn.classList.add("on");
 }
