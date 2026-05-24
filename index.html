@@ -662,44 +662,20 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 
       <!-- ENVÍO -->
       <div id="et2-envio">
-        <div class="card" style="margin-bottom:16px;">
-          <div class="ctitle">Tipo de envío</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-            <button class="dtog on" id="et2-fab" onclick="setEt2Tipo('fabrica')" style="font-size:11px;">🏭 Retira Fábrica</button>
-            <button class="dtog" id="et2-san" onclick="setEt2Tipo('santoni')" style="font-size:11px;">🏪 Retira Santoni</button>
-            <button class="dtog" id="et2-int" onclick="setEt2Tipo('interior')" style="font-size:11px;">📦 Envío Interior</button>
-            <button class="dtog" id="et2-priv" onclick="setEt2Tipo('privado')" style="font-size:11px;">🚗 Envío Privado</button>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:20px;text-align:center;">
+          <div style="font-size:48px;">🏷</div>
+          <div>
+            <div style="font-size:17px;font-weight:800;color:#F1F5F9;margin-bottom:8px;">Sistema de Etiquetas FlexiFloor</div>
+            <div style="font-size:13px;color:#64748B;line-height:1.6;max-width:380px;">
+              Abre el sistema completo de etiquetas con remitente guardado, datos del destinatario, tipo de envío y cantidad de bultos.
+            </div>
           </div>
+          <button onclick="window.open('FlexiFloor_Envios.html','_blank')" 
+            style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:14px 32px;cursor:pointer;font-size:15px;font-weight:800;">
+            🖨 Abrir generador de etiquetas
+          </button>
+          <p style="font-size:11px;color:#475569;">Se abre en una nueva pestaña</p>
         </div>
-        <div class="card" style="margin-bottom:16px;">
-          <div class="ctitle">Destinatario</div>
-          <div class="row2">
-            <div><label>Nombre / Empresa *</label><input id="et2-nombre" class="m-input" type="text" placeholder="Juan García"></div>
-            <div><label>Teléfono *</label><input id="et2-tel" class="m-input" type="text" placeholder="11 2345 6789"></div>
-          </div>
-          <div class="row2" style="margin-top:8px;">
-            <div><label>Dirección</label><input id="et2-dir" class="m-input" type="text" placeholder="Av. Corrientes 1234"></div>
-            <div><label>Localidad</label><input id="et2-loc" class="m-input" type="text" placeholder="Buenos Aires"></div>
-          </div>
-          <div id="et2-transporte-wrap" style="display:none;margin-top:8px;">
-            <label>Transporte / Empresa</label>
-            <input id="et2-transporte" class="m-input" type="text" placeholder="Andreani, OCA, Correo Arg...">
-          </div>
-        </div>
-        <div class="card" style="margin-bottom:16px;">
-          <div class="ctitle">Detalle del pedido</div>
-          <div class="row2">
-            <div><label>N° de pedido</label><input id="et2-pedido" class="m-input" type="text" placeholder="#1001"></div>
-            <div><label>Cantidad de bultos</label><input id="et2-bultos" class="m-input" type="number" min="1" max="20" value="1"></div>
-          </div>
-          <div style="margin-top:8px;">
-            <label>Observaciones <span style="color:#64748B;font-size:10px;">(solo en la etiqueta)</span></label>
-            <textarea id="et2-obs" class="m-input" style="min-height:48px;resize:vertical;" placeholder="Llamar antes de entregar..."></textarea>
-          </div>
-        </div>
-        <button onclick="generarEtiquetaManual()" style="width:100%;background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:14px;cursor:pointer;font-size:14px;font-weight:800;">
-          🖨 Generar e imprimir etiqueta
-        </button>
       </div>
 
       <!-- PRODUCTO -->
@@ -1177,7 +1153,11 @@ function showSection(id, btn){
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
   // Render y sync según sección
-  if(id==="sec-kanban"){ renderKanban(); syncAll().then(()=>{ renderKanban(); window.scrollTo(0,0); }); }
+  if(id==="sec-kanban"){ 
+    window.scrollTo(0,0);
+    renderKanban(); 
+    syncAll().then(()=>{ renderKanban(); setTimeout(()=>window.scrollTo(0,0),50); }); 
+  }
   else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
   else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
   else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
@@ -2572,9 +2552,23 @@ function fpg(id, btn){
 function initPaintCanvas(){
   fcv = document.getElementById("fcv");
   fctx = fcv.getContext("2d");
-  // Inicializar grid si cambió el tamaño
+  // Calcular cols y rows según las medidas
+  if(FS.lR>0 && FS.aR>0){
+    FS.cols = Math.round(FS.lR/0.25);
+    FS.rows = Math.round(FS.aR/0.25);
+  } else if(FS.m2cot>0){
+    const t = FS.m2cot * PxM2;
+    FS.cols = Math.ceil(Math.sqrt(t));
+    FS.rows = Math.ceil(t / FS.cols);
+  }
+  if(FS.cols<1) FS.cols=1;
+  if(FS.rows<1) FS.rows=1;
+  // Inicializar grid
   const needed = FS.cols * FS.rows;
-  if(FS.grid.length !== needed) FS.grid = new Array(needed).fill(-1);
+  if(FS.grid.length !== needed){ FS.grid = new Array(needed).fill(-1); gridHistory=[]; }
+  // Mostrar panel de pintura
+  document.getElementById("paint-wrap").style.display = "block";
+  document.getElementById("zoom-bar").style.display = "flex";
   recalcCell();
   bindPaintEvents();
   buildPaintColors();
