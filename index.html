@@ -61,8 +61,9 @@ html,body{height:100%;}
 .topbar{
   background:#1E293B;border-bottom:1px solid #334155;
   padding:11px 16px;display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:200;
+  position:fixed;top:0;left:0;right:0;z-index:200;
 }
+.section{margin-top:55px;}
 .topbar-brand{display:flex;align-items:center;gap:10px;}
 .topbar-brand .icon{font-size:20px;color:var(--blue);}
 .topbar-brand h1{font-size:16px;font-weight:900;color:#F1F5F9;letter-spacing:-.5px;}
@@ -1148,20 +1149,11 @@ function showSection(id, btn){
   document.getElementById(id).classList.add("on");
   if(btn) btn.classList.add("on");
   currentSection = id;
-  // Scroll al tope
   window.scrollTo(0,0);
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
-  // Render y sync según sección
-  if(id==="sec-kanban"){ 
-    window.scrollTo(0,0);
-    renderKanban(); 
-    syncAll().then(()=>{ renderKanban(); setTimeout(()=>window.scrollTo(0,0),50); }); 
-  }
+  if(id==="sec-kanban"){ renderKanban(); syncAll().then(renderKanban); }
   else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
   else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
   else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
-  // calc y etiquetas abren sin sync
 }
 
 function setSyncState(st){
@@ -2838,13 +2830,27 @@ function setTool(t){
 function setPredominante(ci){
   const c = COLS[ci];
   if(FS.grid.some(v => v >= 0)){
-    if(!window.confirm("Esto va a reemplazar todo el diseño con " + c.n + ". ¿Continuás?")) return;
+    if(!window.confirm("Esto va a reemplazar todo con " + c.n + ". ¿Continuás?")) return;
   }
   pushHistory();
   FS.grid.fill(ci);
   selectColor(ci);
   setTool("p");
-  drawAll();
+  // Forzar redibujado inmediato del canvas
+  if(fctx && fcv && fcv.width > 0){
+    fctx.fillStyle = c.h;
+    fctx.fillRect(0, 0, fcv.width, fcv.height);
+    // Grilla
+    fctx.strokeStyle = "rgba(0,0,0,0.15)";
+    fctx.lineWidth = 0.5;
+    fctx.beginPath();
+    for(let r=0;r<=FS.rows;r++){fctx.moveTo(0,r*CELL);fctx.lineTo(fcv.width,r*CELL);}
+    for(let c2=0;c2<=FS.cols;c2++){fctx.moveTo(c2*CELL,0);fctx.lineTo(c2*CELL,fcv.height);}
+    fctx.stroke();
+    updateLegendLive();
+  } else {
+    drawAll();
+  }
 }
 
 // ─── PANTALLA COMPLETA DISEÑO ────────────────────────────────────────────────
