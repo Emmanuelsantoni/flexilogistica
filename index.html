@@ -460,7 +460,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
             <div><label>Ancho (m)</label><input id="dA" type="number" step="0.01" min="0" placeholder="4.20" oninput="calcDims()"></div>
           </div>
           <label>O bien: m² directamente</label>
-          <input id="dM2" type="number" step="0.01" min="0" placeholder="14.70" oninput="calcM2()">
+          <input id="dM2" type="number" step="0.01" min="0" placeholder="14.70" oninput="calcDims()">
         </div>
         <div class="card" id="dims-card" style="display:none;">
           <div class="ctitle">Resultado</div>
@@ -475,7 +475,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
             <div style="font-size:15px;font-weight:700;color:var(--green);margin-top:4px;" id="r-cajas">—</div>
           </div>
         </div>
-        <button class="fbtn fbtn-pri" onclick="fpg('fpg-paint',document.querySelectorAll('.flexi-nav button')[2]);initPaintCanvas()">Siguiente → Diseño</button>
+        <button class="fbtn fbtn-pri" onclick="if(!FS.pzas){toast('Ingresá las medidas primero','err');return;}fpg('fpg-paint',document.querySelectorAll('.flexi-nav button')[2]);initPaintCanvas()">Siguiente → Diseño</button>
       </div>
 
       <!-- PG 3 DISEÑO -->
@@ -2522,6 +2522,17 @@ const COLS=[
   {n:"Celeste",h:"#18BDEB"},{n:"Verde Agua",h:"#27C7BD"},{n:"Verde",h:"#69BE28"},
 ];
 const PxM2=16,UxCaja=64;
+const fmt = n => new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n);
+const fmtNum = n => new Intl.NumberFormat("es-AR").format(n);
+const fmtKg = kg => kg>=1 ? kg.toFixed(2)+" kg" : (kg*1000).toFixed(0)+" g";
+function embStr(pz){
+  if(!pz||pz<=0) return "0 unidades";
+  const cj=Math.floor(pz/UxCaja), su=pz%UxCaja;
+  let s="";
+  if(cj>0) s+=cj+" caja"+(cj!==1?"s":"");
+  if(su>0) s+=(cj>0?" y ":"")+su+" unidad"+(su!==1?"es":"");
+  return s||"0 unidades";
+}
 let FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retira_fabrica"};
 let fadj={};
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2561,8 +2572,13 @@ function fpg(id, btn){
 function initPaintCanvas(){
   fcv = document.getElementById("fcv");
   fctx = fcv.getContext("2d");
+  // Inicializar grid si cambió el tamaño
+  const needed = FS.cols * FS.rows;
+  if(FS.grid.length !== needed) FS.grid = new Array(needed).fill(-1);
   recalcCell();
   bindPaintEvents();
+  buildPaintColors();
+  buildPredColors();
   drawAll();
 }
 
@@ -2733,7 +2749,10 @@ function fpaint(e){
 // ── Eventos de mouse y touch ──────────────────────────────────────────────────
 let _scrollStart = null;
 
+let _eventsBound = false;
 function bindPaintEvents(){
+  if(_eventsBound) return; // evitar eventos duplicados
+  _eventsBound = true;
   const wrap = document.getElementById("paint-wrap");
 
   // Mouse
