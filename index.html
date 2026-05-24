@@ -3019,6 +3019,98 @@ function renderAdjPreview(){
     return`<div class="leg-row"><div class="leg-top"><div class="leg-dot" style="background:${c.h};${c.h==="#f0f0f0"?"border:1px solid #555":""}"></div><div class="leg-name">${c.n}</div><div class="leg-pzas">${fmtNum(pzT)} pz</div></div><div class="leg-emb">Diseño: <strong>${pzG}</strong>${pzE>0?" + sobrante: <strong>"+pzE+"</strong>":""} · Embalaje: <strong>${embStr(pzT)}</strong></div></div>`;
   }).join("")+`<div class="total-emb"><div class="tl">Total pedido embalado</div><div class="tv">${embStr(totalPz)} <span style="font-size:11px;font-weight:400;color:var(--muted);">(${totalPz} piezas)</span></div></div>`;
 }
+
+
+function showDims(){
+  FS.pzas = FS.m2cot * PxM2;
+  const d = FS.lR>0 ? FS.lR.toFixed(2)+" × "+FS.aR.toFixed(2)+" m" : FS.m2cot+" m²";
+  const rdim = document.getElementById("r-dim");
+  const rmreal = document.getElementById("r-mreal");
+  const rmcot = document.getElementById("r-mcot");
+  const rpzas = document.getElementById("r-pzas");
+  const rcajas = document.getElementById("r-cajas");
+  const dcard = document.getElementById("dims-card");
+  if(rdim) rdim.textContent = d;
+  if(rmreal) rmreal.textContent = FS.m2real.toFixed(2)+" m²";
+  if(rmcot) rmcot.textContent = FS.m2cot+" m²";
+  if(rpzas) rpzas.textContent = new Intl.NumberFormat("es-AR").format(FS.pzas);
+  if(rcajas) rcajas.textContent = embStr(FS.pzas);
+  if(dcard) dcard.style.display = "block";
+  calcPrice();
+}
+
+function resetD(){
+  FS.m2cot = FS.m2real = FS.pzas = 0;
+  const dcard = document.getElementById("dims-card");
+  if(dcard) dcard.style.display = "none";
+}
+
+function getPzasPintadas(){
+  const cnt = getGridCounts();
+  return Object.values(cnt).reduce((s,v)=>s+v, 0);
+}
+
+function setDelivery(tipo){
+  FS.delivery = tipo;
+  ["retira_fabrica","retira_santoni","envio_interior","envio_privado"].forEach(t=>{
+    const el = document.getElementById("dtog-"+t);
+    if(el) el.classList.toggle("on", tipo===t);
+  });
+  const necesitaDir = tipo==="envio_interior" || tipo==="envio_privado";
+  const dw = document.getElementById("dir-wrap");
+  if(dw) dw.style.display = necesitaDir ? "block" : "none";
+}
+
+function calcDims(){
+  const l = parseFloat(document.getElementById("dL").value)||0;
+  const a = parseFloat(document.getElementById("dA").value)||0;
+  const m2dir = parseFloat(document.getElementById("dM2").value)||0;
+  if(m2dir > 0){
+    // Entrada directa de m2
+    FS.lR = 0; FS.aR = 0;
+    FS.m2real = m2dir;
+    FS.m2cot = Math.ceil(m2dir);
+    FS.pzas = FS.m2cot * PxM2;
+    showDims();
+  } else if(l>0 && a>0){
+    FS.lR = Math.ceil(l*4)/4;
+    FS.aR = Math.ceil(a*4)/4;
+    FS.m2real = +(l*a).toFixed(4);
+    FS.m2cot = FS.lR * FS.aR;
+    FS.pzas = FS.m2cot * PxM2;
+    showDims();
+  } else {
+    resetD();
+  }
+}
+
+function calcPrice(){
+  const pm2 = parseFloat(document.getElementById("pM2").value)||0;
+  const ppz = parseFloat(document.getElementById("pPz").value)||0;
+  const pintadas = getPzasPintadas();
+  const pzasBase = pintadas > 0 ? pintadas : FS.pzas;
+  const m2base = pzasBase / PxM2;
+  const tm2 = pm2>0 ? m2base*pm2 : null;
+  const tpz = ppz>0 ? pzasBase*ppz : null;
+  const fin = tm2!==null ? tm2 : tpz;
+  const el = document.getElementById("price-aviso");
+  if(el){
+    const sinPintar = FS.pzas - Object.values(getGridCounts()).reduce((s,v)=>s+v,0);
+    if(sinPintar>0 && FS.grid.some(v=>v>=0)){
+      el.style.display="block";
+      el.innerHTML="⚠ Hay <b>"+sinPintar+" baldosas sin pintar</b> en el diseño. El precio se calculó sobre <b>"+pzasBase+"</b> pintadas de "+FS.pzas+" totales.";
+    } else {
+      el.style.display="none";
+    }
+  }
+  const ptm2El = document.getElementById("p-tm2");
+  const ptpzEl = document.getElementById("p-tpz");
+  const ptotEl = document.getElementById("p-total");
+  if(ptm2El) ptm2El.textContent = tm2!==null ? fmt(tm2) : "—";
+  if(ptpzEl) ptpzEl.textContent = tpz!==null ? fmt(tpz) : "—";
+  if(ptotEl) ptotEl.textContent = fin!==null ? fmt(fin) : "—";
+}
+
 function buildResult(){
   const n=document.getElementById("cNombre").value||"—";
   const t=document.getElementById("cTel").value||"—";
