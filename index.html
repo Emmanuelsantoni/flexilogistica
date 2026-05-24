@@ -643,6 +643,111 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
     </div>
   </div>
 
+  <!-- SECCIÓN: ETIQUETAS -->
+  <div class="section" id="sec-etiquetas"><a id="top-etiquetas"></a>
+    <div style="max-width:700px;margin:0 auto;">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;font-weight:700;">🏷 Generador de Etiquetas</div>
+
+      <!-- Selector de tipo -->
+      <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+        <button id="et2-tab-envio" onclick="setEtiquetaTab('envio')"
+          style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;">
+          📦 Etiqueta de Envío
+        </button>
+        <button id="et2-tab-producto" onclick="setEtiquetaTab('producto')"
+          style="background:#1E293B;color:#64748B;border:1px solid #334155;border-radius:8px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;">
+          🏷 Etiqueta de Producto
+        </button>
+      </div>
+
+      <!-- ENVÍO -->
+      <div id="et2-envio">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="ctitle">Tipo de envío</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+            <button class="dtog on" id="et2-fab" onclick="setEt2Tipo('fabrica')" style="font-size:11px;">🏭 Retira Fábrica</button>
+            <button class="dtog" id="et2-san" onclick="setEt2Tipo('santoni')" style="font-size:11px;">🏪 Retira Santoni</button>
+            <button class="dtog" id="et2-int" onclick="setEt2Tipo('interior')" style="font-size:11px;">📦 Envío Interior</button>
+            <button class="dtog" id="et2-priv" onclick="setEt2Tipo('privado')" style="font-size:11px;">🚗 Envío Privado</button>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="ctitle">Destinatario</div>
+          <div class="row2">
+            <div><label>Nombre / Empresa *</label><input id="et2-nombre" class="m-input" type="text" placeholder="Juan García"></div>
+            <div><label>Teléfono *</label><input id="et2-tel" class="m-input" type="text" placeholder="11 2345 6789"></div>
+          </div>
+          <div class="row2" style="margin-top:8px;">
+            <div><label>Dirección</label><input id="et2-dir" class="m-input" type="text" placeholder="Av. Corrientes 1234"></div>
+            <div><label>Localidad</label><input id="et2-loc" class="m-input" type="text" placeholder="Buenos Aires"></div>
+          </div>
+          <div id="et2-transporte-wrap" style="display:none;margin-top:8px;">
+            <label>Transporte / Empresa</label>
+            <input id="et2-transporte" class="m-input" type="text" placeholder="Andreani, OCA, Correo Arg...">
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="ctitle">Detalle del pedido</div>
+          <div class="row2">
+            <div><label>N° de pedido</label><input id="et2-pedido" class="m-input" type="text" placeholder="#1001"></div>
+            <div><label>Cantidad de bultos</label><input id="et2-bultos" class="m-input" type="number" min="1" max="20" value="1"></div>
+          </div>
+          <div style="margin-top:8px;">
+            <label>Observaciones <span style="color:#64748B;font-size:10px;">(solo en la etiqueta)</span></label>
+            <textarea id="et2-obs" class="m-input" style="min-height:48px;resize:vertical;" placeholder="Llamar antes de entregar..."></textarea>
+          </div>
+        </div>
+        <button onclick="generarEtiquetaManual()" style="width:100%;background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:14px;cursor:pointer;font-size:14px;font-weight:800;">
+          🖨 Generar e imprimir etiqueta
+        </button>
+      </div>
+
+      <!-- PRODUCTO -->
+      <div id="et2-producto" style="display:none;">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="ctitle">Formato de la etiqueta</div>
+          <div class="row2">
+            <div>
+              <label>Tamaño de papel</label>
+              <select id="et2-prod-tamano" class="m-select">
+                <option value="100x70">100 × 70 mm (etiqueta chica)</option>
+                <option value="100x150">100 × 150 mm (etiqueta grande)</option>
+                <option value="A4">A4 vertical</option>
+                <option value="carta">Carta vertical</option>
+              </select>
+            </div>
+            <div>
+              <label>Tamaño de fuente</label>
+              <select id="et2-prod-fuente" class="m-select">
+                <option value="chica">Chica — más info en menos espacio</option>
+                <option value="mediana" selected>Mediana — equilibrada</option>
+                <option value="grande">Grande — máxima legibilidad</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="ctitle">Datos del producto</div>
+          <div class="row2">
+            <div><label>Nombre del producto *</label><input id="et2-prod-nombre" class="m-input" type="text" placeholder="Baldosa FlexiFloor Negro"></div>
+            <div><label>Código / SKU</label><input id="et2-prod-codigo" class="m-input" type="text" placeholder="FF-NEG-001"></div>
+          </div>
+          <div class="row2" style="margin-top:8px;">
+            <div><label>Cantidad / Contenido</label><input id="et2-prod-cantidad" class="m-input" type="text" placeholder="64 unidades / 1 caja"></div>
+            <div><label>N° de etiquetas a imprimir</label><input id="et2-prod-cant-etiq" class="m-input" type="number" min="1" max="50" value="1"></div>
+          </div>
+          <div style="margin-top:8px;">
+            <label>Descripción / Observaciones</label>
+            <textarea id="et2-prod-obs" class="m-input" style="min-height:48px;resize:vertical;" placeholder="Uso interno, depósito A, lote 2024..."></textarea>
+          </div>
+        </div>
+        <button onclick="generarEtiquetaProducto()" style="width:100%;background:linear-gradient(135deg,#00C9A7,#00a085);color:#fff;border:none;border-radius:10px;padding:14px;cursor:pointer;font-size:14px;font-weight:800;">
+          🖨 Generar e imprimir etiqueta de producto
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- SECCIÓN: CALCULADORA -->
   <div class="section" id="sec-calc"><a id="top-calc"></a>
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:20px;">
@@ -900,7 +1005,7 @@ const LABEL_ACCION = {
   listo_transporte:"✈ Confirmar Despacho", listo_privado:"🚗 Confirmar Entrega"
 };
 const ROL_TABS = {
-  admin:   [{id:"sec-flexi",label:"◈ Presupuesto"},{id:"sec-presupuestos",label:"💾 Guardados"},{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"},{id:"sec-calc",label:"🧮 Calculadora"},{id:"sec-usuarios",label:"👤 Usuarios"}],
+  admin:   [{id:"sec-flexi",label:"◈ Presupuesto"},{id:"sec-presupuestos",label:"💾 Guardados"},{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"},{id:"sec-calc",label:"🧮 Calculadora"},{id:"sec-etiquetas",label:"🏷 Etiquetas"},{id:"sec-usuarios",label:"👤 Usuarios"}],
   deposito:[{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"}],
   entrega: [{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"}],
 };
@@ -2131,6 +2236,168 @@ function abrirCalculadora(){
   window.open("calculadora-covin.html","_blank");
 }
 
+// ─── GENERADOR DE ETIQUETAS MANUAL ───────────────────────────────────────────
+let et2TipoActual = "fabrica";
+
+function setEtiquetaTab(tab){
+  document.getElementById("et2-envio").style.display = tab==="envio" ? "block" : "none";
+  document.getElementById("et2-producto").style.display = tab==="producto" ? "block" : "none";
+  document.getElementById("et2-tab-envio").style.background = tab==="envio" ? "var(--accent)" : "#1E293B";
+  document.getElementById("et2-tab-envio").style.color = tab==="envio" ? "#fff" : "#64748B";
+  document.getElementById("et2-tab-envio").style.border = tab==="envio" ? "none" : "1px solid #334155";
+  document.getElementById("et2-tab-producto").style.background = tab==="producto" ? "var(--accent)" : "#1E293B";
+  document.getElementById("et2-tab-producto").style.color = tab==="producto" ? "#fff" : "#64748B";
+  document.getElementById("et2-tab-producto").style.border = tab==="producto" ? "none" : "1px solid #334155";
+}
+
+function setEt2Tipo(tipo){
+  et2TipoActual = tipo;
+  ["fab","san","int","priv"].forEach(id=>{
+    const btn = document.getElementById("et2-"+id);
+    if(btn){ btn.classList.remove("on"); }
+  });
+  const map = {"fabrica":"fab","santoni":"san","interior":"int","privado":"priv"};
+  const btn = document.getElementById("et2-"+map[tipo]);
+  if(btn) btn.classList.add("on");
+  // Mostrar campo transporte para envíos
+  const tw = document.getElementById("et2-transporte-wrap");
+  if(tw) tw.style.display = (tipo==="interior"||tipo==="privado") ? "block" : "none";
+}
+
+function generarEtiquetaManual(){
+  const nombre = document.getElementById("et2-nombre").value.trim();
+  const tel = document.getElementById("et2-tel").value.trim();
+  const dir = document.getElementById("et2-dir").value.trim();
+  const loc = document.getElementById("et2-loc").value.trim();
+  const pedido = document.getElementById("et2-pedido").value.trim();
+  const obs = document.getElementById("et2-obs").value.trim();
+  const transporte = document.getElementById("et2-transporte").value.trim();
+  const bultos = parseInt(document.getElementById("et2-bultos").value)||1;
+
+  if(!nombre){ toast("Completá el nombre del destinatario","err"); return; }
+
+  const tipoLabels = {"fabrica":"🏭 RETIRA EN FÁBRICA","santoni":"🏪 RETIRA EN SANTONI","interior":"📦 ENVÍO INTERIOR","privado":"🚗 ENVÍO PRIVADO"};
+  const tipoColor = {"fabrica":"#00C9A7","santoni":"#06B6D4","interior":"#F97316","privado":"#A855F7"};
+  const label = tipoLabels[et2TipoActual];
+  const color = tipoColor[et2TipoActual];
+
+  const css = `
+    @page{size:100mm 150mm;margin:0;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',Arial,sans-serif;width:100mm;min-height:150mm;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .etiqueta{width:100mm;min-height:150mm;border:1.5px solid #222;padding:0;display:flex;flex-direction:column;}
+    .et-header{background:${color};color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;}
+    .et-tipo{font-size:11px;font-weight:900;letter-spacing:1px;}
+    .et-num{font-size:18px;font-weight:900;font-family:monospace;}
+    .et-body{padding:10px 12px;flex:1;}
+    .et-label{font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:3px;}
+    .et-value{font-size:14px;font-weight:800;color:#111;line-height:1.3;margin-bottom:10px;}
+    .et-value.big{font-size:20px;}
+    .et-footer{background:#f5f5f5;border-top:1px solid #ddd;padding:6px 12px;font-size:8px;color:#888;text-align:center;}
+    .page-break{page-break-after:always;}
+    @media print{button{display:none;}}
+  `;
+
+  let allHTML = "";
+  for(let b=1; b<=bultos; b++){
+    const bultoStr = bultos>1 ? ` — BULTO ${b} de ${bultos}` : "";
+    allHTML += `
+    <div class="etiqueta${b<bultos?' page-break':''}">
+      <div class="et-header">
+        <div class="et-tipo">${label}</div>
+        <div class="et-num">${pedido||"—"}</div>
+      </div>
+      <div class="et-body">
+        <div class="et-label">Destinatario</div>
+        <div class="et-value big">${nombre}</div>
+        ${tel?`<div class="et-label">Teléfono</div><div class="et-value">☎ ${tel}</div>`:""}
+        ${dir?`<div class="et-label">Dirección</div><div class="et-value">${dir}${loc?" — "+loc:""}</div>`:""}
+        ${transporte?`<div class="et-label">Transporte</div><div class="et-value">🚚 ${transporte}</div>`:""}
+        ${obs?`<div class="et-label">Observaciones</div><div class="et-value" style="font-size:11px;">${obs}</div>`:""}
+        ${bultos>1?`<div style="margin-top:10px;background:${color}22;border:1px solid ${color};border-radius:4px;padding:6px;text-align:center;font-size:14px;font-weight:900;color:${color};">BULTO ${b} de ${bultos}</div>`:""}
+      </div>
+      <div class="et-footer">FlexiFloor® · ${new Date().toLocaleDateString("es-AR")}${bultoStr}</div>
+    </div>`;
+  }
+
+  const win = window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Etiqueta FlexiFloor</title>
+    <style>${css}</style></head><body>
+    <button onclick="window.print()" style="position:fixed;top:10px;right:10px;background:#6C63FF;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:14px;font-weight:700;z-index:999;">🖨 Imprimir</button>
+    ${allHTML}</body></html>`);
+  win.document.close();
+}
+
+function generarEtiquetaProducto(){
+  const nombre = document.getElementById("et2-prod-nombre").value.trim();
+  const codigo = document.getElementById("et2-prod-codigo").value.trim();
+  const cantidad = document.getElementById("et2-prod-cantidad").value.trim();
+  const obs = document.getElementById("et2-prod-obs").value.trim();
+  const cantEtiq = parseInt(document.getElementById("et2-prod-cant-etiq").value)||1;
+  const tamano = document.getElementById("et2-prod-tamano").value;
+  const fuente = document.getElementById("et2-prod-fuente").value;
+
+  if(!nombre){ toast("Completá el nombre del producto","err"); return; }
+
+  // Configuración de tamaño
+  const tamanos = {
+    "100x70":  {page:"100mm 70mm",  w:"100mm", h:"70mm",  isLabel:true},
+    "100x150": {page:"100mm 150mm", w:"100mm", h:"150mm", isLabel:true},
+    "A4":      {page:"A4",          w:"210mm", h:"297mm", isLabel:false},
+    "carta":   {page:"letter",      w:"216mm", h:"279mm", isLabel:false}
+  };
+  const cfg = tamanos[tamano]||tamanos["100x70"];
+
+  // Configuración de fuente
+  const fuentes = {
+    "chica":   {nombre:14, cantidad:11, obs:8,  header:10, footer:6,  padding:"5px 8px"},
+    "mediana": {nombre:18, cantidad:14, obs:10, header:12, footer:7,  padding:"8px 10px"},
+    "grande":  {nombre:26, cantidad:18, obs:12, header:14, footer:8,  padding:"12px 14px"}
+  };
+  const fnt = fuentes[fuente]||fuentes["mediana"];
+
+  const css = `
+    @page{size:${cfg.page};margin:0;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .etiqueta{width:${cfg.w};${cfg.isLabel?"height:"+cfg.h+";":" min-height:"+cfg.h+";"}border:1.5px solid #222;display:flex;flex-direction:column;overflow:hidden;}
+    .et-header{background:#1E293B;color:#fff;padding:${fnt.padding};display:flex;justify-content:space-between;align-items:center;}
+    .et-marca{font-size:${fnt.header}px;font-weight:900;letter-spacing:1px;}
+    .et-codigo{font-size:${fnt.obs}px;font-family:monospace;background:#ffffff22;padding:2px 6px;border-radius:3px;}
+    .et-body{padding:${fnt.padding};flex:1;display:flex;flex-direction:column;justify-content:center;}
+    .et-nombre{font-size:${fnt.nombre}px;font-weight:900;color:#111;margin-bottom:8px;line-height:1.2;}
+    .et-cantidad{font-size:${fnt.cantidad}px;font-weight:700;color:#6C63FF;margin-bottom:4px;}
+    .et-obs{font-size:${fnt.obs}px;color:#666;margin-top:6px;line-height:1.4;}
+    .et-footer{background:#f5f5f5;border-top:1px solid #ddd;padding:4px 10px;font-size:${fnt.footer}px;color:#888;}
+    .page-break{page-break-after:always;}
+    @media print{button{display:none;}}
+  `;
+
+  let allHTML = "";
+  for(let i=1; i<=cantEtiq; i++){
+    allHTML += `
+    <div class="etiqueta${i<cantEtiq?' page-break':''}">
+      <div class="et-header">
+        <div class="et-marca">FlexiFloor®</div>
+        ${codigo?`<div class="et-codigo">${codigo}</div>`:""}
+      </div>
+      <div class="et-body">
+        <div class="et-nombre">${nombre}</div>
+        ${cantidad?`<div class="et-cantidad">📦 ${cantidad}</div>`:""}
+        ${obs?`<div class="et-obs">${obs}</div>`:""}
+      </div>
+      <div class="et-footer">FlexiFloor · ${new Date().toLocaleDateString("es-AR")}${cantEtiq>1?" · "+i+" de "+cantEtiq:""}</div>
+    </div>`;
+  }
+
+  const win = window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Etiqueta Producto FlexiFloor</title>
+    <style>${css}</style></head><body>
+    <button onclick="window.print()" style="position:fixed;top:10px;right:10px;background:#00C9A7;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:14px;font-weight:700;z-index:999;">🖨 Imprimir</button>
+    ${allHTML}</body></html>`);
+  win.document.close();
+}
+
 function verDiseno(id){
   const p = allPedidos.find(x=>x.id===id);
   if(!p||!p.imagen_diseno) return;
@@ -2533,30 +2800,64 @@ function setTool(t){
   if(patternMode && t!=="p"){ cancelarPatron(); }
 }
 function drawAll(){
-  fctx.clearRect(0,0,fcv.width,fcv.height);
-  for(let r=0;r<FS.rows;r++)
-    for(let c=0;c<FS.cols;c++)
-      drawCell(c,r,FS.grid[r*FS.cols+c]);
+  // Fondo gris para celdas vacías
+  fctx.fillStyle="#e8e8e8";
+  fctx.fillRect(0,0,fcv.width,fcv.height);
+  // Pintar celdas con color
+  for(let r=0;r<FS.rows;r++){
+    for(let c=0;c<FS.cols;c++){
+      const ci=FS.grid[r*FS.cols+c];
+      if(ci>=0){
+        fctx.fillStyle=COLS[ci].h;
+        fctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);
+      }
+    }
+  }
+  // Grilla
+  fctx.strokeStyle="rgba(0,0,0,0.12)";
+  fctx.lineWidth=0.5;
+  for(let r=0;r<=FS.rows;r++){fctx.beginPath();fctx.moveTo(0,r*CELL);fctx.lineTo(fcv.width,r*CELL);fctx.stroke();}
+  for(let c=0;c<=FS.cols;c++){fctx.beginPath();fctx.moveTo(c*CELL,0);fctx.lineTo(c*CELL,fcv.height);fctx.stroke();}
+  // Labels
+  if(CELL>=28){
+    fctx.textAlign="center";fctx.textBaseline="middle";
+    for(let r=0;r<FS.rows;r++){
+      for(let c=0;c<FS.cols;c++){
+        const ci=FS.grid[r*FS.cols+c];
+        if(ci>=0){
+          const nm=COLS[ci].n.split(" ")[0];
+          const fs=Math.min(CELL*0.22,9);
+          fctx.font="bold "+fs+"px sans-serif";
+          fctx.fillStyle="rgba(0,0,0,0.3)";
+          fctx.fillText(nm,c*CELL+CELL/2,r*CELL+CELL/2);
+        }
+      }
+    }
+  }
   updateLegendLive();
 }
 function drawCell(c,r,ci){
-  // Limpiar celda
-  fctx.fillStyle=ci>=0?COLS[ci].h:"#f5f5f5";
+  // Borrar celda con fondo gris
+  fctx.fillStyle="#e8e8e8";
   fctx.fillRect(c*CELL,r*CELL,CELL,CELL);
-  // Borde sutil
-  fctx.strokeStyle="rgba(0,0,0,0.07)";
-  fctx.lineWidth=0.3;
-  fctx.strokeRect(c*CELL,r*CELL,CELL,CELL);
-  // Label
-  if(ci>=0&&CELL>=28){
-    const nm=COLS[ci].n.split(" ")[0];
-    const fs=Math.min(CELL*0.22,9);
-    fctx.font="bold "+fs+"px sans-serif";
-    fctx.fillStyle="rgba(0,0,0,0.3)";
-    fctx.textAlign="center";
-    fctx.textBaseline="middle";
-    fctx.fillText(nm,c*CELL+CELL/2,r*CELL+CELL/2);
+  // Pintar color si tiene
+  if(ci>=0){
+    fctx.fillStyle=COLS[ci].h;
+    fctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);
+    // Label
+    if(CELL>=28){
+      const nm=COLS[ci].n.split(" ")[0];
+      const fs=Math.min(CELL*0.22,9);
+      fctx.font="bold "+fs+"px sans-serif";
+      fctx.fillStyle="rgba(0,0,0,0.3)";
+      fctx.textAlign="center";fctx.textBaseline="middle";
+      fctx.fillText(nm,c*CELL+CELL/2,r*CELL+CELL/2);
+    }
   }
+  // Bordes de grilla para esta celda
+  fctx.strokeStyle="rgba(0,0,0,0.12)";
+  fctx.lineWidth=0.5;
+  fctx.strokeRect(c*CELL,r*CELL,CELL,CELL);
 }
 function getCell(e){const rect=fcv.getBoundingClientRect();const sx=fcv.width/rect.width,sy=fcv.height/rect.height;let x,y;if(e.touches&&e.touches.length){x=e.touches[0].clientX;y=e.touches[0].clientY;}else{x=e.clientX;y=e.clientY;}return{c:Math.floor((x-rect.left)*sx/CELL),r:Math.floor((y-rect.top)*sy/CELL)};}
 let _lastPaintIdx=-1; // evitar push duplicado por arrastre
