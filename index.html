@@ -475,7 +475,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
             <div style="font-size:15px;font-weight:700;color:var(--green);margin-top:4px;" id="r-cajas">—</div>
           </div>
         </div>
-        <button class="fbtn fbtn-pri" onclick="fpg('fpg-paint',document.querySelectorAll('.flexi-nav button')[2]);startPaint()">Siguiente → Diseño</button>
+        <button class="fbtn fbtn-pri" onclick="fpg('fpg-paint',document.querySelectorAll('.flexi-nav button')[2]);initPaintCanvas()">Siguiente → Diseño</button>
       </div>
 
       <!-- PG 3 DISEÑO -->
@@ -710,10 +710,14 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
             <div>
               <label>Tamaño de papel</label>
               <select id="et2-prod-tamano" class="m-select">
-                <option value="100x70">100 × 70 mm (etiqueta chica)</option>
-                <option value="100x150">100 × 150 mm (etiqueta grande)</option>
-                <option value="A4">A4 vertical</option>
-                <option value="carta">Carta vertical</option>
+                <option value="100x70">100 × 70 mm (chica horizontal)</option>
+                <option value="70x100">70 × 100 mm (chica vertical)</option>
+                <option value="100x150">100 × 150 mm (grande horizontal)</option>
+                <option value="150x100">150 × 100 mm (grande vertical)</option>
+                <option value="A4v">A4 vertical</option>
+                <option value="A4h">A4 horizontal</option>
+                <option value="cartav">Carta vertical</option>
+                <option value="cartah">Carta horizontal</option>
               </select>
             </div>
             <div>
@@ -2341,10 +2345,14 @@ function generarEtiquetaProducto(){
 
   // Configuración de tamaño
   const tamanos = {
-    "100x70":  {page:"100mm 70mm",  w:"100mm", h:"70mm",  isLabel:true},
-    "100x150": {page:"100mm 150mm", w:"100mm", h:"150mm", isLabel:true},
-    "A4":      {page:"A4",          w:"210mm", h:"297mm", isLabel:false},
-    "carta":   {page:"letter",      w:"216mm", h:"279mm", isLabel:false}
+    "100x70":  {page:"100mm 70mm",          w:"100mm", h:"70mm",  isLabel:true},
+    "70x100":  {page:"70mm 100mm",          w:"70mm",  h:"100mm", isLabel:true},
+    "100x150": {page:"100mm 150mm",         w:"100mm", h:"150mm", isLabel:true},
+    "150x100": {page:"150mm 100mm",         w:"150mm", h:"100mm", isLabel:true},
+    "A4v":     {page:"A4 portrait",         w:"210mm", h:"297mm", isLabel:false},
+    "A4h":     {page:"A4 landscape",        w:"297mm", h:"210mm", isLabel:false},
+    "cartav":  {page:"letter portrait",     w:"216mm", h:"279mm", isLabel:false},
+    "cartah":  {page:"letter landscape",    w:"279mm", h:"216mm", isLabel:false}
   };
   const cfg = tamanos[tamano]||tamanos["100x70"];
 
@@ -2516,127 +2524,308 @@ const COLS=[
 const PxM2=16,UxCaja=64;
 let FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retira_fabrica"};
 let fadj={};
-let fcv,fctx,CELL=0,fpainting=false;
-let ZOOM=100,BASE_CELL=32;
-let gridHistory=[]; // historial para deshacer
-const MAX_HISTORY=30;
+// ═══════════════════════════════════════════════════════════════════════════
+// MOTOR DE DIBUJO — reescrito limpio
+// ═══════════════════════════════════════════════════════════════════════════
+let fcv, fctx;
+let CELL = 0, BASE_CELL = 32, ZOOM = 100;
+let fpainting = false;
+let _lastCell = null; // última celda pintada (evita repintar la misma)
+let _historyPushed = false; // pushHistory solo 1 vez por trazo
+let _patronPainted = false;
+
+let gridHistory = [];
+const MAX_HISTORY = 30;
 
 function pushHistory(){
   gridHistory.push([...FS.grid]);
-  if(gridHistory.length>MAX_HISTORY) gridHistory.shift();
+  if(gridHistory.length > MAX_HISTORY) gridHistory.shift();
 }
+
 function undoGrid(){
-  if(gridHistory.length===0){toast("No hay más pasos para deshacer");return;}
-  FS.grid=gridHistory.pop();
+  if(!gridHistory.length){ toast("Nada para deshacer","err"); return; }
+  FS.grid = gridHistory.pop();
   drawAll();
   toast("↩ Deshecho","ok");
 }
 
+// ── Inicializar canvas ────────────────────────────────────────────────────────
+function initPaintCanvas(){
+  fcv = document.getElementById("fcv");
+  fctx = fcv.getContext("2d");
+  recalcCell();
+  bindPaintEvents();
+  drawAll();
+}
 
-function fpg(id,btn){
-  document.querySelectorAll(".fpg").forEach(p=>p.classList.remove("on"));
-  document.querySelectorAll(".flexi-nav button").forEach(b=>b.classList.remove("on"));
-  document.getElementById(id).classList.add("on");
-  if(btn)btn.classList.add("on");
-  document.getElementById("sec-flexi").scrollTop=0;
+function recalcCell(){
+  const wrap = document.getElementById("paint-wrap");
+  const maxW = (wrap ? wrap.clientWidth : 600) - 4;
+  BASE_CELL = Math.max(14, Math.min(48, Math.floor(maxW / FS.cols)));
+  applyZoom();
 }
-function setDelivery(tipo){
-  FS.delivery=tipo;
-  ["retira_fabrica","retira_santoni","envio_interior","envio_privado"].forEach(t=>{
-    const el=document.getElementById("dtog-"+t);
-    if(el) el.classList.toggle("on",tipo===t);
-  });
-  const necesitaDir = tipo==="envio_interior"||tipo==="envio_privado";
-  document.getElementById("dir-wrap").style.display=necesitaDir?"block":"none";
+
+function applyZoom(){
+  CELL = Math.max(8, Math.round(BASE_CELL * ZOOM / 100));
+  if(!fcv) return;
+  fcv.width  = FS.cols * CELL;
+  fcv.height = FS.rows * CELL;
+  const lbl = document.getElementById("zoom-label");
+  const sl  = document.getElementById("zoom-slider");
+  if(lbl) lbl.textContent = ZOOM + "%";
+  if(sl)  sl.value = ZOOM;
+  drawAll();
 }
-function embStr(pz){
-  if(!pz||pz<=0)return"0 unidades";
-  const cj=Math.floor(pz/UxCaja),su=pz%UxCaja;
-  let s="";if(cj>0)s+=cj+" caja"+(cj!==1?"s":"");
-  if(su>0)s+=(cj>0?" y ":"")+su+" unidad"+(su!==1?"es":"");
-  return s||"0 unidades";
+
+function zoomChange(delta){
+  ZOOM = Math.max(20, Math.min(300, ZOOM + delta));
+  applyZoom();
 }
-function r025(v){return Math.ceil(v/0.25)*0.25;}
-function calcDims(){
-  const l=parseFloat(document.getElementById("dL").value)||0;
-  const a=parseFloat(document.getElementById("dA").value)||0;
-  document.getElementById("dM2").value="";
-  if(l>0&&a>0){FS.lR=r025(l);FS.aR=r025(a);FS.m2real=+(l*a).toFixed(4);FS.m2cot=Math.ceil(FS.lR*FS.aR);showDims();}
-  else resetD();
+
+function zoomFit(){
+  const wrap = document.getElementById("paint-wrap");
+  if(!wrap || !FS.cols) return;
+  const maxW = wrap.clientWidth - 8;
+  BASE_CELL = Math.max(14, Math.min(48, Math.floor(maxW / FS.cols)));
+  ZOOM = 100;
+  applyZoom();
 }
-function calcM2(){
-  const v=parseFloat(document.getElementById("dM2").value)||0;
-  document.getElementById("dL").value="";document.getElementById("dA").value="";
-  if(v>0){FS.lR=0;FS.aR=0;FS.m2real=v;FS.m2cot=Math.ceil(v);showDims();}else resetD();
-}
-function resetD(){FS.m2cot=FS.m2real=FS.pzas=0;document.getElementById("dims-card").style.display="none";}
-function showDims(){
-  FS.pzas=FS.m2cot*PxM2;
-  const d=FS.lR>0?FS.lR.toFixed(2)+" × "+FS.aR.toFixed(2)+" m":"—";
-  document.getElementById("r-dim").textContent=d;
-  document.getElementById("r-mreal").textContent=FS.m2real.toFixed(2)+" m²";
-  document.getElementById("r-mcot").textContent=FS.m2cot+" m²";
-  document.getElementById("r-pzas").textContent=fmtNum(FS.pzas);
-  document.getElementById("r-cajas").textContent=embStr(FS.pzas)+" · "+fmtKg(Math.floor(FS.pzas/64)*14+(FS.pzas%64)*0.22);
-  document.getElementById("dims-card").style.display="block";
-  calcPrice();
-}
-const fmt=n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n);
-const fmtKg=n=>new Intl.NumberFormat("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+" kg";
-const fmtNum=n=>new Intl.NumberFormat("es-AR",{maximumFractionDigits:2}).format(n);
-function getPzasPintadas(){
-  // Total de baldosas pintadas (grilla + ajuste sobrante)
-  const cnt=getGridCounts();
-  const gridPzas=Object.values(cnt).reduce((s,v)=>s+v,0);
-  const adjPzas=Object.values(fadj).reduce((s,v)=>s+v,0);
-  return gridPzas+adjPzas;
-}
-function calcPrice(){
-  const pm2=parseFloat(document.getElementById("pM2").value)||0;
-  const ppz=parseFloat(document.getElementById("pPz").value)||0;
-  const pintadas=getPzasPintadas();
-  // Cotizar por pintadas: si hay diseño usamos pintadas, sino usamos total
-  const pzasBase=pintadas>0?pintadas:FS.pzas;
-  const m2base=pzasBase/16; // 16 pzas por m²
-  const tm2=pm2>0?m2base*pm2:null;
-  const tpz=ppz>0?pzasBase*ppz:null;
-  const fin=tm2!==null?tm2:tpz;
-  document.getElementById("p-tm2").textContent=tm2!==null?fmt(tm2):"—";
-  document.getElementById("p-tpz").textContent=tpz!==null?fmt(tpz):"—";
-  document.getElementById("p-total").textContent=fin!==null?fmt(fin):"—";
-  // Aviso si hay baldosas sin pintar
-  const sinPintar=FS.pzas-pzasBase;
-  const avisoEl=document.getElementById("price-aviso");
-  if(avisoEl){
-    if(sinPintar>0&&pintadas>0){
-      avisoEl.innerHTML=`⚠ Hay <strong>${sinPintar} baldosas sin pintar</strong> en el diseño. El precio se calculó sobre <strong>${pzasBase} pintadas</strong> de ${FS.pzas} totales.`;
-      avisoEl.style.display="block";
-    } else {
-      avisoEl.style.display="none";
+
+// ── Dibujo ────────────────────────────────────────────────────────────────────
+function drawAll(){
+  if(!fctx) return;
+  const W = FS.cols * CELL, H = FS.rows * CELL;
+
+  // Fondo para celdas vacías
+  fctx.fillStyle = "#d8d8d8";
+  fctx.fillRect(0, 0, W, H);
+
+  // Celdas con color
+  for(let r = 0; r < FS.rows; r++){
+    for(let c = 0; c < FS.cols; c++){
+      const ci = FS.grid[r * FS.cols + c];
+      if(ci >= 0){
+        fctx.fillStyle = COLS[ci].h;
+        fctx.fillRect(c*CELL+1, r*CELL+1, CELL-2, CELL-2);
+      }
     }
   }
+
+  // Grilla
+  fctx.strokeStyle = "rgba(0,0,0,0.15)";
+  fctx.lineWidth = 0.5;
+  fctx.beginPath();
+  for(let r = 0; r <= FS.rows; r++){
+    fctx.moveTo(0, r*CELL);
+    fctx.lineTo(W, r*CELL);
+  }
+  for(let c = 0; c <= FS.cols; c++){
+    fctx.moveTo(c*CELL, 0);
+    fctx.lineTo(c*CELL, H);
+  }
+  fctx.stroke();
+
+  // Labels de color (solo si las celdas son suficientemente grandes)
+  if(CELL >= 30){
+    fctx.textAlign = "center";
+    fctx.textBaseline = "middle";
+    for(let r = 0; r < FS.rows; r++){
+      for(let c = 0; c < FS.cols; c++){
+        const ci = FS.grid[r * FS.cols + c];
+        if(ci >= 0){
+          const nm = COLS[ci].n.split(" ")[0];
+          const fs = Math.min(Math.floor(CELL * 0.22), 9);
+          fctx.font = "bold " + fs + "px sans-serif";
+          fctx.fillStyle = "rgba(0,0,0,0.28)";
+          fctx.fillText(nm, c*CELL + CELL/2, r*CELL + CELL/2);
+        }
+      }
+    }
+  }
+
+  updateLegendLive();
 }
-function startPaint(){
-  if(FS.m2cot<=0){document.getElementById("no-dims").style.display="block";document.getElementById("paint-wrap").style.display="none";document.getElementById("zoom-bar").style.display="none";return;}
-  document.getElementById("no-dims").style.display="none";
-  document.getElementById("paint-wrap").style.display="block";
-  document.getElementById("zoom-bar").style.display="flex";
-  fcv=document.getElementById("fcv");fctx=fcv.getContext("2d");
-  if(FS.lR>0&&FS.aR>0){FS.cols=Math.round(FS.lR/0.25);FS.rows=Math.round(FS.aR/0.25);}
-  else{const t=FS.m2cot*PxM2;FS.cols=Math.ceil(Math.sqrt(t));FS.rows=Math.ceil(t/FS.cols);}
-  if(FS.cols<1)FS.cols=1;if(FS.rows<1)FS.rows=1;
-  const wrap=document.getElementById("paint-wrap");
-  const maxW=wrap.clientWidth-4;
-  BASE_CELL=Math.max(18,Math.min(44,Math.floor(maxW/FS.cols)));
-  ZOOM=100;applyZoom();
-  if(FS.grid.length!==FS.cols*FS.rows){FS.grid=new Array(FS.cols*FS.rows).fill(-1);paintHistory=[];}
-  buildPaintColors();buildPredColors();selectColor(FS.ci);setTool(FS.tool);drawAll();bindEvents();
-  document.getElementById("paint-info").textContent=FS.lR>0?FS.cols+"×"+FS.rows+" baldosas ("+FS.pzas+" a pedir)":FS.cols+"×"+FS.rows+" baldosas";
+
+function drawCell(c, r, ci){
+  if(!fctx) return;
+  // Limpiar celda con fondo gris
+  fctx.fillStyle = "#d8d8d8";
+  fctx.fillRect(c*CELL, r*CELL, CELL, CELL);
+  // Pintar color
+  if(ci >= 0){
+    fctx.fillStyle = COLS[ci].h;
+    fctx.fillRect(c*CELL+1, r*CELL+1, CELL-2, CELL-2);
+    // Label
+    if(CELL >= 30){
+      const nm = COLS[ci].n.split(" ")[0];
+      const fs = Math.min(Math.floor(CELL * 0.22), 9);
+      fctx.font = "bold " + fs + "px sans-serif";
+      fctx.fillStyle = "rgba(0,0,0,0.28)";
+      fctx.textAlign = "center";
+      fctx.textBaseline = "middle";
+      fctx.fillText(nm, c*CELL + CELL/2, r*CELL + CELL/2);
+    }
+  }
+  // Borde de grilla
+  fctx.strokeStyle = "rgba(0,0,0,0.15)";
+  fctx.lineWidth = 0.5;
+  fctx.strokeRect(c*CELL, r*CELL, CELL, CELL);
 }
-function applyZoom(){CELL=Math.max(8,Math.round(BASE_CELL*ZOOM/100));fcv.width=FS.cols*CELL;fcv.height=FS.rows*CELL;document.getElementById("zoom-label").textContent=ZOOM+"%";document.getElementById("zoom-slider").value=ZOOM;drawAll();}
-function zoomChange(delta){ZOOM=Math.max(20,Math.min(200,ZOOM+delta));applyZoom();}
-function zoomSet(val){ZOOM=parseInt(val);applyZoom();}
-function zoomFit(){const wrap=document.getElementById("paint-wrap");BASE_CELL=Math.max(8,Math.floor((wrap.clientWidth-4)/FS.cols));ZOOM=100;applyZoom();}
+
+// ── Coordenada celda desde evento ─────────────────────────────────────────────
+function getCell(e){
+  const rect = fcv.getBoundingClientRect();
+  const scaleX = CELL / (rect.width  / FS.cols);
+  const scaleY = CELL / (rect.height / FS.rows);
+  let cx, cy;
+  if(e.touches && e.touches.length){
+    cx = e.touches[0].clientX;
+    cy = e.touches[0].clientY;
+  } else {
+    cx = e.clientX;
+    cy = e.clientY;
+  }
+  const x = (cx - rect.left) * (fcv.width  / rect.width);
+  const y = (cy - rect.top)  * (fcv.height / rect.height);
+  return { c: Math.floor(x / CELL), r: Math.floor(y / CELL) };
+}
+
+// ── Pintura ───────────────────────────────────────────────────────────────────
+function fpaint(e){
+  const { c, r } = getCell(e);
+  if(c < 0 || c >= FS.cols || r < 0 || r >= FS.rows) return;
+
+  // Evitar repintar la misma celda en arrastre
+  if(_lastCell && _lastCell.c === c && _lastCell.r === r) return;
+  _lastCell = { c, r };
+
+  const idx = r * FS.cols + c;
+
+  // Modo patrón
+  if(FS.tool === "patron"){
+    const nci = getPatternColor(c, r);
+    if(nci < 0) return;
+    if(!_patronPainted){ pushHistory(); _patronPainted = true; }
+    if(FS.grid[idx] === nci) return;
+    FS.grid[idx] = nci;
+    drawCell(c, r, nci);
+    updateLegendLive();
+    return;
+  }
+
+  // Modo normal (pintar o borrar)
+  const nci = FS.tool === "p" ? FS.ci : -1;
+  if(FS.grid[idx] === nci) return;
+  if(!_historyPushed){ pushHistory(); _historyPushed = true; }
+  FS.grid[idx] = nci;
+  drawCell(c, r, nci);
+  updateLegendLive();
+}
+
+// ── Eventos de mouse y touch ──────────────────────────────────────────────────
+let _scrollStart = null;
+
+function bindPaintEvents(){
+  const wrap = document.getElementById("paint-wrap");
+
+  // Mouse
+  fcv.addEventListener("mousedown", e => {
+    if(FS.tool === "m"){
+      _scrollStart = { x:e.clientX, y:e.clientY, sl:wrap.scrollLeft, st:wrap.scrollTop };
+      fcv.style.cursor = "grabbing";
+    } else {
+      fpainting = true;
+      _lastCell = null;
+      _historyPushed = false;
+      _patronPainted = false;
+      fpaint(e);
+    }
+  });
+
+  fcv.addEventListener("mousemove", e => {
+    if(FS.tool === "m" && _scrollStart){
+      wrap.scrollLeft = _scrollStart.sl - (e.clientX - _scrollStart.x);
+      wrap.scrollTop  = _scrollStart.st - (e.clientY - _scrollStart.y);
+    } else if(fpainting){
+      fpaint(e);
+    }
+  });
+
+  const stopPaint = () => {
+    fpainting = false;
+    _lastCell = null;
+    _historyPushed = false;
+    _patronPainted = false;
+    _scrollStart = null;
+    if(FS.tool === "m") fcv.style.cursor = "grab";
+  };
+
+  fcv.addEventListener("mouseup",    stopPaint);
+  fcv.addEventListener("mouseleave", stopPaint);
+
+  // Touch
+  fcv.addEventListener("touchstart", e => {
+    if(FS.tool === "m"){
+      _scrollStart = { x:e.touches[0].clientX, y:e.touches[0].clientY, sl:wrap.scrollLeft, st:wrap.scrollTop };
+    } else {
+      e.preventDefault();
+      fpainting = true;
+      _lastCell = null;
+      _historyPushed = false;
+      _patronPainted = false;
+      fpaint(e);
+    }
+  }, { passive: false });
+
+  fcv.addEventListener("touchmove", e => {
+    if(FS.tool === "m" && _scrollStart){
+      wrap.scrollLeft = _scrollStart.sl - (e.touches[0].clientX - _scrollStart.x);
+      wrap.scrollTop  = _scrollStart.st - (e.touches[0].clientY - _scrollStart.y);
+    } else if(fpainting){
+      e.preventDefault();
+      fpaint(e);
+    }
+  }, { passive: false });
+
+  fcv.addEventListener("touchend", e => {
+    if(FS.tool !== "m") e.preventDefault();
+    fpainting = false;
+    _lastCell = null;
+    _historyPushed = false;
+    _patronPainted = false;
+    _scrollStart = null;
+  }, { passive: false });
+}
+
+// ── Herramienta activa ────────────────────────────────────────────────────────
+function setTool(t){
+  FS.tool = t;
+  ["p","b","m"].forEach(id => {
+    const btn = document.getElementById("tb-"+id);
+    if(btn) btn.classList.toggle("on", t === id);
+  });
+  const patBtn = document.getElementById("tb-pat");
+  if(patBtn) patBtn.classList.toggle("on", t === "patron");
+  if(!fcv) return;
+  fcv.style.cursor = t === "m" ? "grab" : "crosshair";
+  const wrap = document.getElementById("paint-wrap");
+  if(wrap) wrap.style.cursor = t === "m" ? "grab" : "default";
+  if(patronActivo && t !== "patron") cancelarPatron();
+}
+
+// ── Color predominante ────────────────────────────────────────────────────────
+function setPredominante(ci){
+  const c = COLS[ci];
+  if(FS.grid.some(v => v >= 0)){
+    if(!window.confirm("Esto va a reemplazar todo el diseño con " + c.n + ". ¿Continuás?")) return;
+  }
+  pushHistory();
+  FS.grid.fill(ci);
+  selectColor(ci);
+  setTool("p");
+  drawAll();
+}
+
 // ─── PANTALLA COMPLETA DISEÑO ────────────────────────────────────────────────
 function toggleFullscreenDesign(){
   const pg = document.getElementById("fpg-paint");
@@ -2799,106 +2988,7 @@ function setTool(t){
   // Al cambiar de herramienta, cancelar selección de patrón si estaba activa
   if(patternMode && t!=="p"){ cancelarPatron(); }
 }
-function drawAll(){
-  // Fondo gris para celdas vacías
-  fctx.fillStyle="#e8e8e8";
-  fctx.fillRect(0,0,fcv.width,fcv.height);
-  // Pintar celdas con color
-  for(let r=0;r<FS.rows;r++){
-    for(let c=0;c<FS.cols;c++){
-      const ci=FS.grid[r*FS.cols+c];
-      if(ci>=0){
-        fctx.fillStyle=COLS[ci].h;
-        fctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);
-      }
-    }
-  }
-  // Grilla
-  fctx.strokeStyle="rgba(0,0,0,0.12)";
-  fctx.lineWidth=0.5;
-  for(let r=0;r<=FS.rows;r++){fctx.beginPath();fctx.moveTo(0,r*CELL);fctx.lineTo(fcv.width,r*CELL);fctx.stroke();}
-  for(let c=0;c<=FS.cols;c++){fctx.beginPath();fctx.moveTo(c*CELL,0);fctx.lineTo(c*CELL,fcv.height);fctx.stroke();}
-  // Labels
-  if(CELL>=28){
-    fctx.textAlign="center";fctx.textBaseline="middle";
-    for(let r=0;r<FS.rows;r++){
-      for(let c=0;c<FS.cols;c++){
-        const ci=FS.grid[r*FS.cols+c];
-        if(ci>=0){
-          const nm=COLS[ci].n.split(" ")[0];
-          const fs=Math.min(CELL*0.22,9);
-          fctx.font="bold "+fs+"px sans-serif";
-          fctx.fillStyle="rgba(0,0,0,0.3)";
-          fctx.fillText(nm,c*CELL+CELL/2,r*CELL+CELL/2);
-        }
-      }
-    }
-  }
-  updateLegendLive();
-}
-function drawCell(c,r,ci){
-  // Borrar celda con fondo gris
-  fctx.fillStyle="#e8e8e8";
-  fctx.fillRect(c*CELL,r*CELL,CELL,CELL);
-  // Pintar color si tiene
-  if(ci>=0){
-    fctx.fillStyle=COLS[ci].h;
-    fctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);
-    // Label
-    if(CELL>=28){
-      const nm=COLS[ci].n.split(" ")[0];
-      const fs=Math.min(CELL*0.22,9);
-      fctx.font="bold "+fs+"px sans-serif";
-      fctx.fillStyle="rgba(0,0,0,0.3)";
-      fctx.textAlign="center";fctx.textBaseline="middle";
-      fctx.fillText(nm,c*CELL+CELL/2,r*CELL+CELL/2);
-    }
-  }
-  // Bordes de grilla para esta celda
-  fctx.strokeStyle="rgba(0,0,0,0.12)";
-  fctx.lineWidth=0.5;
-  fctx.strokeRect(c*CELL,r*CELL,CELL,CELL);
-}
-function getCell(e){const rect=fcv.getBoundingClientRect();const sx=fcv.width/rect.width,sy=fcv.height/rect.height;let x,y;if(e.touches&&e.touches.length){x=e.touches[0].clientX;y=e.touches[0].clientY;}else{x=e.clientX;y=e.clientY;}return{c:Math.floor((x-rect.left)*sx/CELL),r:Math.floor((y-rect.top)*sy/CELL)};}
-let _lastPaintIdx=-1; // evitar push duplicado por arrastre
-let _patronPainted = false; // flag para pushHistory solo una vez por arrastre
 
-function fpaint(e){
-  const{c,r}=getCell(e);
-  if(c<0||c>=FS.cols||r<0||r>=FS.rows)return;
-  const idx=r*FS.cols+c;
-
-  // Modo patrón: replicar el bloque definido al arrastrar
-  if(FS.tool==="patron"){
-    const nci=getPatternColor(c,r);
-    if(nci<0)return; // celda vacía en el patrón = no pintar
-    if(!_patronPainted){ pushHistory(); _patronPainted=true; }
-    if(FS.grid[idx]===nci)return; // ya tiene el color correcto
-    FS.grid[idx]=nci;
-    drawCell(c,r,nci);
-    updateLegendLive();
-    return;
-  }
-
-  // Modo normal
-  const nci=FS.tool==="p"?FS.ci:-1;
-  if(FS.grid[idx]===nci)return;
-  if(_lastPaintIdx===-1)pushHistory();
-  _lastPaintIdx=idx;
-  FS.grid[idx]=nci;
-  drawCell(c,r,nci);
-  updateLegendLive();
-}
-let scrollStart={x:0,y:0,sl:0,st:0};
-function bindEvents(){
-  const wrap=document.getElementById("paint-wrap");
-  fcv.onmousedown=e=>{if(FS.tool==="m"){fpainting=true;scrollStart={x:e.clientX,y:e.clientY,sl:wrap.scrollLeft,st:wrap.scrollTop};fcv.style.cursor="grabbing";}else{fpainting=true;fpaint(e);}};
-  fcv.onmousemove=e=>{if(!fpainting)return;if(FS.tool==="m"){wrap.scrollLeft=scrollStart.sl-(e.clientX-scrollStart.x);wrap.scrollTop=scrollStart.st-(e.clientY-scrollStart.y);}else{fpaint(e);}};
-  fcv.onmouseup=fcv.onmouseleave=()=>{fpainting=false;_lastPaintIdx=-1;_patronPainted=false;if(FS.tool==="m")fcv.style.cursor="grab";};
-  fcv.ontouchstart=e=>{if(FS.tool==="m"){fpainting=true;scrollStart={x:e.touches[0].clientX,y:e.touches[0].clientY,sl:wrap.scrollLeft,st:wrap.scrollTop};}else{e.preventDefault();fpainting=true;fpaint(e);}};
-  fcv.ontouchmove=e=>{if(!fpainting)return;if(FS.tool==="m"){wrap.scrollLeft=scrollStart.sl-(e.touches[0].clientX-scrollStart.x);wrap.scrollTop=scrollStart.st-(e.touches[0].clientY-scrollStart.y);}else{e.preventDefault();fpaint(e);}};
-  fcv.ontouchend=e=>{if(FS.tool!=="m")e.preventDefault();fpainting=false;_lastPaintIdx=-1;_patronPainted=false;};
-}
 function clearGrid(){pushHistory();FS.grid.fill(-1);drawAll();}
 function getGridCounts(){const cnt={};FS.grid.forEach(ci=>{if(ci>=0)cnt[ci]=(cnt[ci]||0)+1;});return cnt;}
 function getTotalCounts(){const cnt=getGridCounts();Object.entries(fadj).forEach(([ci,x])=>{if(x>0)cnt[ci]=(cnt[ci]||0)+x;});return cnt;}
