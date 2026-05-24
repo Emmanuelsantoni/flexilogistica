@@ -1149,41 +1149,18 @@ function showSection(id, btn){
   document.getElementById(id).classList.add("on");
   if(btn) btn.classList.add("on");
   currentSection = id;
-  // Scroll al tope usando el anchor de la sección
-  const anchorId = "top-"+id.replace("sec-","");
-  const anchor = document.getElementById(anchorId);
-  if(anchor) anchor.scrollIntoView({block:"start",behavior:"instant"});
-  else { window.scrollTo(0,0); document.documentElement.scrollTop=0; }
-  if(id==="sec-kanban"){ syncAll().then(()=>{ renderKanban(); if(anchor) anchor.scrollIntoView({block:"start",behavior:"instant"}); }); }
-  else if(id==="sec-historial"){ syncAll().then(()=>{ renderHistorial(); if(anchor) anchor.scrollIntoView({block:"start",behavior:"instant"}); }); }
-  else if(id==="sec-usuarios"){ syncAll().then(()=>{ renderUsuarios(); }); }
-  else if(id==="sec-presupuestos"){ syncAll().then(()=>{ renderPresupuestos(); }); }
-  // calc abre en ventana nueva
+  // Scroll al tope
+  window.scrollTo(0,0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  // Render y sync según sección
+  if(id==="sec-kanban"){ renderKanban(); syncAll().then(()=>{ renderKanban(); window.scrollTo(0,0); }); }
+  else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
+  else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
+  else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
+  // calc y etiquetas abren sin sync
 }
 
-// ═══════════════════════════════════════════════════════════════════
-//  SYNC / DATA
-// ═══════════════════════════════════════════════════════════════════
-async function syncAll(){
-  try{
-    setSyncState("syncing");
-    const [{data:p},{data:u}] = await Promise.all([
-      db.from("pedidos").select("*").order("numero",{ascending:false}),
-      db.from("usuarios").select("*").order("nombre"),
-    ]);
-    allPedidos = p||[];
-    allUsuarios = u||[];
-    setSyncState("ok");
-    // Refrescar vista activa siempre
-    if(currentSection==="sec-kanban") renderKanban();
-    else if(currentSection==="sec-historial") renderHistorial();
-    else if(currentSection==="sec-usuarios") renderUsuarios();
-    else if(currentSection==="sec-presupuestos") renderPresupuestos();
-  }catch(e){
-    setSyncState("err");
-    if(currentSection==="sec-kanban") renderKanban();
-  }
-}
 function setSyncState(st){
   const dot = document.getElementById("sync-dot");
   const txt = document.getElementById("sync-txt");
@@ -2349,9 +2326,9 @@ function generarEtiquetaProducto(){
     "70x100":  {page:"70mm 100mm",          w:"70mm",  h:"100mm", isLabel:true},
     "100x150": {page:"100mm 150mm",         w:"100mm", h:"150mm", isLabel:true},
     "150x100": {page:"150mm 100mm",         w:"150mm", h:"100mm", isLabel:true},
-    "A4v":     {page:"A4 portrait",         w:"210mm", h:"297mm", isLabel:false},
+    "A4v":     {page:"A4",                  w:"210mm", h:"297mm", isLabel:false},
     "A4h":     {page:"A4 landscape",        w:"297mm", h:"210mm", isLabel:false},
-    "cartav":  {page:"letter portrait",     w:"216mm", h:"279mm", isLabel:false},
+    "cartav":  {page:"letter",              w:"216mm", h:"279mm", isLabel:false},
     "cartah":  {page:"letter landscape",    w:"279mm", h:"216mm", isLabel:false}
   };
   const cfg = tamanos[tamano]||tamanos["100x70"];
@@ -2550,6 +2527,14 @@ function undoGrid(){
 }
 
 // ── Inicializar canvas ────────────────────────────────────────────────────────
+function fpg(id, btn){
+  document.querySelectorAll(".fpg").forEach(p=>p.style.display="none");
+  const el = document.getElementById(id);
+  if(el) el.style.display="block";
+  document.querySelectorAll(".flexi-nav button").forEach(b=>b.classList.remove("on"));
+  if(btn) btn.classList.add("on");
+}
+
 function initPaintCanvas(){
   fcv = document.getElementById("fcv");
   fctx = fcv.getContext("2d");
