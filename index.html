@@ -2684,6 +2684,14 @@ function bindPaintEvents(){
   fcv.ontouchend=e=>{if(FS.tool!=="m")e.preventDefault();fpainting=false;_lastPaintIdx=-1;_patronPainted=false;_scrollStart=null;};
 }
 
+function fpg(id, btn){
+  document.querySelectorAll(".fpg").forEach(p=>{p.classList.remove("on");p.style.display="";});
+  const el = document.getElementById(id);
+  if(el){el.classList.add("on");el.style.display="block";}
+  document.querySelectorAll(".flexi-nav button").forEach(b=>b.classList.remove("on"));
+  if(btn)btn.classList.add("on");
+}
+
 function initPaintCanvas(){
   fcv=document.getElementById("fcv");
   fctx=fcv.getContext("2d");
