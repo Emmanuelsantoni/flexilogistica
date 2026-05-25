@@ -2515,305 +2515,137 @@ function embStr(pz){
 }
 let FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retira_fabrica"};
 let fadj={};
-// ═══════════════════════════════════════════════════════════════════════════
-// MOTOR DE DIBUJO — reescrito limpio
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══ MOTOR DE DIBUJO ════════════════════════════════════════════════════════
 let fcv, fctx;
-let CELL = 0, BASE_CELL = 32, ZOOM = 100;
-let fpainting = false;
-let _lastCell = null; // última celda pintada (evita repintar la misma)
-let _historyPushed = false; // pushHistory solo 1 vez por trazo
-let _patronPainted = false;
-
-let gridHistory = [];
-const MAX_HISTORY = 30;
+let CELL=0, BASE_CELL=32, ZOOM=100;
+let fpainting=false;
+let gridHistory=[];
+const MAX_HISTORY=30;
 
 function pushHistory(){
   gridHistory.push([...FS.grid]);
-  if(gridHistory.length > MAX_HISTORY) gridHistory.shift();
+  if(gridHistory.length>MAX_HISTORY) gridHistory.shift();
 }
-
 function undoGrid(){
-  if(!gridHistory.length){ toast("Nada para deshacer","err"); return; }
-  FS.grid = gridHistory.pop();
+  if(!gridHistory.length){toast("Nada para deshacer","err");return;}
+  FS.grid=gridHistory.pop();
   drawAll();
   toast("↩ Deshecho","ok");
 }
 
-// ── Inicializar canvas ────────────────────────────────────────────────────────
-function fpg(id, btn){
-  document.querySelectorAll(".fpg").forEach(p=>{p.classList.remove("on");p.style.display="";});
-  const el = document.getElementById(id);
-  if(el){el.classList.add("on");el.style.display="block";}
-  document.querySelectorAll(".flexi-nav button").forEach(b=>b.classList.remove("on"));
-  if(btn) btn.classList.add("on");
-}
-
-function initPaintCanvas(){
-  fcv = document.getElementById("fcv");
-  fctx = fcv.getContext("2d");
-  // Calcular cols y rows según las medidas
-  if(FS.lR>0 && FS.aR>0){
-    FS.cols = Math.round(FS.lR/0.25);
-    FS.rows = Math.round(FS.aR/0.25);
-  } else if(FS.m2cot>0){
-    const t = FS.m2cot * PxM2;
-    FS.cols = Math.ceil(Math.sqrt(t));
-    FS.rows = Math.ceil(t / FS.cols);
-  }
-  if(FS.cols<1) FS.cols=1;
-  if(FS.rows<1) FS.rows=1;
-  // Inicializar grid
-  const needed = FS.cols * FS.rows;
-  if(FS.grid.length !== needed){ FS.grid = new Array(needed).fill(-1); gridHistory=[]; }
-  // Mostrar panel de pintura
-  document.getElementById("paint-wrap").style.display = "block";
-  document.getElementById("zoom-bar").style.display = "flex";
-  recalcCell();
-  bindPaintEvents();
-  buildPaintColors();
-  buildPredColors();
-  drawAll();
-}
-
-function recalcCell(){
-  const wrap = document.getElementById("paint-wrap");
-  const maxW = (wrap ? wrap.clientWidth : 600) - 4;
-  BASE_CELL = Math.max(14, Math.min(48, Math.floor(maxW / FS.cols)));
-  applyZoom();
-}
-
-function applyZoom(){
-  CELL = Math.max(8, Math.round(BASE_CELL * ZOOM / 100));
-  if(!fcv) return;
-  fcv.width  = FS.cols * CELL;
-  fcv.height = FS.rows * CELL;
-  const lbl = document.getElementById("zoom-label");
-  const sl  = document.getElementById("zoom-slider");
-  if(lbl) lbl.textContent = ZOOM + "%";
-  if(sl)  sl.value = ZOOM;
-  drawAll();
-}
-
-function zoomChange(delta){
-  ZOOM = Math.max(20, Math.min(300, ZOOM + delta));
-  applyZoom();
-}
-
-function zoomFit(){
-  const wrap = document.getElementById("paint-wrap");
-  if(!wrap || !FS.cols) return;
-  const maxW = wrap.clientWidth - 8;
-  BASE_CELL = Math.max(14, Math.min(48, Math.floor(maxW / FS.cols)));
-  ZOOM = 100;
-  applyZoom();
-}
-
-// ── Dibujo ────────────────────────────────────────────────────────────────────
 function drawAll(){
-  if(!fctx || CELL<=0) return;
-  // Fondo gris
-  fctx.fillStyle = "#d8d8d8";
-  fctx.fillRect(0, 0, fcv.width, fcv.height);
-  // Celdas
-  for(let r=0; r<FS.rows; r++){
-    for(let c=0; c<FS.cols; c++){
-      const ci = FS.grid[r*FS.cols+c];
-      if(ci >= 0){
-        fctx.fillStyle = COLS[ci].h;
-        fctx.fillRect(Math.round(c*CELL), Math.round(r*CELL), Math.round(CELL), Math.round(CELL));
-      }
-    }
-  }
-  // Grilla
-  fctx.strokeStyle = "rgba(0,0,0,0.2)";
-  fctx.lineWidth = 1;
-  fctx.beginPath();
-  for(let r=0; r<=FS.rows; r++){
-    const y = Math.round(r*CELL)+0.5;
-    fctx.moveTo(0,y); fctx.lineTo(fcv.width,y);
-  }
-  for(let c=0; c<=FS.cols; c++){
-    const x = Math.round(c*CELL)+0.5;
-    fctx.moveTo(x,0); fctx.lineTo(x,fcv.height);
-  }
-  fctx.stroke();
+  if(!fctx||!fcv)return;
+  for(let r=0;r<FS.rows;r++)
+    for(let c=0;c<FS.cols;c++)
+      drawCell(c,r,FS.grid[r*FS.cols+c]);
   updateLegendLive();
 }
 
-function drawCell(c, r, ci){
-  if(!fctx || CELL<=0) return;
-  const x = Math.round(c*CELL), y = Math.round(r*CELL), sz = Math.round(CELL);
-  // Fondo
-  fctx.fillStyle = ci>=0 ? COLS[ci].h : "#d8d8d8";
-  fctx.fillRect(x, y, sz, sz);
-  // Borde de grilla
-  fctx.strokeStyle = "rgba(0,0,0,0.2)";
-  fctx.lineWidth = 1;
-  fctx.strokeRect(x+0.5, y+0.5, sz-1, sz-1);
-}
-
-// ── Coordenada celda desde evento ─────────────────────────────────────────────
-function getCell(e){
-  const rect = fcv.getBoundingClientRect();
-  const scaleX = CELL / (rect.width  / FS.cols);
-  const scaleY = CELL / (rect.height / FS.rows);
-  let cx, cy;
-  if(e.touches && e.touches.length){
-    cx = e.touches[0].clientX;
-    cy = e.touches[0].clientY;
-  } else {
-    cx = e.clientX;
-    cy = e.clientY;
+function drawCell(c,r,ci){
+  if(!fctx)return;
+  fctx.fillStyle=ci>=0?COLS[ci].h:"#f0f0f0";
+  fctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);
+  if(ci>=0&&CELL>=32){
+    const nm=COLS[ci].n.split(" ")[0];
+    const fs=Math.min(CELL*0.22,9);
+    fctx.font="bold "+fs+"px sans-serif";
+    fctx.fillStyle="rgba(0,0,0,0.35)";
+    fctx.textAlign="center";
+    fctx.textBaseline="middle";
+    fctx.fillText(nm,c*CELL+CELL/2,r*CELL+CELL/2);
   }
-  const x = (cx - rect.left) * (fcv.width  / rect.width);
-  const y = (cy - rect.top)  * (fcv.height / rect.height);
-  return { c: Math.floor(x / CELL), r: Math.floor(y / CELL) };
 }
 
-// ── Pintura ───────────────────────────────────────────────────────────────────
+function getCell(e){
+  const rect=fcv.getBoundingClientRect();
+  const sx=fcv.width/rect.width, sy=fcv.height/rect.height;
+  let x,y;
+  if(e.touches&&e.touches.length){x=e.touches[0].clientX;y=e.touches[0].clientY;}
+  else{x=e.clientX;y=e.clientY;}
+  return{c:Math.floor((x-rect.left)*sx/CELL),r:Math.floor((y-rect.top)*sy/CELL)};
+}
+
+let _lastPaintIdx=-1;
+let _patronPainted=false;
+
 function fpaint(e){
-  const { c, r } = getCell(e);
-  if(c < 0 || c >= FS.cols || r < 0 || r >= FS.rows) return;
-
-  // Evitar repintar la misma celda en arrastre
-  if(_lastCell && _lastCell.c === c && _lastCell.r === r) return;
-  _lastCell = { c, r };
-
-  const idx = r * FS.cols + c;
+  const{c,r}=getCell(e);
+  if(c<0||c>=FS.cols||r<0||r>=FS.rows)return;
+  const idx=r*FS.cols+c;
 
   // Modo patrón
-  if(FS.tool === "patron"){
-    const nci = getPatternColor(c, r);
-    if(nci < 0) return;
-    if(!_patronPainted){ pushHistory(); _patronPainted = true; }
-    if(FS.grid[idx] === nci) return;
-    FS.grid[idx] = nci;
-    drawCell(c, r, nci);
+  if(FS.tool==="patron"){
+    const nci=getPatternColor(c,r);
+    if(nci<0)return;
+    if(!_patronPainted){pushHistory();_patronPainted=true;}
+    if(FS.grid[idx]===nci)return;
+    FS.grid[idx]=nci;
+    drawCell(c,r,nci);
     updateLegendLive();
     return;
   }
 
-  // Modo normal (pintar o borrar)
-  const nci = FS.tool === "p" ? FS.ci : -1;
-  if(FS.grid[idx] === nci) return;
-  if(!_historyPushed){ pushHistory(); _historyPushed = true; }
-  FS.grid[idx] = nci;
-  drawCell(c, r, nci);
+  // Normal
+  const nci=FS.tool==="p"?FS.ci:-1;
+  if(FS.grid[idx]===nci)return;
+  if(_lastPaintIdx===-1)pushHistory();
+  _lastPaintIdx=idx;
+  FS.grid[idx]=nci;
+  drawCell(c,r,nci);
   updateLegendLive();
 }
 
-// ── Eventos de mouse y touch ──────────────────────────────────────────────────
-let _scrollStart = null;
-
-let _eventsBound = false;
-function bindPaintEvents(){
-  if(_eventsBound) return; // evitar eventos duplicados
-  _eventsBound = true;
-  const wrap = document.getElementById("paint-wrap");
-
-  // Mouse
-  fcv.addEventListener("mousedown", e => {
-    if(FS.tool === "m"){
-      _scrollStart = { x:e.clientX, y:e.clientY, sl:wrap.scrollLeft, st:wrap.scrollTop };
-      fcv.style.cursor = "grabbing";
-    } else {
-      fpainting = true;
-      _lastCell = null;
-      _historyPushed = false;
-      _patronPainted = false;
-      fpaint(e);
-    }
-  });
-
-  fcv.addEventListener("mousemove", e => {
-    if(FS.tool === "m" && _scrollStart){
-      wrap.scrollLeft = _scrollStart.sl - (e.clientX - _scrollStart.x);
-      wrap.scrollTop  = _scrollStart.st - (e.clientY - _scrollStart.y);
-    } else if(fpainting){
-      fpaint(e);
-    }
-  });
-
-  const stopPaint = () => {
-    fpainting = false;
-    _lastCell = null;
-    _historyPushed = false;
-    _patronPainted = false;
-    _scrollStart = null;
-    if(FS.tool === "m") fcv.style.cursor = "grab";
-  };
-
-  fcv.addEventListener("mouseup",    stopPaint);
-  fcv.addEventListener("mouseleave", stopPaint);
-
-  // Touch
-  fcv.addEventListener("touchstart", e => {
-    if(FS.tool === "m"){
-      _scrollStart = { x:e.touches[0].clientX, y:e.touches[0].clientY, sl:wrap.scrollLeft, st:wrap.scrollTop };
-    } else {
-      e.preventDefault();
-      fpainting = true;
-      _lastCell = null;
-      _historyPushed = false;
-      _patronPainted = false;
-      fpaint(e);
-    }
-  }, { passive: false });
-
-  fcv.addEventListener("touchmove", e => {
-    if(FS.tool === "m" && _scrollStart){
-      wrap.scrollLeft = _scrollStart.sl - (e.touches[0].clientX - _scrollStart.x);
-      wrap.scrollTop  = _scrollStart.st - (e.touches[0].clientY - _scrollStart.y);
-    } else if(fpainting){
-      e.preventDefault();
-      fpaint(e);
-    }
-  }, { passive: false });
-
-  fcv.addEventListener("touchend", e => {
-    if(FS.tool !== "m") e.preventDefault();
-    fpainting = false;
-    _lastCell = null;
-    _historyPushed = false;
-    _patronPainted = false;
-    _scrollStart = null;
-  }, { passive: false });
+function applyZoom(){
+  CELL=Math.max(8,Math.round(BASE_CELL*ZOOM/100));
+  if(!fcv)return;
+  fcv.width=FS.cols*CELL;
+  fcv.height=FS.rows*CELL;
+  const lbl=document.getElementById("zoom-label");
+  const sl=document.getElementById("zoom-slider");
+  if(lbl)lbl.textContent=ZOOM+"%";
+  if(sl)sl.value=ZOOM;
+  drawAll();
 }
 
-// ── Herramienta activa ────────────────────────────────────────────────────────
+function zoomChange(delta){ZOOM=Math.max(20,Math.min(300,ZOOM+delta));applyZoom();}
+
+function zoomFit(){
+  const wrap=document.getElementById("paint-wrap");
+  if(!wrap||!FS.cols)return;
+  BASE_CELL=Math.max(14,Math.min(48,Math.floor((wrap.clientWidth-8)/FS.cols)));
+  ZOOM=100;applyZoom();
+}
+
 function setTool(t){
-  FS.tool = t;
-  ["p","b","m"].forEach(id => {
-    const btn = document.getElementById("tb-"+id);
-    if(btn) btn.classList.toggle("on", t === id);
-  });
-  const patBtn = document.getElementById("tb-pat");
-  if(patBtn) patBtn.classList.toggle("on", t === "patron");
-  if(!fcv) return;
-  fcv.style.cursor = t === "m" ? "grab" : "crosshair";
-  const wrap = document.getElementById("paint-wrap");
-  if(wrap) wrap.style.cursor = t === "m" ? "grab" : "default";
-  if(patronActivo && t !== "patron") cancelarPatron();
+  FS.tool=t;
+  document.getElementById("tb-p").classList.toggle("on",t==="p");
+  document.getElementById("tb-b").classList.toggle("on",t==="b");
+  document.getElementById("tb-m").classList.toggle("on",t==="m");
+  const tbpat=document.getElementById("tb-pat");
+  if(tbpat)tbpat.classList.toggle("on",t==="patron");
+  if(!fcv)return;
+  fcv.style.cursor=t==="m"?"grab":"crosshair";
+  const wrap=document.getElementById("paint-wrap");
+  if(wrap)wrap.style.cursor=t==="m"?"grab":"default";
+  if(patronActivo&&t!=="patron")cancelarPatron();
 }
 
-// ── Color predominante ────────────────────────────────────────────────────────
 function setPredominante(ci){
-  const c = COLS[ci];
-  if(FS.grid.some(v => v >= 0)){
-    if(!window.confirm("Esto va a reemplazar todo con " + c.n + ". ¿Continuás?")) return;
+  const c=COLS[ci];
+  if(FS.grid.some(v=>v>=0)){
+    if(!window.confirm("Esto va a reemplazar todo con "+c.n+". ¿Continuás?"))return;
   }
   pushHistory();
   FS.grid.fill(ci);
   selectColor(ci);
   setTool("p");
-  // Forzar redibujado inmediato del canvas
-  if(fctx && fcv && fcv.width > 0){
-    fctx.fillStyle = c.h;
-    fctx.fillRect(0, 0, fcv.width, fcv.height);
+  // Dibujar directamente con fillRect para mayor velocidad
+  if(fctx&&fcv&&fcv.width>0){
+    fctx.fillStyle=c.h;
+    fctx.fillRect(0,0,fcv.width,fcv.height);
     // Grilla
-    fctx.strokeStyle = "rgba(0,0,0,0.15)";
-    fctx.lineWidth = 0.5;
+    fctx.strokeStyle="rgba(0,0,0,0.12)";
+    fctx.lineWidth=0.5;
     fctx.beginPath();
     for(let r=0;r<=FS.rows;r++){fctx.moveTo(0,r*CELL);fctx.lineTo(fcv.width,r*CELL);}
     for(let c2=0;c2<=FS.cols;c2++){fctx.moveTo(c2*CELL,0);fctx.lineTo(c2*CELL,fcv.height);}
@@ -2822,6 +2654,58 @@ function setPredominante(ci){
   } else {
     drawAll();
   }
+}
+
+let _scrollStart=null;
+let _eventsBound=false;
+
+function bindPaintEvents(){
+  if(_eventsBound)return;
+  _eventsBound=true;
+  const wrap=document.getElementById("paint-wrap");
+  fcv.onmousedown=e=>{
+    if(FS.tool==="m"){_scrollStart={x:e.clientX,y:e.clientY,sl:wrap.scrollLeft,st:wrap.scrollTop};fcv.style.cursor="grabbing";}
+    else{fpainting=true;_lastPaintIdx=-1;_patronPainted=false;fpaint(e);}
+  };
+  fcv.onmousemove=e=>{
+    if(FS.tool==="m"&&_scrollStart){wrap.scrollLeft=_scrollStart.sl-(e.clientX-_scrollStart.x);wrap.scrollTop=_scrollStart.st-(e.clientY-_scrollStart.y);}
+    else if(fpainting){fpaint(e);}
+  };
+  fcv.onmouseup=fcv.onmouseleave=()=>{fpainting=false;_lastPaintIdx=-1;_patronPainted=false;_scrollStart=null;if(FS.tool==="m")fcv.style.cursor="grab";};
+  fcv.ontouchstart=e=>{
+    if(FS.tool==="m"){_scrollStart={x:e.touches[0].clientX,y:e.touches[0].clientY,sl:wrap.scrollLeft,st:wrap.scrollTop};}
+    else{e.preventDefault();fpainting=true;_lastPaintIdx=-1;_patronPainted=false;fpaint(e);}
+  };
+  fcv.ontouchmove=e=>{
+    if(!fpainting)return;
+    if(FS.tool==="m"&&_scrollStart){wrap.scrollLeft=_scrollStart.sl-(e.touches[0].clientX-_scrollStart.x);wrap.scrollTop=_scrollStart.st-(e.touches[0].clientY-_scrollStart.y);}
+    else{e.preventDefault();fpaint(e);}
+  };
+  fcv.ontouchend=e=>{if(FS.tool!=="m")e.preventDefault();fpainting=false;_lastPaintIdx=-1;_patronPainted=false;_scrollStart=null;};
+}
+
+function initPaintCanvas(){
+  fcv=document.getElementById("fcv");
+  fctx=fcv.getContext("2d");
+  // Calcular cols y rows
+  if(FS.lR>0&&FS.aR>0){FS.cols=Math.round(FS.lR/0.25);FS.rows=Math.round(FS.aR/0.25);}
+  else if(FS.m2cot>0){const t=FS.m2cot*PxM2;FS.cols=Math.ceil(Math.sqrt(t));FS.rows=Math.ceil(t/FS.cols);}
+  if(FS.cols<1)FS.cols=1;if(FS.rows<1)FS.rows=1;
+  // Grid
+  const needed=FS.cols*FS.rows;
+  if(FS.grid.length!==needed){FS.grid=new Array(needed).fill(-1);gridHistory=[];}
+  // Mostrar panel
+  document.getElementById("paint-wrap").style.display="block";
+  document.getElementById("zoom-bar").style.display="flex";
+  // Calcular tamaño de celda
+  const wrap=document.getElementById("paint-wrap");
+  const maxW=(wrap?wrap.clientWidth:600)-4;
+  BASE_CELL=Math.max(14,Math.min(44,Math.floor(maxW/FS.cols)));
+  ZOOM=100;
+  applyZoom();
+  bindPaintEvents();
+  buildPaintColors();
+  buildPredColors();
 }
 
 // ─── PANTALLA COMPLETA DISEÑO ────────────────────────────────────────────────
