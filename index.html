@@ -625,7 +625,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div><!-- /sec-flexi -->
 
   <!-- SECCIÓN: PRESUPUESTOS GUARDADOS -->
-  <div class="section" id="sec-presupuestos"><a id="top-presupuestos"></a>
+  <div class="section" id="sec-presupuestos"><div id="top-sec-presupuestos" style="height:0;"></div><a id="top-presupuestos"></a>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
       <div>
         <h2 style="font-size:18px;font-weight:800;color:#F1F5F9;">💾 Presupuestos Guardados</h2>
@@ -644,7 +644,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div>
 
   <!-- SECCIÓN: ETIQUETAS -->
-  <div class="section" id="sec-etiquetas"><a id="top-etiquetas"></a>
+  <div class="section" id="sec-etiquetas"><div id="top-sec-etiquetas" style="height:0;"></div><a id="top-etiquetas"></a>
     <div style="max-width:700px;margin:0 auto;">
       <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;font-weight:700;">🏷 Generador de Etiquetas</div>
 
@@ -729,7 +729,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div>
 
   <!-- SECCIÓN: CALCULADORA -->
-  <div class="section" id="sec-calc"><a id="top-calc"></a>
+  <div class="section" id="sec-calc"><div id="top-sec-calc" style="height:0;"></div><a id="top-calc"></a>
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:20px;">
       <div style="font-size:48px;">🧮</div>
       <div style="text-align:center;">
@@ -744,7 +744,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div></div>
 
   <!-- SECCIÓN: KANBAN -->
-  <div class="section" id="sec-kanban"><a id="top-kanban"></a>
+  <div class="section" id="sec-kanban"><div id="top-sec-kanban" style="height:0;"></div><a id="top-kanban"></a>
     <div class="kanban-stats" id="kanban-stats"></div>
     <div class="kanban-board" id="kanban-board">
       <div style="color:#475569;padding:40px;font-size:13px;">Cargando pedidos...</div>
@@ -752,7 +752,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div>
 
   <!-- SECCIÓN: HISTORIAL -->
-  <div class="section" id="sec-historial"><a id="top-historial"></a>
+  <div class="section" id="sec-historial"><div id="top-sec-historial" style="height:0;"></div><a id="top-historial"></a>
     <div class="historial-filters">
       <input class="hist-input" id="hist-search" placeholder="Buscar cliente, N° pedido..." oninput="renderHistorial()" style="flex:1;min-width:200px;">
       <input class="hist-input" id="hist-fecha" type="date" onchange="renderHistorial()" style="width:150px;">
@@ -766,7 +766,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div>
 
   <!-- SECCIÓN: USUARIOS (solo admin) -->
-  <div class="section" id="sec-usuarios"><a id="top-usuarios"></a>
+  <div class="section" id="sec-usuarios"><div id="top-sec-usuarios" style="height:0;"></div><a id="top-usuarios"></a>
     <button class="btn-add-user" onclick="abrirModalUsuario()">+ Nuevo usuario</button>
     <div class="usuarios-grid" id="usuarios-grid">Cargando...</div>
   </div>
@@ -1155,15 +1155,19 @@ function showSection(id, btn){
   document.getElementById(id).classList.add("on");
   if(btn) btn.classList.add("on");
   currentSection = id;
+  // Scroll al anchor de la sección
+  const anchor = document.getElementById("top-"+id);
+  if(anchor) anchor.scrollIntoView({behavior:"instant",block:"start"});
+  else window.scrollTo(0,0);
   if(id==="sec-kanban"){
     renderKanban();
-    syncAll().then(()=>{ renderKanban(); window.scrollTo(0,0); });
-  } else {
-    window.scrollTo(0,0);
-    if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
-    else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
-    else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
-  }
+    syncAll().then(()=>{
+      renderKanban();
+      if(anchor) anchor.scrollIntoView({behavior:"instant",block:"start"});
+    });
+  } else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
+  else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
+  else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
 }
 
 function setSyncState(st){
@@ -1331,6 +1335,7 @@ function cardHTML(p, est){
       ${puedeRetroceder?`<button class="pc-btn-editar" onclick="cambiarEstado('${p.id}','${antEst}')" title="Volver estado anterior" style="font-size:11px;padding:8px;">← Volver</button>`:''}
       ${puedeEtiqueta?`<button class="pc-btn-etiqueta" onclick="abrirEtiqueta('${p.id}')" title="Imprimir etiqueta">🖨</button>`:''}
       ${(p.imagen_diseno||p.datos_presupuesto)?`<button class="pc-btn-etiqueta" onclick="verDiseno('${p.id}')" title="Ver presupuesto PDF" style="font-size:13px;">🖼</button>`:''}
+      <button class="pc-btn-etiqueta" onclick="imprimirPedidoKanban('${p.id}')" title="Imprimir pedido" style="font-size:13px;">📋</button>
       ${puedeEditar?`<button class="pc-btn-editar" onclick="abrirEditarPedido('${p.id}')" title="Editar">✏</button>`:''}
       ${puedeEditar?`<button class="pc-btn-editar" onclick="eliminarPedido('${p.id}','${p.numero}')" title="Eliminar" style="color:#FF6B6B;" onmouseenter="this.style.borderColor='#FF6B6B'" onmouseleave="this.style.borderColor='#334155'">🗑</button>`:''}
     </div>
@@ -2388,6 +2393,110 @@ function generarEtiquetaProducto(){
   win.document.close();
 }
 
+function imprimirPedidoKanban(id){
+  const p = allPedidos.find(x=>x.id===id);
+  if(!p) return;
+  const UxCajaP=64, KgxPzP=0.210;
+  const fmtP = n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n);
+  const embP = pz=>{const cj=Math.floor(pz/UxCajaP),su=pz%UxCajaP;return[cj>0?cj+(cj===1?" caja":" cajas"):"",su>0?su+(su===1?" unidad":" unidades"):""].filter(Boolean).join(" y ")||"0 unidades";};
+  const COLS_MAP={"Negro":"#1F1F1F","Gris Oscuro":"#3F4244","Gris Medio":"#9C9C93","Gris Claro":"#D0D3D4","Blanco":"#FFFFFF","Amarillo":"#FFD100","Naranja":"#FF6A00","Rojo":"#ED1C24","Fucsia":"#EC008C","Violeta":"#6B2DBD","Azul Electrico":"#0057FF","Azul Puro":"#2D76B8","Celeste":"#18BDEB","Verde Agua":"#27C7BD","Verde":"#69BE28"};
+
+  const totalPz = (p.productos||[]).reduce((s,pr)=>s+parseInt(pr.cantidad||1),0);
+  const totalKg = (totalPz*KgxPzP).toFixed(2);
+
+  const prodsHTML = (p.productos||[]).map(pr=>{
+    const pz=parseInt(pr.cantidad||1);
+    const cj=Math.floor(pz/UxCajaP),su=pz%UxCajaP;
+    const nombre=pr.nombre.replace(/^(Baldosa |FlexiFloor )/i,"");
+    const hex=COLS_MAP[nombre]||"#555";
+    const isLight=["#FFFFFF","#D0D3D4","#9C9C93","#FFD100","#18BDEB","#27C7BD","#69BE28"].includes(hex);
+    const txt=isLight?"#333":"#fff";
+    const emb=[cj>0?cj+" Cj":"",su>0?su+" u":""].filter(Boolean).join(" + ")||pz+" u";
+    return `<div style="display:flex;align-items:center;justify-content:space-between;background:${hex};border-radius:5px;padding:7px 12px;margin-bottom:5px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      <div>
+        <div style="color:${txt};font-size:13px;font-weight:800;">${nombre}</div>
+        <div style="color:${txt};opacity:.75;font-size:10px;">${new Intl.NumberFormat("es-AR").format(pz)} pz &nbsp;·&nbsp; ${emb} &nbsp;·&nbsp; ${(pz*KgxPzP).toFixed(2)} kg</div>
+      </div>
+      <div style="color:${txt};font-size:14px;font-weight:900;">${emb}</div>
+    </div>`;
+  }).join("");
+
+  // Extraer precio de observaciones si existe
+  const obsMatch = (p.observaciones||"").match(/Total:\s*\$?([\d,.]+)/);
+  const totalStr = obsMatch ? fmtP(parseFloat(obsMatch[1].replace(/\./g,"").replace(",","."))) : "";
+
+  // Tipo de entrega
+  const estadoLabels={"listo_fabrica":"🏭 Retira en Fábrica","listo_santoni":"🏪 Retira en Santoni","listo_transporte":"📦 Envío Interior","listo_privado":"🚗 Envío Privado","pendiente":"Pendiente","preparado":"En preparación","embalado":"Embalado","entregado":"Entregado"};
+  const entregaLabel = estadoLabels[p.estado]||p.estado;
+
+  const printHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    @page{size:A4 landscape;margin:12mm 14mm;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#111;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .sheet{display:grid;grid-template-columns:3fr 1fr;gap:0;width:269mm;height:183mm;overflow:hidden;}
+    .col-left{border-right:2px dashed #ccc;padding-right:6mm;display:flex;flex-direction:column;}
+    .col-right{padding-left:6mm;display:flex;flex-direction:column;}
+    .hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #2D76B8;padding-bottom:5px;margin-bottom:10px;}
+    .logo{font-size:22px;font-weight:900;letter-spacing:-1px;}
+    .logo span{color:#2D76B8;}
+    .logo small{display:block;font-size:8px;color:#888;letter-spacing:1px;text-transform:uppercase;font-weight:400;}
+    .num{font-size:10px;font-weight:700;color:#cc3300;text-align:right;}
+    .sec{margin-bottom:10px;}
+    .stitle{font-size:7px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#2D76B8;margin-bottom:4px;padding-bottom:2px;border-bottom:1px solid #eee;}
+    .line{font-size:14px;font-weight:700;line-height:1.4;color:#111;}
+    .lsm{font-size:11px;color:#444;line-height:1.5;}
+    .total-box{background:#f0f7ff;border:1.5px solid #2D76B8;border-radius:4px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+    .total-box .l{font-size:7px;letter-spacing:1px;text-transform:uppercase;color:#888;}
+    .total-box .v{font-size:18px;font-weight:700;color:#cc3300;}
+    .footer{font-size:7px;color:#aaa;text-align:center;margin-top:auto;border-top:1px solid #eee;padding-top:4px;}
+    @media print{button{display:none;}}
+  </style></head><body>
+  <button onclick="window.print()" style="position:fixed;top:10px;right:10px;background:#2D76B8;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:14px;font-weight:700;z-index:999;">🖨 Imprimir</button>
+  <div class="sheet">
+    <div class="col-left">
+      <div class="hdr">
+        <div class="logo">Flexi<span>Floor</span>®<small>Baldosas Plásticas Encastrables</small></div>
+        <div><div class="num">Pedido #${p.numero}</div><div style="font-size:7px;color:#888;text-align:right;">${p.fecha}</div></div>
+      </div>
+      <div class="sec">
+        <div class="stitle">Detalle de productos</div>
+        ${prodsHTML}
+      </div>
+      <div style="background:#f0fff0;border:1px solid #3a9000;border-radius:4px;padding:6px 10px;margin-top:auto;">
+        <div style="font-size:7px;letter-spacing:1px;text-transform:uppercase;color:#888;">Total pedido</div>
+        <div style="font-size:13px;font-weight:700;color:#226600;">${embP(totalPz)} &nbsp;·&nbsp; ${new Intl.NumberFormat("es-AR").format(totalPz)} piezas &nbsp;·&nbsp; ${totalKg} kg</div>
+      </div>
+    </div>
+    <div class="col-right">
+      <div class="hdr">
+        <span style="font-size:10px;font-weight:700;color:#2D76B8;letter-spacing:1px;">HOJA DE PEDIDO</span>
+        <div class="num">#${p.numero}</div>
+      </div>
+      <div class="sec">
+        <div class="stitle">Cliente</div>
+        <div class="line">${p.cliente}</div>
+        ${p.telefono?`<div class="lsm">☎ ${p.telefono}</div>`:""}
+        ${p.direccion?`<div class="lsm">📍 ${p.direccion}</div>`:""}
+      </div>
+      <div class="sec">
+        <div class="stitle">Estado y entrega</div>
+        <div class="lsm" style="font-size:13px;font-weight:700;">${entregaLabel}</div>
+        <div class="lsm">${p.fecha}</div>
+        ${p.despacho_transporte?`<div class="lsm">🚚 ${p.despacho_transporte}${p.despacho_numero?" · "+p.despacho_numero:""}</div>`:""}
+      </div>
+      ${p.observaciones?`<div class="sec"><div class="stitle">Observaciones</div><div class="lsm" style="line-height:1.6;">${p.observaciones}</div></div>`:""}
+      ${totalStr?`<div class="total-box"><div class="l">Total estimado</div><div class="v">${totalStr}</div></div>`:""}
+      <div class="footer">FlexiFloor® — Baldosas Plásticas Encastrables<br>Creado por: ${p.creado_por||"—"}</div>
+    </div>
+  </div>
+  </body></html>`;
+
+  const win=window.open("","_blank");
+  win.document.write(printHTML);
+  win.document.close();
+}
+
 function verDiseno(id){
   const p = allPedidos.find(x=>x.id===id);
   if(!p||!p.imagen_diseno) return;
@@ -2641,17 +2750,19 @@ function setPredominante(ci){
   FS.grid.fill(ci);
   selectColor(ci);
   setTool("p");
-  if(fctx&&fcv&&CELL>0){
-    fctx.fillStyle=c.h;
-    fctx.fillRect(0,0,fcv.width,fcv.height);
-    fctx.strokeStyle="rgba(0,0,0,0.12)";
-    fctx.lineWidth=0.5;
-    fctx.beginPath();
-    for(let r=0;r<=FS.rows;r++){fctx.moveTo(0,r*CELL);fctx.lineTo(fcv.width,r*CELL);}
-    for(let c2=0;c2<=FS.cols;c2++){fctx.moveTo(c2*CELL,0);fctx.lineTo(c2*CELL,fcv.height);}
-    fctx.stroke();
-    updateLegendLive();
-  }
+  requestAnimationFrame(()=>{
+    if(fctx&&fcv&&CELL>0){
+      fctx.fillStyle=c.h;
+      fctx.fillRect(0,0,fcv.width,fcv.height);
+      fctx.strokeStyle="rgba(0,0,0,0.12)";
+      fctx.lineWidth=0.5;
+      fctx.beginPath();
+      for(let r=0;r<=FS.rows;r++){fctx.moveTo(0,r*CELL);fctx.lineTo(fcv.width,r*CELL);}
+      for(let c2=0;c2<=FS.cols;c2++){fctx.moveTo(c2*CELL,0);fctx.lineTo(c2*CELL,fcv.height);}
+      fctx.stroke();
+      updateLegendLive();
+    }
+  });
 }
 
 let _scrollStart=null;

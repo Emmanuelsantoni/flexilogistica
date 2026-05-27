@@ -1655,8 +1655,37 @@ function buildPrivado(sender) {
       box.innerHTML = `<strong>Revisá antes de imprimir:</strong><ul>${warnings.map(w => `<li>${escapeHTML(w)}</li>`).join('')}</ul>`;
     }
 
+    function sincronizarDatos(nuevoTipo){
+      const esPrivadoActual = $('formPrivado').style.display !== 'none';
+      const esMicroActual = $('formMicro').style.display !== 'none';
+      let nombre="",tel="",dir="",loc="",pedido="";
+      if(esPrivadoActual){
+        nombre=val('destNombre');tel=val('destTelefono');dir=val('destDireccion');loc=val('destLocalidad');pedido=val('pedido');
+      } else if(esMicroActual){
+        nombre=val('destNombreMicro');tel=val('destTelefonoMicro');dir=val('destDireccionMicro');loc=val('destLocalidadMicro');pedido=val('pedidoMicro');
+      }
+      if(!nombre&&!tel&&!pedido) return;
+      setTimeout(()=>{
+        if(nuevoTipo==='micro'){
+          if(nombre) $('destNombreMicro').value=nombre;
+          if(tel) $('destTelefonoMicro').value=tel;
+          if(dir) $('destDireccionMicro').value=dir;
+          if(loc) $('destLocalidadMicro').value=loc;
+          if(pedido) $('pedidoMicro').value=pedido;
+        } else {
+          if(nombre) $('destNombre').value=nombre;
+          if(tel) $('destTelefono').value=tel;
+          if(dir) $('destDireccion').value=dir;
+          if(loc) $('destLocalidad').value=loc;
+          if(pedido) $('pedido').value=pedido;
+        }
+        actualizarVistaPrevia();
+      },50);
+    }
+
     function actualizarFormulario() { 
-      const tipo = $('tipoCartel').value; 
+      const tipo = $('tipoCartel').value;
+      sincronizarDatos(tipo);
       $('formPrivado').style.display = (tipo === 'privado' || tipo === 'retira') ? 'grid' : 'none'; 
       $('formMicro').style.display = tipo === 'micro' ? 'grid' : 'none'; 
       $('formHint').textContent = tipo === 'privado' ? 'Envío privado' : tipo === 'retira' ? 'Retira en local' : 'Micro / transporte'; 
