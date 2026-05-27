@@ -829,6 +829,49 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ═══ SUPABASE ═══════════════════════════════════
+const SUPA_URL = "https://eszdibaycqirmouqzlkc.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzemRpYmF5Y3Fpcm1vdXF6bGtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1OTE4MjcsImV4cCI6MjA5NDE2NzgyN30.9BDss2-LtybweiVzCESTM-R5tWTWpWdpbHuQbawjX6A";
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// Cache local para no hacer fetch en cada operación menor
+let _cfgCache = {};
+
+// Reemplazos de localStorage con Supabase + cache local
+async function sbGet(key) {
+  // Primero intentar cache
+  if(_cfgCache[key] !== undefined) return _cfgCache[key];
+  try {
+    const {data, error} = await supa.from('calculadora_config').select('valor').eq('id', key).single();
+    if(error || !data) return null;
+    _cfgCache[key] = data.valor;
+    return data.valor;
+  } catch(e) {
+    return null;
+  }
+}
+
+async function sbSet(key, value) {
+  _cfgCache[key] = value;
+  try {
+    await supa.from('calculadora_config').upsert({id: key, valor: value, updated_at: new Date().toISOString()});
+  } catch(e) {
+    console.error('sbSet error:', e);
+  }
+}
+
+// Cargar todo el cache al inicio (un solo fetch)
+async function cargarCacheInicial() {
+  try {
+    const {data} = await supa.from('calculadora_config').select('*');
+    if(data) data.forEach(row => _cfgCache[row.id] = row.valor);
+  } catch(e) {
+    console.error('cache error:', e);
+  }
+}
+</script>
 <script>
 // ════════════════════════════════════════════════
 // PRODUCTOS — definición de cada producto
@@ -916,10 +959,10 @@ function getCFHora(){
 // ════════════════════════════════════════════════
 // SELECTOR DE PRODUCTO
 // ════════════════════════════════════════════════
-function elegirProducto(id){
+async function elegirProducto(id){
   if(!PRODUCTOS[id])return;
   prodActual=id;
-  localStorage.setItem('covin_prod',id);
+  sbSet('covin_prod', id);
   $('selector-screen').style.display='none';
   $('app').style.display='block';
 
@@ -933,9 +976,9 @@ function elegirProducto(id){
   adaptarUI();
 
   // Cargar datos del producto
-  cargarConfig();
-  cargarFijos();
-  cargarColores();
+  await cargarConfig();
+  await cargarFijos();
+  await cargarColores();
 
   // Activar primer tab
   showPanel('config', document.querySelector('.tab'));
@@ -1025,7 +1068,7 @@ function showPanel(name,tab){
 // ════════════════════════════════════════════════
 // CONFIG
 // ════════════════════════════════════════════════
-function guardarConfig(){
+async function guardarConfig(){
   cfg={
     ppPrecio:+$('cfg-pp').value||0, mbPrecio:+$('cfg-mb').value||0, mbPct:+$('cfg-mbpct').value||0,
     recActivo, recPrecio:+$('cfg-recprecio').value||0, recPct:+$('cfg-recpct').value||0,
@@ -1035,15 +1078,15 @@ function guardarConfig(){
     coladaG:+$('cfg-colada').value||0, coladaPrecio:+$('cfg-colada-precio').value||0,
     cajaKg:+$('cfg-caja-kg').value||4,
   };
-  localStorage.setItem(lsKey('cfg'),JSON.stringify(cfg));
+  await sbSet(lsKey('cfg'), cfg);
   $('config-status').className='badge badge-ok';$('config-status').textContent='✓ Guardado';
   notif('✓ Configuración guardada');
   propagar();calcularCF();calcularCosto();calcularTanda();calcularProd();calcularRent();calcularSensibilidad();renderColores();
 }
 
-function cargarConfig(){
-  const r=localStorage.getItem(lsKey('cfg'));
-  cfg=r?JSON.parse(r):{};
+async function cargarConfig(){
+  const r=await sbGet(lsKey('cfg'));
+  cfg=r||{};
   $('cfg-pp').value=cfg.ppPrecio||'';$('cfg-mb').value=cfg.mbPrecio||'';
   $('cfg-mbpct').value=cfg.mbPct||'';$('cfg-recprecio').value=cfg.recPrecio||'';
   $('cfg-recpct').value=cfg.recPct||'';$('cfg-mo').value=cfg.mo||'';
@@ -1060,9 +1103,9 @@ function cargarConfig(){
   actualizarPiezasCaja();
 }
 
-function resetConfig(){
+async function resetConfig(){
   if(!confirm('¿Resetear configuración de este producto?'))return;
-  localStorage.removeItem(lsKey('cfg'));cfg={};recActivo=false;
+  await sbSet(lsKey('cfg'), null);cfg={};recActivo=false;
   ['cfg-pp','cfg-mb','cfg-mbpct','cfg-recprecio','cfg-recpct','cfg-mo','cfg-kw','cfg-kwh','cfg-peso','cfg-colada','cfg-colada-precio'].forEach(i=>$(i).value='');
   $('cfg-cav').value=1;$('cfg-ciclo').value=30;$('cfg-bm2').value=16;$('cfg-caja-kg').value=4;
   $('tog-rec').classList.remove('on');$('rec-fields').style.display='none';
@@ -1090,15 +1133,15 @@ function actualizarPiezasCaja(){
 // ════════════════════════════════════════════════
 // COSTOS FIJOS
 // ════════════════════════════════════════════════
-function cargarFijos(){
-  const r=localStorage.getItem(lsKey('fijos'));if(r)cfItems=JSON.parse(r);else cfItems=[];
-  cfHsMes=+(localStorage.getItem(lsKey('cfhs'))||176);
+async function cargarFijos(){
+  const r=await sbGet(lsKey('fijos'));cfItems=Array.isArray(r)?r:[];
+  const hs=await sbGet(lsKey('cfhs'));cfHsMes=+(hs||176);
   $('cf-hsmes').value=cfHsMes;
   renderCF();calcularCF();
 }
-function guardarFijos(){
-  localStorage.setItem(lsKey('fijos'),JSON.stringify(cfItems));
-  localStorage.setItem(lsKey('cfhs'),$('cf-hsmes').value||176);
+async function guardarFijos(){
+  await sbSet(lsKey('fijos'), cfItems);
+  await sbSet(lsKey('cfhs'), +($('cf-hsmes').value||176));
   cfHsMes=+$('cf-hsmes').value||176;
   $('fijos-status').className='badge badge-ok';$('fijos-status').textContent='✓ Guardado';
   notif('✓ Costos fijos guardados');
@@ -1577,22 +1620,22 @@ function calcCostoColor(c){
 
 function savePV(){
   precioVentaPieza=+$('pv-pieza').value||0;
-  localStorage.setItem(lsKey('pv'),precioVentaPieza);
+  sbSet(lsKey('pv'), precioVentaPieza);
   const P=PR();
   const u2v=P.tieneU2?precioVentaPieza*piezasPorU2():P.tieneCaja?precioVentaPieza*piezasPorCaja():null;
   $('pv-u2-calc').textContent=u2v!==null&&precioVentaPieza>0?fmt2(u2v):'$—';
   if(P.tieneCaja)$('pv-caja-calc').textContent=precioVentaPieza>0?fmt2(precioVentaPieza*piezasPorCaja()):'$—';
 }
 
-function cargarColores(){
-  const r=localStorage.getItem(lsKey('colores'));colores=r?JSON.parse(r):[];
-  precioVentaPieza=+(localStorage.getItem(lsKey('pv'))||0);
+async function cargarColores(){
+  const r=await sbGet(lsKey('colores'));colores=Array.isArray(r)?r:[];
+  const pv=await sbGet(lsKey('pv'));precioVentaPieza=+(pv||0);
   if($('pv-pieza'))$('pv-pieza').value=precioVentaPieza||'';
   savePV();
   renderColores();
 }
 
-function guardarColoresLS(){localStorage.setItem(lsKey('colores'),JSON.stringify(colores));}
+function guardarColoresLS(){sbSet(lsKey('colores'), colores);}
 
 function abrirModalColor(id){
   editColorId=id;
@@ -1722,14 +1765,15 @@ function renderComparacion(){
 // ════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════
-window.onload=()=>{
-  // Mostrar botón continuar si hay producto guardado
-  const saved=localStorage.getItem('covin_prod');
+window.onload=async ()=>{
+  // Cargar cache completo de Supabase
+  await cargarCacheInicial();
+  // Detectar último producto
+  const saved=await sbGet('covin_prod');
   if(saved&&PRODUCTOS[saved]){
     const btn=$('btn-continuar');
     btn.style.display='inline-flex';
     btn.textContent=`→ Continuar con ${PRODUCTOS[saved].nombre}`;
-    // Highlight last product card
     document.querySelectorAll('.prod-card').forEach(card=>{
       if(card.querySelector('.prod-name').textContent===PRODUCTOS[saved].nombre)
         card.classList.add('active-prod');
