@@ -1155,13 +1155,15 @@ function showSection(id, btn){
   document.getElementById(id).classList.add("on");
   if(btn) btn.classList.add("on");
   currentSection = id;
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
-  window.scrollTo({top:0,behavior:"instant"});
-  if(id==="sec-kanban"){ renderKanban(); syncAll().then(()=>{renderKanban();window.scrollTo({top:0,behavior:"instant"});}); }
-  else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
-  else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
-  else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
+  if(id==="sec-kanban"){
+    renderKanban();
+    syncAll().then(()=>{ renderKanban(); window.scrollTo(0,0); });
+  } else {
+    window.scrollTo(0,0);
+    if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
+    else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
+    else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
+  }
 }
 
 function setSyncState(st){
@@ -2639,7 +2641,17 @@ function setPredominante(ci){
   FS.grid.fill(ci);
   selectColor(ci);
   setTool("p");
-  drawAll();
+  if(fctx&&fcv&&CELL>0){
+    fctx.fillStyle=c.h;
+    fctx.fillRect(0,0,fcv.width,fcv.height);
+    fctx.strokeStyle="rgba(0,0,0,0.12)";
+    fctx.lineWidth=0.5;
+    fctx.beginPath();
+    for(let r=0;r<=FS.rows;r++){fctx.moveTo(0,r*CELL);fctx.lineTo(fcv.width,r*CELL);}
+    for(let c2=0;c2<=FS.cols;c2++){fctx.moveTo(c2*CELL,0);fctx.lineTo(c2*CELL,fcv.height);}
+    fctx.stroke();
+    updateLegendLive();
+  }
 }
 
 let _scrollStart=null;
