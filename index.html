@@ -2609,7 +2609,7 @@ function verDiseno(id){
   +"<div class='dbox'><div class='v gr'>"+new Intl.NumberFormat("es-AR").format(d.pintadas||totalPz)+"</div><div class='l'>Piezas cotizadas</div></div>"
   +"<div class='dbox'><div class='v gr'>"+embStr2(d.pintadas||totalPz)+"</div><div class='l'>Embalaje</div></div>"
   +"</div>"
-  +(sinPintar>0?"<div style='background:#fff8e6;border:1px solid #f59e0b;border-radius:3px;padding:4px 7px;font-size:9px;color:#92400e;margin-bottom:5px;'><strong>"+sinPintar+" baldosas sin pintar</strong>. Precio sobre "+(d.pintadas||totalPz)+" pintadas.</div>":"")
+  +(sinPintar>0?"<div style='background:#fff8e6;border:1px solid #f59e0b;border-radius:3px;padding:4px 7px;font-size:9px;color:#92400e;margin-bottom:5px;'><strong>"+sinPintar+" sin asignar</strong>. Precio sobre "+totalPz+" piezas.</div>":"")
   +"</div>"
   +"<div class='sec'><div class='stitle'>Precio</div>"
   +"<div class='tbox'><div class='l'>Total estimado</div><div class='v'>"+(d.total!==null&&d.total!==undefined?fmtAR(d.total):"—")+"</div></div>"
@@ -3326,8 +3326,14 @@ function buildLegendResult(){
   const cnt=getGridCounts();const totalCnt=getTotalCounts();const data=Object.entries(totalCnt).sort((a,b)=>b[1]-a[1]);
   if(!data.length){el.innerHTML='<div style="color:var(--muted);font-size:12px;">Sin diseño pintado.</div>';return;}
   const totalPz=data.reduce((s,[,p])=>s+p,0);
-  el.innerHTML=data.map(([ci,pzT])=>{const c=COLS[+ci];const pzG=cnt[ci]||0;const pzE=fadj[ci]||0;
-    return`<div class="leg-row"><div class="leg-top"><div class="leg-dot" style="background:${c.h};${c.h==="#f0f0f0"?"border:1px solid #555":""}"></div><div class="leg-name">${c.n}</div><div class="leg-pzas">${fmtNum(pzT)} pz</div></div><div class="leg-emb">${pzE>0?pzG+" diseño + "+pzE+" sobrante = "+pzT+" piezas<br>":""}Embalaje: <strong>${embStr(pzT)}</strong></div></div>`;
+  el.innerHTML=data.map(([ci,pzT])=>{const c=COLS[+ci];const pzG=cnt[ci]||0;const pzE=fadj[ci]||0;const pzX=fadjExtra[+ci]||0;
+    let detalle="";
+    const parts=[];
+    if(pzG>0) parts.push(pzG+" diseño");
+    if(pzE>0) parts.push(pzE+" sobrante");
+    if(pzX>0) parts.push(pzX+" adicional");
+    if(parts.length>1) detalle=parts.join(" + ")+" = "+pzT+" piezas<br>";
+    return`<div class="leg-row"><div class="leg-top"><div class="leg-dot" style="background:${c.h};${c.h==="#f0f0f0"?"border:1px solid #555":""}"></div><div class="leg-name">${c.n}</div><div class="leg-pzas">${fmtNum(pzT)} pz</div></div><div class="leg-emb">${detalle}Embalaje: <strong>${embStr(pzT)}</strong></div></div>`;
   }).join("")+`<div class="total-emb"><div class="tl">Total pedido embalado</div><div class="tv">${embStr(totalPz)} <span style="font-size:11px;font-weight:400;color:var(--muted);">(${totalPz} piezas)</span></div></div>`;
 }
 function genPDF(){
@@ -3465,7 +3471,7 @@ function genPDF(){
 
   const avisoSinPintar = sinPintar>0
     ? "<div style='background:#fff8e6;border:1px solid #f59e0b;border-radius:4px;padding:5px 8px;font-size:10px;color:#92400e;margin-top:4px;'>"
-      +"<strong>"+sinPintar+" baldosas sin pintar</strong>. Precio calculado sobre "+pintadas+" pintadas."
+      +(sinPintar>0?"<strong>"+sinPintar+" sin asignar</strong>. ":"")+"Precio sobre "+totalPz+" piezas."
       +"</div>" : "";
 
   let detPrecio="";
@@ -3539,7 +3545,7 @@ function genPDF(){
   +"<div class='dbox'><div class='v gr'>"+new Intl.NumberFormat("es-AR").format(pintadas)+"</div><div class='l'>Piezas cotizadas</div></div>"
   +"<div class='dbox'><div class='v gr'>"+embStr(pintadas)+"</div><div class='l'>Embalaje</div></div>"
   +"</div>"
-  +(sinPintar>0?"<div style='background:#fff8e6;border:1px solid #f59e0b;border-radius:3px;padding:4px 7px;font-size:9px;color:#92400e;margin-bottom:5px;'><strong>"+sinPintar+" baldosas sin pintar</strong>. Precio sobre "+pintadas+" pintadas.</div>":"")
+  +(sinPintar>0?"<div style='background:#fff8e6;border:1px solid #f59e0b;border-radius:3px;padding:4px 7px;font-size:9px;color:#92400e;margin-bottom:5px;'><strong>"+sinPintar+" sin asignar</strong>. Precio sobre "+totalPz+" piezas.</div>":"")
   +"</div>"
   +"<div class='sec'><div class='sec-title'>Precio</div>"
   +"<div class='total-box'><div class='l'>Total estimado</div><div class='v'>"+(fin!==null?fmt(fin):"—")+"</div></div>"
