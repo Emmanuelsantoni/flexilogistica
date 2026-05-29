@@ -566,6 +566,28 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
             <div style="font-size:28px;font-weight:700;color:var(--accent);margin-top:4px;" id="sob-num">0</div>
           </div>
         </div>
+        <!-- Baldosas adicionales -->
+        <div class="card" id="ajuste-adicional" style="display:none;margin-top:12px;">
+          <div class="ctitle">➕ Baldosas adicionales</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5;">
+            Sumá baldosas extra al pedido (stock de repuesto, roturas, etc). Se van a sumar al total pintado.
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+            <div>
+              <label style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Cantidad a agregar</label>
+              <div style="display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+                <button onclick="deltaAdicional(-1)" style="background:#1E293B;border:none;color:#fff;width:36px;height:36px;font-size:18px;cursor:pointer;">−</button>
+                <input type="number" id="adj-extra" min="0" max="500" value="0"
+                  style="width:70px;text-align:center;background:#111;border:none;border-left:1px solid var(--border);border-right:1px solid var(--border);color:#fff;font-size:16px;font-weight:700;height:36px;outline:none;"
+                  oninput="calcAdicional()">
+                <button onclick="deltaAdicional(1)" style="background:#1E293B;border:none;color:#fff;width:36px;height:36px;font-size:18px;cursor:pointer;">+</button>
+              </div>
+            </div>
+            <div id="adj-extra-info" style="font-size:11px;color:var(--muted);line-height:1.6;"></div>
+          </div>
+          <div id="adj-extra-banner" style="display:none;border-radius:8px;padding:10px 14px;font-size:11px;font-weight:600;"></div>
+        </div>
+
         <div class="card" id="ajuste-preview" style="display:none;">
           <div class="ctitle">Vista previa con ajuste</div>
           <div class="legend" id="legend-ajuste"></div>
@@ -2624,7 +2646,7 @@ function embStr(pz){
   if(su>0) s+=(cj>0?" y ":"")+su+" unidad"+(su!==1?"es":"");
   return s||"0 unidades";
 }
-let FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retira_fabrica"};
+let FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retira_fabrica",extra:0};
 let fadj={};
 // ═══ MOTOR DE DIBUJO ════════════════════════════════════════════════════════
 let fcv, fctx;
@@ -3002,14 +3024,70 @@ function updateLegendLive(){
 }
 function startAjuste(){
   const cnt=getGridCounts();const gridPzas=Object.values(cnt).reduce((s,v)=>s+v,0);const sobrante=FS.pzas-gridPzas;
-  if(FS.m2cot<=0||gridPzas===0){document.getElementById("ajuste-nodims").style.display="block";document.getElementById("ajuste-ok").style.display="none";document.getElementById("ajuste-preview").style.display="none";return;}
+  if(FS.m2cot<=0||gridPzas===0){
+    document.getElementById("ajuste-nodims").style.display="block";
+    document.getElementById("ajuste-ok").style.display="none";
+    document.getElementById("ajuste-preview").style.display="none";
+    document.getElementById("ajuste-adicional").style.display="none";
+    return;
+  }
   document.getElementById("ajuste-nodims").style.display="none";
-  document.getElementById("ajuste-ok").style.display="block";document.getElementById("ajuste-preview").style.display="block";
+  document.getElementById("ajuste-ok").style.display="block";
+  document.getElementById("ajuste-preview").style.display="block";
+  document.getElementById("ajuste-adicional").style.display="block";
   const colUsados=Object.keys(cnt).map(Number);const newAdj={};colUsados.forEach(ci=>{newAdj[ci]=fadj[ci]||0;});fadj=newAdj;
   const banner=document.getElementById("sob-banner");
   if(sobrante<=0){banner.innerHTML=`<div class="sb-ok">✓ Sin sobrante</div><div class="sb-lbl">Las piezas coinciden exactamente</div>`;}
   else{banner.innerHTML=`<div class="sb-num">${sobrante}</div><div class="sb-lbl">baldosa${sobrante!==1?"s":""} sobrante${sobrante!==1?"s":""} para repartir</div>`;}
   renderAdjRows(cnt,sobrante);renderAdjPreview();
+  // Resetear adicional al entrar
+  if(FS.extra===undefined) FS.extra=0;
+  document.getElementById("adj-extra").value=FS.extra||0;
+  calcAdicional();
+}
+
+function deltaAdicional(d){
+  const inp=document.getElementById("adj-extra");
+  inp.value=Math.max(0,(+inp.value||0)+d);
+  calcAdicional();
+}
+
+function calcAdicional(){
+  const extra=Math.max(0,+document.getElementById("adj-extra").value||0);
+  FS.extra=extra;
+  const cnt=getGridCounts();
+  const gridPzas=Object.values(cnt).reduce((s,v)=>s+v,0);
+  const totalPedido=gridPzas+Object.values(fadj).reduce((s,v)=>s+v,0)+extra;
+  const infoEl=document.getElementById("adj-extra-info");
+  const bannerEl=document.getElementById("adj-extra-banner");
+
+  if(extra===0){
+    infoEl.innerHTML="";
+    bannerEl.style.display="none";
+    return;
+  }
+
+  const masQueDiagrama=totalPedido>FS.pzas;
+  infoEl.innerHTML=`Total en pedido: <b style="color:#fff;">${fmtNum(totalPedido)} pzas</b><br>
+    (${fmtNum(gridPzas)} pintadas + ${fmtNum(Object.values(fadj).reduce((s,v)=>s+v,0))} ajuste + <span style="color:#F59E0B;font-weight:700;">${extra} extra</span>)`;
+
+  if(masQueDiagrama){
+    bannerEl.style.display="block";
+    bannerEl.style.background="rgba(245,158,11,0.12)";
+    bannerEl.style.border="1px solid rgba(245,158,11,0.4)";
+    bannerEl.style.color="#F59E0B";
+    bannerEl.innerHTML=`⚠ Estás pidiendo <b>${totalPedido-FS.pzas} baldosas más</b> que lo que está en el diagrama. Asegurate de que sea intencional.`;
+  } else {
+    bannerEl.style.display="none";
+  }
+}
+
+// Override de getPzasPintadas para incluir el extra
+function getTotalPzasPedido(){
+  const cnt=getGridCounts();
+  const gridPzas=Object.values(cnt).reduce((s,v)=>s+v,0);
+  const adjPzas=Object.values(fadj).reduce((s,v)=>s+v,0);
+  return gridPzas + adjPzas + (FS.extra||0);
 }
 function renderAdjRows(cnt,sobrante){
   const el=document.getElementById("adj-rows");el.innerHTML="";
@@ -3080,17 +3158,17 @@ function calcDims(){
   const a = parseFloat(document.getElementById("dA").value)||0;
   const m2dir = parseFloat(document.getElementById("dM2").value)||0;
   if(m2dir > 0){
-    // Entrada directa de m2
+    // Entrada directa de m2 — redondear al metro entero superior
     FS.lR = 0; FS.aR = 0;
     FS.m2real = m2dir;
-    FS.m2cot = Math.ceil(m2dir);
+    FS.m2cot = Math.ceil(m2dir); // siempre metro entero
     FS.pzas = FS.m2cot * PxM2;
     showDims();
   } else if(l>0 && a>0){
-    FS.lR = Math.ceil(l*4)/4;
-    FS.aR = Math.ceil(a*4)/4;
+    FS.lR = l;
+    FS.aR = a;
     FS.m2real = +(l*a).toFixed(4);
-    FS.m2cot = FS.lR * FS.aR;
+    FS.m2cot = Math.ceil(l*a); // redondear al metro entero superior
     FS.pzas = FS.m2cot * PxM2;
     showDims();
   } else {
@@ -3102,7 +3180,7 @@ function calcPrice(){
   const pm2 = parseFloat(document.getElementById("pM2").value)||0;
   const ppz = parseFloat(document.getElementById("pPz").value)||0;
   const pintadas = getPzasPintadas();
-  const pzasBase = pintadas > 0 ? pintadas : FS.pzas;
+  const pzasBase = pintadas > 0 ? getTotalPzasPedido() : FS.pzas;
   const m2base = pzasBase / PxM2;
   const tm2 = pm2>0 ? m2base*pm2 : null;
   const tpz = ppz>0 ? pzasBase*ppz : null;
@@ -3132,6 +3210,7 @@ function buildResult(){
   const em=document.getElementById("cEmail").value||"—";
   const no=document.getElementById("cNota").value;
   const dir=document.getElementById("cDireccion")?document.getElementById("cDireccion").value:"";
+  const extra=FS.extra||0;
   const dlabels={"retira_fabrica":"🏭 Retira en Fábrica","retira_santoni":"🏪 Retira en Santoni","envio_interior":"📦 Envío Interior"+(dir?" → "+dir:""),"envio_privado":"🚚 Envío Privado"+(dir?" → "+dir:"")};
   const entrega=dlabels[FS.delivery]||"🏭 Retira en Fábrica";
   document.getElementById("sum-client").innerHTML=`<b>${n}</b><br>${t} &nbsp;·&nbsp; ${ci}<br>${em}<br><span style="color:var(--muted);font-size:12px;">${entrega}</span>`+(no?`<br><i style="color:var(--muted);font-size:12px;">${no}</i>`:"");
@@ -3139,18 +3218,27 @@ function buildResult(){
   document.getElementById("sum-dim").textContent=dim;
   document.getElementById("sum-mcot").textContent=FS.m2cot?FS.m2cot+" m²":"—";
   const pintadas=getPzasPintadas();
-  const pzasBase=pintadas>0?pintadas:FS.pzas;
-  const sinPintar=FS.pzas-pzasBase;
-  document.getElementById("sum-pzas").textContent=pintadas>0?fmtNum(pintadas)+(sinPintar>0?" ("+fmtNum(sinPintar)+" sin pintar)":""):FS.pzas||"—";
+  const adjPzas=Object.values(fadj).reduce((s,v)=>s+v,0);
+  const extraPzas=FS.extra||0;
+  const totalPedido=pintadas>0?(pintadas+adjPzas+extraPzas):FS.pzas;
+  const sinPintar=FS.pzas-(pintadas+adjPzas);
+  const pzasBase=totalPedido;
+  document.getElementById("sum-pzas").textContent=pintadas>0?
+    fmtNum(pintadas)+(adjPzas>0?" + "+fmtNum(adjPzas)+" ajuste":"")+(extraPzas>0?" + "+fmtNum(extraPzas)+" extra":"")+" = "+fmtNum(totalPedido)+" pzas"
+    :FS.pzas||"—";
   document.getElementById("sum-emb").textContent=pzasBase?embStr(pzasBase):"—";
   const pm2=parseFloat(document.getElementById("pM2").value)||0,ppz=parseFloat(document.getElementById("pPz").value)||0;
   const m2base=pzasBase/16;
   const tm2=pm2>0?m2base*pm2:null,tpz=ppz>0?pzasBase*ppz:null,fin=tm2!==null?tm2:tpz;
   document.getElementById("sum-total").textContent=fin!==null?fmt(fin):"—";
-  // Aviso en resumen si hay sin pintar
+  // Avisos en resumen
   const resAviso=document.getElementById("sum-aviso-pintar");
   if(resAviso){
-    if(sinPintar>0&&pintadas>0){resAviso.innerHTML=`⚠ <strong>${sinPintar} baldosas sin pintar</strong> en el diseño. Precio calculado sobre ${pzasBase} pintadas.`;resAviso.style.display="block";}
+    let avisos=[];
+    if(sinPintar>0&&pintadas>0) avisos.push(`⚠ <strong>${sinPintar} baldosas sin pintar</strong> en el diseño.`);
+    if(extraPzas>0) avisos.push(`ℹ <strong>${extraPzas} baldosas extra</strong> sumadas al pedido.`);
+    if(totalPedido>FS.pzas+adjPzas&&extraPzas>0) avisos.push(`⚠ El pedido supera el diagrama en <strong>${totalPedido-FS.pzas} pzas</strong>.`);
+    if(avisos.length){resAviso.innerHTML=avisos.join("<br>");resAviso.style.display="block";}
     else{resAviso.style.display="none";}
   }
   buildLegendResult();
@@ -3388,7 +3476,7 @@ function genPDF(){
 }
 function nuevoPresup(){
   ["cNombre","cTel","cCiudad","cEmail","cNota","dL","dA","dM2","pM2","pPz","cDireccion"].forEach(id=>{const e=document.getElementById(id);if(e)e.value="";});
-  FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retira_fabrica"};
+  FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retira_fabrica",extra:0};
   fadj={};setDelivery("retiro");
   document.getElementById("dims-card").style.display="none";
   fpg("fpg-client",document.querySelectorAll(".flexi-nav button")[0]);
