@@ -2010,6 +2010,7 @@ async function confirmarEnvioLogiflow(){
     entrega:FS.delivery==="envio"?"Envio"+(document.getElementById("cDireccion")?.value?" → "+document.getElementById("cDireccion").value:""):"Retira en local",
     dim:FS.lR>0?FS.lR.toFixed(2)+" x "+FS.aR.toFixed(2)+" m":FS.m2cot+" m2",
     m2cot:FS.m2cot, pzas:FS.pzas, pintadas:pintadasv, sinPintar:sinPintarv,
+    gridPzas:Object.values(getGridCounts()).reduce((s,v)=>s+v,0), adjPzas:Object.values(fadj).reduce((s,v)=>s+v,0), extraPzas:FS.extra||0,
     pm2:pm2v, ppz:ppzv, total:finv,
     colores:Object.entries(totalCntv).sort((a,b)=>b[1]-a[1]).map(([ci,pzT])=>({
       nombre:COLS[+ci].n, hex:COLS[+ci].h, cantidad:pzT,
@@ -2587,7 +2588,14 @@ function verDiseno(id){
   +"<div class='col-left'>"
   +"<div class='hdr'><div class='logo'>Flexi<span>Floor</span><sup style='font-size:10px;'>®</sup><small>Baldosas Plasticas Encastrables</small></div>"
   +"<div><div class='num'>N° "+(d.num||"FF-"+p.numero)+"</div><div class='dt'>Fecha: "+(d.dt||p.fecha)+"</div></div></div>"
-  +"<div style='font-size:9px;color:#888;margin-bottom:4px;'>"+(d.dim||"")+" · "+new Intl.NumberFormat("es-AR").format(d.pzas||0)+" piezas del espacio</div>"
+  +"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;'>"
+  +"<div style='font-size:16px;font-weight:800;color:#111;'>"+( d.dim||"")+"</div>"
+  +"<div style='text-align:right;font-size:9px;color:#555;line-height:1.8;'>"
+  +"<span style='font-size:12px;font-weight:700;color:#111;'>"+new Intl.NumberFormat('es-AR').format(d.gridPzas||d.pzas||0)+" pzas</span> en diagrama"
+  +(d.adjPzas>0?"<br>+ "+d.adjPzas+" ajuste sobrante":"")
+  +(d.extraPzas>0?"<br>+ "+d.extraPzas+" adicionales":"")
+  +"<br><span style='font-weight:700;color:#cc3300;'>"+new Intl.NumberFormat('es-AR').format(d.pintadas||0)+" total</span>"
+  +"</div></div>"
   +"<div class='cv'><img src='"+img+"'></div>"
   +(sinPintar>0?"<div style='font-size:8px;color:#666;margin-top:2px;'>Las celdas claras son baldosas sin pintar ("+sinPintar+" baldosas)</div>":"")
   +"<div class='legend'>"+legendHTML
@@ -3521,7 +3529,14 @@ function genPDF(){
   +"<div><span class='logo-text'>Flexi<span>Floor</span><sup style='font-size:10px;'>®</sup></span><span class='logo-sub'>Baldosas Plasticas Encastrables</span></div>"
   +"<div><div class='hdr-num'>N° "+num+"</div><div class='hdr-dt'>Fecha: "+dt+"</div></div>"
   +"</div>"
-  +"<div style='font-size:9px;color:#888;margin-bottom:4px;'>"+dim+" &middot; "+new Intl.NumberFormat("es-AR").format(FS.pzas)+" piezas del espacio</div>"
+  +"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;'>"
+  +"<div style='font-size:16px;font-weight:800;color:#111;'>"+dim+"</div>"
+  +"<div style='text-align:right;font-size:9px;color:#555;line-height:1.8;'>"
+  +"<span style='font-size:12px;font-weight:700;color:#111;'>"+new Intl.NumberFormat('es-AR').format(Object.values(getGridCounts()).reduce((s,v)=>s+v,0))+" pzas</span> en diagrama"
+  +(Object.values(fadj).reduce((s,v)=>s+v,0)>0?"<br>+ "+Object.values(fadj).reduce((s,v)=>s+v,0)+" ajuste sobrante":"")
+  +((FS.extra||0)>0?"<br>+ "+(FS.extra||0)+" adicionales":"")
+  +"<br><span style='font-weight:700;color:#cc3300;'>"+new Intl.NumberFormat('es-AR').format(Object.values(getTotalCounts()).reduce((s,v)=>s+v,0))+" total</span>"
+  +"</div></div>"
   +"<div class='cv-wrap'>"+(canvasDataUrl?"<img src='"+canvasDataUrl+"'/>":"<div style='color:#ccc;font-size:12px;padding:40px;'>Sin diseno</div>")+"</div>"
   +(sinPintar>0?"<div style='font-size:8px;color:#666;margin-top:2px;'>Las celdas con X son baldosas sin pintar ("+sinPintar+" baldosas)</div>":"")
   +"<div class='legend-wrap'>"+legendHTML
