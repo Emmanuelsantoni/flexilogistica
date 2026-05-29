@@ -2866,7 +2866,8 @@ function initPaintCanvas(){
     } else {
       dimTxt.textContent = FS.m2cot+" m²";
     }
-    celdasTxt.textContent = FS.cols+" × "+FS.rows+" ("+FS.pzas+" pzas)";
+    const pintadasActual = Object.values(getGridCounts()||{}).reduce((s,v)=>s+v,0);
+    celdasTxt.textContent = FS.cols+" × "+FS.rows+" ("+pintadasActual+" a pintar de "+FS.pzas+" cotizadas)";
     m2Txt.textContent = FS.m2cot+" m²";
   }
 }
@@ -3036,7 +3037,7 @@ function setTool(t){
 
 function clearGrid(){pushHistory();FS.grid.fill(-1);drawAll();}
 function getGridCounts(){const cnt={};FS.grid.forEach(ci=>{if(ci>=0)cnt[ci]=(cnt[ci]||0)+1;});return cnt;}
-function getTotalCounts(){const cnt=getGridCounts();Object.entries(fadj).forEach(([ci,x])=>{if(x>0)cnt[ci]=(cnt[ci]||0)+x;});return cnt;}
+function getTotalCounts(){const cnt=getGridCounts();Object.entries(fadj).forEach(([ci,x])=>{if(x>0)cnt[ci]=(cnt[ci]||0)+x;});Object.entries(fadjExtra).forEach(([ci,x])=>{if(x>0)cnt[ci]=(cnt[ci]||0)+x;});return cnt;}
 function updateLegendLive(){
   const cnt=getGridCounts();const data=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
   const el=document.getElementById("legend-live");if(!el)return;
@@ -3182,7 +3183,9 @@ function showDims(){
   const rcajas = document.getElementById("r-cajas");
   const dcard = document.getElementById("dims-card");
   if(rdim) rdim.textContent = d;
-  if(rmreal) rmreal.textContent = FS.m2real.toFixed(2)+" m²";
+  // M² a usar = dimensiones redondeadas (lR×aR), no las reales
+  const m2usar = FS.lR>0&&FS.aR>0 ? +(FS.lR*FS.aR).toFixed(2) : FS.m2real;
+  if(rmreal) rmreal.textContent = m2usar.toFixed(2)+" m²";
   if(rmcot) rmcot.textContent = FS.m2cot+" m²";
   if(rpzas) rpzas.textContent = new Intl.NumberFormat("es-AR").format(FS.pzas);
   if(rcajas) rcajas.textContent = embStr(FS.pzas);
@@ -3246,10 +3249,25 @@ function calcPrice(){
   const fin = tm2!==null ? tm2 : tpz;
   const el = document.getElementById("price-aviso");
   if(el){
-    const sinPintar = FS.pzas - Object.values(getGridCounts()).reduce((s,v)=>s+v,0);
-    if(sinPintar>0 && FS.grid.some(v=>v>=0)){
+    const pintadas = Object.values(getGridCounts()).reduce((s,v)=>s+v,0);
+    const adjPzas = Object.values(fadj).reduce((s,v)=>s+v,0);
+    const extraPzas = FS.extra||0;
+    const totalPedido = pintadas + adjPzas + extraPzas;
+    const sobrante = FS.pzas - pintadas - adjPzas; // sobrante sin asignar
+    const avisos = [];
+    // Solo avisar si quedan baldosas sin asignar (sin pintar y sin sobrante)
+    if(sobrante > 0 && pintadas > 0){
+      avisos.push("⚠ Hay <b>"+sobrante+" baldosas sin asignar</b> en el diseño.");
+    }
+    if(extraPzas > 0){
+      avisos.push("ℹ <b>"+extraPzas+" baldosas adicionales</b> sumadas al pedido.");
+    }
+    if(totalPedido > FS.pzas){
+      avisos.push("⚠ El pedido supera lo cotizado en <b>"+(totalPedido-FS.pzas)+" pzas</b>.");
+    }
+    if(avisos.length){
       el.style.display="block";
-      el.innerHTML="⚠ Hay <b>"+sinPintar+" baldosas sin pintar</b> en el diseño. El precio se calculó sobre <b>"+pzasBase+"</b> pintadas de "+FS.pzas+" totales.";
+      el.innerHTML=avisos.join("<br>");
     } else {
       el.style.display="none";
     }
@@ -3294,9 +3312,10 @@ function buildResult(){
   const resAviso=document.getElementById("sum-aviso-pintar");
   if(resAviso){
     let avisos=[];
-    if(sinPintar>0&&pintadas>0) avisos.push(`⚠ <strong>${sinPintar} baldosas sin pintar</strong> en el diseño.`);
-    if(extraPzas>0) avisos.push(`ℹ <strong>${extraPzas} baldosas extra</strong> sumadas al pedido.`);
-    if(totalPedido>FS.pzas+adjPzas&&extraPzas>0) avisos.push(`⚠ El pedido supera el diagrama en <strong>${totalPedido-FS.pzas} pzas</strong>.`);
+    // sinPintar: baldosas cotizadas que no están pintadas ni en ajuste
+    if(sinPintar>0&&pintadas>0) avisos.push(`⚠ <strong>${sinPintar} baldosas sin asignar</strong> en el diseño (sobrante sin distribuir).`);
+    if(extraPzas>0) avisos.push(`ℹ <strong>${extraPzas} baldosas adicionales</strong> sumadas al pedido.`);
+    if(totalPedido>FS.pzas) avisos.push(`⚠ El pedido supera lo cotizado en <strong>${totalPedido-FS.pzas} pzas</strong>.`);
     if(avisos.length){resAviso.innerHTML=avisos.join("<br>");resAviso.style.display="block";}
     else{resAviso.style.display="none";}
   }
@@ -3331,11 +3350,16 @@ function genPDF(){
   const cnt=getGridCounts();
   const totalCnt=getTotalCounts();
   const pintadas=Object.values(totalCnt).reduce((s,v)=>s+v,0);
-  const sinPintar=FS.pzas-Object.values(cnt).reduce((s,v)=>s+v,0);
+  const gridPzas=Object.values(cnt).reduce((s,v)=>s+v,0);
+  const adjPzas2=Object.values(fadj).reduce((s,v)=>s+v,0);
+  const extraPzasPDF=FS.extra||0;
+  const sinPintar=FS.pzas-gridPzas-adjPzas2;
+  const totalPedidoPDF=Object.values(totalCnt).reduce((s,v)=>s+v,0);
   const m2pintado=pintadas/16;
   const usarPintadas=pintadas>0;
-  const tm2=pm2>0?(usarPintadas?m2pintado*pm2:FS.m2cot*pm2):null;
-  const tpz=ppz>0?pintadas*ppz:null;
+  const m2total=totalPedidoPDF/16;
+  const tm2=pm2>0?(usarPintadas?m2total*pm2:FS.m2cot*pm2):null;
+  const tpz=ppz>0?totalPedidoPDF*ppz:null;
   const fin=tm2!==null?tm2:tpz;
 
   const data=Object.entries(totalCnt).sort((a,b)=>b[1]-a[1]);
