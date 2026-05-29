@@ -1058,10 +1058,16 @@ async function syncAll(){
 }
 
 async function cargarUsuariosLogin(){
-  document.getElementById("login-loading").style.display = "block";
-  document.getElementById("login-form").style.display = "none";
+  const loadEl = document.getElementById("login-loading");
+  const formEl = document.getElementById("login-form");
+  loadEl.innerHTML = "Conectando...";
+  loadEl.style.display = "block";
+  formEl.style.display = "none";
   try{
-    const {data,error} = await db.from("usuarios").select("id,nombre,rol").eq("activo",true).order("nombre");
+    // Timeout de 10 segundos
+    const fetchPromise = db.from("usuarios").select("id,nombre,rol,password").eq("activo",true).order("nombre");
+    const timeoutPromise = new Promise((_,rej) => setTimeout(()=>rej(new Error("Tiempo de espera agotado")), 10000));
+    const {data,error} = await Promise.race([fetchPromise, timeoutPromise]);
     if(error) throw error;
     const sel = document.getElementById("login-user");
     sel.innerHTML = `<option value="">Seleccioná tu perfil...</option>`;
@@ -1071,12 +1077,13 @@ async function cargarUsuariosLogin(){
       opt.textContent = `${ROL_ICONS[u.rol]||"·"} ${u.nombre}`;
       sel.appendChild(opt);
     });
-    document.getElementById("login-loading").style.display = "none";
-    document.getElementById("login-form").style.display = "block";
+    loadEl.style.display = "none";
+    formEl.style.display = "block";
   }catch(e){
-    document.getElementById("login-loading").innerHTML = `
-      <span style="color:var(--red);font-size:12px;line-height:1.8;">
-        ⚠ Error: ${e.message||JSON.stringify(e)}<br><br>
+    loadEl.innerHTML = `
+      <span style="color:var(--red);font-size:12px;line-height:1.8;display:block;text-align:center;">
+        ⚠ ${e.message||"Error de conexión"}<br>
+        <span style="color:#64748B;font-size:10px;">Verificá tu conexión a internet</span><br><br>
         <button onclick="cargarUsuariosLogin()" style="background:#6C63FF;color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:12px;">↻ Reintentar</button>
       </span>`;
   }
