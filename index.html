@@ -465,8 +465,8 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
         <div class="card" id="dims-card" style="display:none;">
           <div class="ctitle">Resultado</div>
           <div class="res-grid">
-            <div class="res-box"><div class="v" id="r-dim">—</div><div class="l">Dimensiones</div></div>
-            <div class="res-box"><div class="v ac" id="r-mreal">—</div><div class="l">M² reales</div></div>
+            <div class="res-box"><div class="v" id="r-dim">—</div><div class="l">Dimensiones (redondeadas)</div></div>
+            <div class="res-box"><div class="v ac" id="r-mreal">—</div><div class="l">M² a usar</div></div>
             <div class="res-box"><div class="v ac" id="r-mcot">—</div><div class="l">M² cotizados</div></div>
             <div class="res-box"><div class="v gr" id="r-pzas">—</div><div class="l">Piezas a pedir</div></div>
           </div>
@@ -541,6 +541,12 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
               </div>
             </div>
           </div>
+          <!-- Info dimensiones del diagrama -->
+          <div id="canvas-dims-info" style="display:none;font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:flex;gap:16px;flex-wrap:wrap;">
+            <span>📐 Diagrama: <strong id="canvas-dim-txt" style="color:var(--white);">—</strong></span>
+            <span>🔲 Celdas: <strong id="canvas-celdas-txt" style="color:var(--accent);">—</strong></span>
+            <span>📦 M² cotizados: <strong id="canvas-m2-txt" style="color:var(--green);">—</strong></span>
+          </div>
           <div class="paint-wrap" id="paint-wrap" style="display:none;">
             <div id="cv-sizer" style="display:inline-block;"><canvas id="fcv" style="display:block;cursor:crosshair;touch-action:none;"></canvas></div>
           </div>
@@ -568,24 +574,16 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
         </div>
         <!-- Baldosas adicionales -->
         <div class="card" id="ajuste-adicional" style="display:none;margin-top:12px;">
-          <div class="ctitle">➕ Baldosas adicionales</div>
+          <div class="ctitle">➕ Baldosas adicionales por color</div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5;">
-            Sumá baldosas extra al pedido (stock de repuesto, roturas, etc). Se van a sumar al total pintado.
+            Sumá baldosas extra por color (stock de repuesto, roturas, etc). Se calculan sobre el total final.
           </div>
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
-            <div>
-              <label style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Cantidad a agregar</label>
-              <div style="display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
-                <button onclick="deltaAdicional(-1)" style="background:#1E293B;border:none;color:#fff;width:36px;height:36px;font-size:18px;cursor:pointer;">−</button>
-                <input type="number" id="adj-extra" min="0" max="500" value="0"
-                  style="width:70px;text-align:center;background:#111;border:none;border-left:1px solid var(--border);border-right:1px solid var(--border);color:#fff;font-size:16px;font-weight:700;height:36px;outline:none;"
-                  oninput="calcAdicional()">
-                <button onclick="deltaAdicional(1)" style="background:#1E293B;border:none;color:#fff;width:36px;height:36px;font-size:18px;cursor:pointer;">+</button>
-              </div>
-            </div>
-            <div id="adj-extra-info" style="font-size:11px;color:var(--muted);line-height:1.6;"></div>
+          <div id="adj-extra-rows"></div>
+          <div id="adj-extra-banner" style="display:none;border-radius:8px;padding:10px 14px;font-size:11px;font-weight:600;margin-top:8px;"></div>
+          <div style="background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;margin-top:10px;">
+            <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">Total adicional</div>
+            <div style="font-size:24px;font-weight:700;color:var(--accent);margin-top:4px;" id="adj-extra-total">0 pzas</div>
           </div>
-          <div id="adj-extra-banner" style="display:none;border-radius:8px;padding:10px 14px;font-size:11px;font-weight:600;"></div>
         </div>
 
         <div class="card" id="ajuste-preview" style="display:none;">
@@ -2648,6 +2646,7 @@ function embStr(pz){
 }
 let FS={m2cot:0,m2real:0,pzas:0,lR:0,aR:0,ci:0,tool:"p",grid:[],cols:0,rows:0,delivery:"retira_fabrica",extra:0};
 let fadj={};
+let fadjExtra={};
 // ═══ MOTOR DE DIBUJO ════════════════════════════════════════════════════════
 let fcv, fctx;
 let CELL=0, BASE_CELL=32, ZOOM=100;
@@ -2845,6 +2844,21 @@ function initPaintCanvas(){
   bindPaintEvents();
   buildPaintColors();
   buildPredColors();
+  // Mostrar info de dimensiones
+  const dimsInfo = document.getElementById("canvas-dims-info");
+  const dimTxt = document.getElementById("canvas-dim-txt");
+  const celdasTxt = document.getElementById("canvas-celdas-txt");
+  const m2Txt = document.getElementById("canvas-m2-txt");
+  if(dimsInfo){
+    dimsInfo.style.display = "flex";
+    if(FS.lR>0&&FS.aR>0){
+      dimTxt.textContent = FS.lR.toFixed(2)+" × "+FS.aR.toFixed(2)+" m";
+    } else {
+      dimTxt.textContent = FS.m2cot+" m²";
+    }
+    celdasTxt.textContent = FS.cols+" × "+FS.rows+" ("+FS.pzas+" pzas)";
+    m2Txt.textContent = FS.m2cot+" m²";
+  }
 }
 
 // ─── PANTALLA COMPLETA DISEÑO ────────────────────────────────────────────────
@@ -3040,53 +3054,88 @@ function startAjuste(){
   if(sobrante<=0){banner.innerHTML=`<div class="sb-ok">✓ Sin sobrante</div><div class="sb-lbl">Las piezas coinciden exactamente</div>`;}
   else{banner.innerHTML=`<div class="sb-num">${sobrante}</div><div class="sb-lbl">baldosa${sobrante!==1?"s":""} sobrante${sobrante!==1?"s":""} para repartir</div>`;}
   renderAdjRows(cnt,sobrante);renderAdjPreview();
-  // Resetear adicional al entrar
+  // Inicializar adicionales
   if(FS.extra===undefined) FS.extra=0;
-  document.getElementById("adj-extra").value=FS.extra||0;
+  const colUsadosExtra = Object.keys(cnt).map(Number);
+  const newExtra = {};
+  colUsadosExtra.forEach(ci=>{ newExtra[ci] = fadjExtra[ci]||0; });
+  fadjExtra = newExtra;
+  renderAdjExtraRows(cnt);
   calcAdicional();
 }
 
-function deltaAdicional(d){
-  const inp=document.getElementById("adj-extra");
-  inp.value=Math.max(0,(+inp.value||0)+d);
+// Adicionales por color
+let fadjExtra = {}; // igual que fadj pero para adicionales
+
+function renderAdjExtraRows(cnt){
+  const el = document.getElementById("adj-extra-rows");
+  if(!el) return;
+  el.innerHTML = "";
+  Object.keys(cnt).map(Number).forEach(ci=>{
+    const c = COLS[ci];
+    const isLight = ["#FFFFFF","#D0D3D4","#9C9C93","#FFD100","#18BDEB","#27C7BD","#69BE28"].includes(c.h);
+    const txt = isLight ? "#333" : "#fff";
+    const val = fadjExtra[ci]||0;
+    const row = document.createElement("div");
+    row.style.cssText = "display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-bottom:8px;";
+    row.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:28px;height:28px;border-radius:5px;background:${c.h};border:1px solid rgba(255,255,255,0.15);flex-shrink:0;"></div>
+        <div>
+          <div style="font-size:12px;font-weight:700;">${c.n}</div>
+          <div style="font-size:9px;color:var(--muted);">${cnt[ci]} pzas en diagrama</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:7px;overflow:hidden;">
+        <button onclick="deltaExtra(${ci},-1)" style="background:#1E293B;border:none;color:#fff;width:32px;height:32px;font-size:16px;cursor:pointer;flex-shrink:0;">−</button>
+        <input type="number" id="extra-${ci}" min="0" max="500" value="${val}"
+          style="width:60px;text-align:center;background:#111;border:none;border-left:1px solid var(--border);border-right:1px solid var(--border);color:var(--accent);font-size:14px;font-weight:700;height:32px;outline:none;"
+          oninput="fadjExtra[${ci}]=Math.max(0,+this.value||0);calcAdicional()">
+        <button onclick="deltaExtra(${ci},1)" style="background:#1E293B;border:none;color:#fff;width:32px;height:32px;font-size:16px;cursor:pointer;flex-shrink:0;">+</button>
+      </div>`;
+    el.appendChild(row);
+  });
+}
+
+function deltaExtra(ci, d){
+  fadjExtra[ci] = Math.max(0,(fadjExtra[ci]||0)+d);
+  const inp = document.getElementById("extra-"+ci);
+  if(inp) inp.value = fadjExtra[ci];
   calcAdicional();
 }
 
 function calcAdicional(){
-  const extra=Math.max(0,+document.getElementById("adj-extra").value||0);
-  FS.extra=extra;
-  const cnt=getGridCounts();
-  const gridPzas=Object.values(cnt).reduce((s,v)=>s+v,0);
-  const totalPedido=gridPzas+Object.values(fadj).reduce((s,v)=>s+v,0)+extra;
-  const infoEl=document.getElementById("adj-extra-info");
-  const bannerEl=document.getElementById("adj-extra-banner");
+  const cnt = getGridCounts();
+  const gridPzas = Object.values(cnt).reduce((s,v)=>s+v,0);
+  const adjPzas = Object.values(fadj).reduce((s,v)=>s+v,0);
+  const totalExtra = Object.values(fadjExtra).reduce((s,v)=>s+v,0);
+  FS.extra = totalExtra;
 
-  if(extra===0){
-    infoEl.innerHTML="";
-    bannerEl.style.display="none";
+  const totalEl = document.getElementById("adj-extra-total");
+  if(totalEl) totalEl.textContent = totalExtra+" pzas";
+
+  const totalPedido = gridPzas + adjPzas + totalExtra;
+  const bannerEl = document.getElementById("adj-extra-banner");
+  if(!bannerEl) return;
+
+  if(totalExtra === 0){
+    bannerEl.style.display = "none";
     return;
   }
 
-  const masQueDiagrama=totalPedido>FS.pzas;
-  infoEl.innerHTML=`Total en pedido: <b style="color:#fff;">${fmtNum(totalPedido)} pzas</b><br>
-    (${fmtNum(gridPzas)} pintadas + ${fmtNum(Object.values(fadj).reduce((s,v)=>s+v,0))} ajuste + <span style="color:#F59E0B;font-weight:700;">${extra} extra</span>)`;
-
-  if(masQueDiagrama){
-    bannerEl.style.display="block";
-    bannerEl.style.background="rgba(245,158,11,0.12)";
-    bannerEl.style.border="1px solid rgba(245,158,11,0.4)";
-    bannerEl.style.color="#F59E0B";
-    bannerEl.innerHTML=`⚠ Estás pidiendo <b>${totalPedido-FS.pzas} baldosas más</b> que lo que está en el diagrama. Asegurate de que sea intencional.`;
+  if(totalPedido > FS.pzas){
+    bannerEl.style.display = "block";
+    bannerEl.style.cssText = "display:block;border-radius:8px;padding:10px 14px;font-size:11px;font-weight:600;margin-top:8px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.4);color:#F59E0B;";
+    bannerEl.innerHTML = `⚠ Con los adicionales, pedís <b>${totalPedido-FS.pzas} baldosas más</b> que lo cotizado. Asegurate de que sea intencional.`;
   } else {
-    bannerEl.style.display="none";
+    bannerEl.style.display = "none";
   }
 }
 
-// Override de getPzasPintadas para incluir el extra
 function getTotalPzasPedido(){
-  const cnt=getGridCounts();
-  const gridPzas=Object.values(cnt).reduce((s,v)=>s+v,0);
-  const adjPzas=Object.values(fadj).reduce((s,v)=>s+v,0);
+  const cnt = getGridCounts();
+  const gridPzas = Object.values(cnt).reduce((s,v)=>s+v,0);
+  const adjPzas = Object.values(fadj).reduce((s,v)=>s+v,0);
   return gridPzas + adjPzas + (FS.extra||0);
 }
 function renderAdjRows(cnt,sobrante){
@@ -3158,17 +3207,17 @@ function calcDims(){
   const a = parseFloat(document.getElementById("dA").value)||0;
   const m2dir = parseFloat(document.getElementById("dM2").value)||0;
   if(m2dir > 0){
-    // Entrada directa de m2 — redondear al metro entero superior
     FS.lR = 0; FS.aR = 0;
     FS.m2real = m2dir;
-    FS.m2cot = Math.ceil(m2dir); // siempre metro entero
+    FS.m2cot = Math.ceil(m2dir);
     FS.pzas = FS.m2cot * PxM2;
     showDims();
   } else if(l>0 && a>0){
-    FS.lR = l;
-    FS.aR = a;
+    // Redondear cada lado al 0.25 superior (cuarto de metro)
+    FS.lR = Math.ceil(l*4)/4;
+    FS.aR = Math.ceil(a*4)/4;
     FS.m2real = +(l*a).toFixed(4);
-    FS.m2cot = Math.ceil(l*a); // redondear al metro entero superior
+    FS.m2cot = Math.ceil(FS.lR * FS.aR); // m² cotizados: metro entero superior
     FS.pzas = FS.m2cot * PxM2;
     showDims();
   } else {
