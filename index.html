@@ -1044,6 +1044,7 @@ async function syncAll(){
     ]);
     allPedidos = p||[];
     allUsuarios = u||[];
+    _kanbanSynced = true;
     setSyncState("ok");
     if(currentSection==="sec-kanban") renderKanban();
     else if(currentSection==="sec-historial") renderHistorial();
@@ -1193,16 +1194,18 @@ function showSection(id, btn){
 function setSyncState(st){
   const dot = document.getElementById("sync-dot");
   const txt = document.getElementById("sync-txt");
-  dot.className = "sync-dot " + (st==="ok"?"ok":st==="err"?"err":"");
-  txt.textContent = st==="ok"? new Date().toLocaleTimeString("es-AR") : st==="err"?"Error":"...";
+  if(dot) dot.className = "sync-dot " + (st==="ok"?"ok":st==="err"?"err":"");
+  if(txt) txt.textContent = st==="ok"? new Date().toLocaleTimeString("es-AR") : st==="err"?"Error":"...";
 }
 
 // ═══════════════════════════════════════════════════════════════════
 //  KANBAN
 // ═══════════════════════════════════════════════════════════════════
+let _kanbanSynced = false; // flag: ya hizo al menos un sync exitoso
+
 function renderKanban(){
-  // Si no hay datos y no hay conexión, mostrar mensaje
-  if(!allPedidos.length){
+  // Mostrar "conectando" solo si nunca hubo sync exitoso
+  if(!allPedidos.length && !_kanbanSynced){
     const board = document.getElementById("kanban-board");
     const stats = document.getElementById("kanban-stats");
     if(board) board.innerHTML = `<div style="color:#475569;padding:40px;font-size:13px;text-align:center;">
