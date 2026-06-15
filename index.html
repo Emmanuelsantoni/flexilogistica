@@ -2613,8 +2613,27 @@ function verDiseno(id){
   +(d.email?"<div class='lsm'>"+d.email+"</div>":"")
   +(()=>{
     const entregaMap={"pendiente":"⏳ Pendiente","en_preparacion":"🔧 En preparación","listo_fabrica":"🏭 Retira en Fábrica","listo_santoni":"🏪 Retira en Santoni","listo_transporte":"📦 Envío Interior","listo_privado":"🚗 Envío Privado","entregado":"✅ Entregado"};
-    const etiqueta=entregaMap[p.estado]||(d.entrega||"");
-    const dir=p.direccion&&p.direccion.trim()&&p.direccion!==p.cliente?p.direccion:"";
+    // 1) Si el estado ya indica tipo de entrega, usarlo directo
+    let etiqueta = entregaMap[p.estado]||"";
+    let dir = p.direccion&&p.direccion.trim()&&p.direccion!==p.cliente?p.direccion:"";
+    // 2) Si el estado es genérico (en_preparacion, pendiente), buscar en observaciones
+    if(!etiqueta || etiqueta==="🔧 En preparación" || etiqueta==="⏳ Pendiente"){
+      const obs = p.observaciones||"";
+      const partes = obs.split("|").map(s=>s.trim());
+      const entregaParte = partes.find(s=>s.startsWith("🏭")||s.startsWith("🏪")||s.startsWith("📦")||s.startsWith("🚗"));
+      if(entregaParte){
+        // puede ser "🚗 Envío Privado → Helguera 4932"
+        const flechaIdx = entregaParte.indexOf("→");
+        if(flechaIdx>-1){
+          etiqueta = entregaParte.slice(0,flechaIdx).trim();
+          if(!dir) dir = entregaParte.slice(flechaIdx+1).trim();
+        } else {
+          etiqueta = entregaParte;
+        }
+      } else {
+        etiqueta = etiqueta || (d.entrega||"");
+      }
+    }
     return "<div class='lsm' style='margin-top:4px;'><strong>"+etiqueta+"</strong>"+(dir?" &rarr; "+dir:"")+"</div>";
   })()+"</div>"
   +"<div class='sec'><div class='stitle'>Medidas</div>"
