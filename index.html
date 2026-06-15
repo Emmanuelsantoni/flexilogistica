@@ -2530,7 +2530,8 @@ function imprimirPedidoKanban(id){
 
 function verDiseno(id){
   const p = allPedidos.find(x=>x.id===id);
-  if(!p||!p.imagen_diseno) return;
+  if(!p) return;
+  if(!p.imagen_diseno && !p.datos_presupuesto) return;
   const d = p.datos_presupuesto||{};
   const img = p.imagen_diseno;
   const fmtAR = n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n);
@@ -2548,6 +2549,8 @@ function verDiseno(id){
 
   const totalPz = (d.colores||[]).reduce((s,c)=>s+c.cantidad,0);
   const sinPintar = d.sinPintar||0;
+  const pintadasv = d.pintadas||totalPz||0;
+  const img = p.imagen_diseno;
 
   const printHTML="<!DOCTYPE html><html><head><meta charset='UTF-8'>"
   +"<style>"
@@ -2596,7 +2599,7 @@ function verDiseno(id){
   +(d.extraPzas>0?"<br>+ "+d.extraPzas+" adicionales":"")
   +"<br><span style='font-weight:700;color:#cc3300;'>"+new Intl.NumberFormat('es-AR').format(d.pintadas||0)+" total</span>"
   +"</div></div>"
-  +"<div class='cv'><img src='"+img+"'></div>"
+  +"<div class='cv'>"+(img?"<img src='"+img+"'>":"<div style='color:#aaa;font-size:12px;text-align:center;padding:20px;'>Sin imagen de diseño</div>")+"</div>"
   +(sinPintar>0?"<div style='font-size:8px;color:#666;margin-top:2px;'>Las celdas claras son baldosas sin pintar ("+sinPintar+" baldosas)</div>":"")
   +"<div class='legend'>"+legendHTML
   +"<div class='emb-total'><div style='font-size:7px;letter-spacing:1px;text-transform:uppercase;color:#888;'>Total pedido embalado</div>"
@@ -2613,7 +2616,7 @@ function verDiseno(id){
   +"<div class='sec'><div class='stitle'>Medidas</div>"
   +"<div class='dgrid'>"
   +"<div class='dbox'><div class='v'>"+(d.dim||"")+"</div><div class='l'>Dimensiones</div></div>"
-  +"<div class=\'dbox\'><div class=\'v ac\'>"+( pintadasv/16).toFixed(2)+" m2</div><div class=\'l\'>M2 cotizados</div></div>"
+  +"<div class=\'dbox\'><div class=\'v ac\'>"+(pintadasv/16).toFixed(2)+" m2</div><div class=\'l\'>M2 cotizados</div></div>"
   +"<div class='dbox'><div class='v gr'>"+new Intl.NumberFormat("es-AR").format(d.pintadas||totalPz)+"</div><div class='l'>Piezas cotizadas</div></div>"
   +"<div class='dbox'><div class='v gr'>"+embStr2(d.pintadas||totalPz)+"</div><div class='l'>Embalaje</div></div>"
   +"</div>"
