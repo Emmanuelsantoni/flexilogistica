@@ -1039,7 +1039,7 @@ async function syncAll(){
   try{
     setSyncState("syncing");
     const [{data:p},{data:u}] = await Promise.all([
-      db.from("pedidos").select("*").order("numero",{ascending:false}),
+      db.from("pedidos").select("id,numero,estado,fecha,cliente,telefono,direccion,observaciones,productos,origen_flexi,historial_estados,prioridad,creado_por,updated_at").order("numero",{ascending:false}),
       db.from("usuarios").select("*").order("nombre"),
     ]);
     allPedidos = p||[];
@@ -1364,7 +1364,7 @@ function cardHTML(p, est){
       ` : ""}
       ${puedeRetroceder?`<button class="pc-btn-editar" onclick="cambiarEstado('${p.id}','${antEst}')" title="Volver estado anterior" style="font-size:11px;padding:8px;">← Volver</button>`:''}
       ${puedeEtiqueta?`<button class="pc-btn-etiqueta" onclick="abrirEtiqueta('${p.id}')" title="Imprimir etiqueta">🖨</button>`:''}
-      ${(p.imagen_diseno||p.datos_presupuesto)?`<button class="pc-btn-etiqueta" onclick="verDiseno('${p.id}')" title="Ver presupuesto PDF" style="font-size:13px;">🖼</button>`:''}
+      ${(p.origen_flexi||p.imagen_diseno||p.datos_presupuesto)?`<button class="pc-btn-etiqueta" onclick="verDiseno('${p.id}')" title="Ver presupuesto PDF" style="font-size:13px;">🖼</button>`:''}
       <button class="pc-btn-etiqueta" onclick="imprimirPedidoKanban('${p.id}')" title="Imprimir pedido" style="font-size:13px;">📋</button>
       ${puedeEditar?`<button class="pc-btn-editar" onclick="abrirEditarPedido('${p.id}')" title="Editar">✏</button>`:''}
       ${puedeEditar?`<button class="pc-btn-editar" onclick="eliminarPedido('${p.id}','${p.numero}')" title="Eliminar" style="color:#FF6B6B;" onmouseenter="this.style.borderColor='#FF6B6B'" onmouseleave="this.style.borderColor='#334155'">🗑</button>`:''}
@@ -2528,12 +2528,25 @@ function imprimirPedidoKanban(id){
   win.document.close();
 }
 
-function verDiseno(id){
+async function verDiseno(id){
   const p = allPedidos.find(x=>x.id===id);
   if(!p) return;
-  if(!p.imagen_diseno && !p.datos_presupuesto) return;
-  const d = p.datos_presupuesto||{};
-  const img = p.imagen_diseno;
+  // Bajar campos pesados solo ahora (no vienen en la query general)
+  let imagen_diseno = p.imagen_diseno||null;
+  let datos_presupuesto = p.datos_presupuesto||null;
+  if(!imagen_diseno && !datos_presupuesto){
+    try{
+      const {data} = await db.from("pedidos").select("imagen_diseno,datos_presupuesto").eq("id",id).single();
+      imagen_diseno = data?.imagen_diseno||null;
+      datos_presupuesto = data?.datos_presupuesto||null;
+      // cachear en el objeto local para no volver a bajar
+      p.imagen_diseno = imagen_diseno;
+      p.datos_presupuesto = datos_presupuesto;
+    }catch(e){}
+  }
+  if(!imagen_diseno && !datos_presupuesto) return;
+  const d = datos_presupuesto||{};
+  const img = imagen_diseno;
   const fmtAR = n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n);
   const embStr2 = pz=>{const cj=Math.floor(pz/64),su=pz%64;return[cj>0?cj+" cj":"",su>0?su+" u":""].filter(Boolean).join(" + ")||"0 u";};
 
