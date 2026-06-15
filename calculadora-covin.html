@@ -934,8 +934,9 @@ let sensVars={};
 // HELPERS
 // ════════════════════════════════════════════════
 const $=id=>document.getElementById(id);
-const fmt=(n,d=4)=>'$'+(+n||0).toFixed(d);
+const fmt=(n,d=2)=>{const num=+n||0;return'$'+num.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});};
 const fmt2=n=>fmt(n,2);
+const fmtN=n=>(+n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
 function notif(msg){const n=$('notif');n.textContent=msg;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2400);}
 function PR(){return PRODUCTOS[prodActual];}
 function lsKey(k){return `covin_${prodActual}_${k}`;}
@@ -1711,11 +1712,11 @@ function renderColores(){
         <div class="color-card-name">${c.nombre}</div>
         <span style="font-size:9px;padding:2px 7px;border-radius:10px;font-weight:600;${bStyle}">${bText}</span>
       </div>
-      <div class="color-stat"><span class="cs-label">Costo / pieza</span><span class="cs-val" style="color:var(--accent);">$${r.total.toFixed(4)}</span></div>
+      <div class="color-stat"><span class="cs-label">Costo / pieza</span><span class="cs-val" style="color:var(--accent);">$${r.total.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
       ${u2v!==null?`<div class="color-stat"><span class="cs-label">Costo / ${u2lbl}</span><span class="cs-val" style="color:var(--green);">$${u2v.toFixed(2)}</span></div>`:''}
       <div class="color-stat"><span class="cs-label">MB $${r.mbPrecio.toFixed(2)}/kg · ${(r.fMB*100).toFixed(1)}%</span></div>
       ${r.marg!==null?`<div class="color-stat"><span class="cs-label">Margen</span><span class="cs-val" style="color:${mc};">${r.marg.toFixed(1)}%</span></div>`:''}
-      ${r.gan!==null?`<div class="color-stat"><span class="cs-label">Ganancia / pieza</span><span class="cs-val" style="color:${r.gan>=0?'var(--green)':'var(--red)'};">${r.gan>=0?'+':''}$${Math.abs(r.gan).toFixed(4)}</span></div>`:''}
+      ${r.gan!==null?`<div class="color-stat"><span class="cs-label">Ganancia / pieza</span><span class="cs-val" style="color:${r.gan>=0?'var(--green)':'var(--red)'};">${r.gan>=0?'+':''}$${Math.abs(r.gan).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>`:''}
       ${c.notas?`<div style="font-size:9px;color:var(--muted);font-style:italic;margin-top:6px;border-top:1px solid var(--border);padding-top:6px;">${c.notas}</div>`:''}
       <div class="color-actions">
         <button class="btn btn-s btn-sm" onclick="abrirModalColor(${c.id})">✏</button>
@@ -1749,14 +1750,14 @@ function renderComparacion(){
       <td><div style="display:flex;align-items:center;gap:7px;">
         <div class="color-swatch" style="background:${c.colorHex};"></div><strong>${c.nombre}</strong></div>
         <div class="compare-bar" style="width:${bw}%;background:${c.colorHex};opacity:.4;"></div></td>
-      <td>$${r.cPP.toFixed(4)}<br><span style="font-size:9px;color:var(--muted);">${(r.fPP*100).toFixed(1)}%</span></td>
-      <td>$${r.cMB.toFixed(4)}<br><span style="font-size:9px;color:var(--muted);">$${r.mbPrecio.toFixed(2)}/kg·${(r.fMB*100).toFixed(1)}%</span></td>
-      <td>${r.fRec>0?'$'+r.cRec.toFixed(4)+'<br><span style="font-size:9px;color:var(--muted);">$'+r.recPrecio.toFixed(2)+'/kg·'+(r.fRec*100).toFixed(1)+'%</span>':'—'}</td>
-      <td>$${r.cMO.toFixed(4)}</td><td>$${r.cElec.toFixed(4)}</td><td>$${r.cCF.toFixed(4)}</td>
-      <td class="${cls}" style="font-family:'Syne',sans-serif;">$${r.total.toFixed(4)}</td>
+      <td>$${r.cPP.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}<br><span style="font-size:9px;color:var(--muted);">${(r.fPP*100).toFixed(1)}%</span></td>
+      <td>$${r.cMB.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}<br><span style="font-size:9px;color:var(--muted);">$${r.mbPrecio.toFixed(2)}/kg·${(r.fMB*100).toFixed(1)}%</span></td>
+      <td>${r.fRec>0?'$'+r.cRec.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})+'<br><span style="font-size:9px;color:var(--muted);">$'+r.recPrecio.toFixed(2)+'/kg·'+(r.fRec*100).toFixed(1)+'%</span>':'—'}</td>
+      <td>$${r.cMO.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td>$${r.cElec.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td>$${r.cCF.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td class="${cls}" style="font-family:'Syne',sans-serif;">$${r.total.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
       ${u2v!==null?`<td class="${cls}" style="font-family:'Syne',sans-serif;">$${u2v.toFixed(2)}</td>`:''}
       ${precioVentaPieza>0?`<td style="color:${mc};font-weight:700;">${r.marg!==null?r.marg.toFixed(1)+'%':'—'}</td>
-      <td style="color:${r.gan!==null&&r.gan>=0?'var(--green)':'var(--red)'};font-weight:700;">${r.gan!==null?(r.gan>=0?'+':'')+r.gan.toFixed(4):'—'}</td>`:''}
+      <td style="color:${r.gan!==null&&r.gan>=0?'var(--green)':'var(--red)'};font-weight:700;">${r.gan!==null?(r.gan>=0?'+':'')+r.gan.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>`:''}
     </tr>`;
   });
   html+='</tbody>';$('compare-table').innerHTML=html;
