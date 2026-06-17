@@ -1223,6 +1223,13 @@ function renderKanban(){
     if(stats) stats.innerHTML = "";
     return;
   }
+  // Guardar scroll de cada columna antes de re-renderizar
+  const scrollPositions = {};
+  document.querySelectorAll(".k-col").forEach(col=>{
+    const id = col.dataset.estado;
+    const body = col.querySelector(".k-col-body");
+    if(id && body) scrollPositions[id] = body.scrollTop;
+  });
   const activos = allPedidos.filter(p=>p.estado!=="entregado");
   // Stats
   const statsEl = document.getElementById("kanban-stats");
@@ -1243,6 +1250,7 @@ function renderKanban(){
     const peds = pedsRaw;
     const col = document.createElement("div");
     col.className = "k-col";
+    col.dataset.estado = est.id;
     col.innerHTML = `
       <div class="k-col-header" style="background:${est.color}11;">
         <div class="k-col-title"><div class="k-col-dot" style="background:${est.color}"></div><span style="color:${est.color}">${est.label.toUpperCase()}</span></div>
@@ -1258,6 +1266,12 @@ function renderKanban(){
     addBtn.innerHTML=`<button onclick="abrirModalNuevoPedido()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:12px 18px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;">+ Nuevo pedido</button>`;
     board.appendChild(addBtn);
   }
+  // Restaurar posición de scroll de cada columna
+  document.querySelectorAll(".k-col").forEach(col=>{
+    const id = col.dataset.estado;
+    const body = col.querySelector(".k-col-body");
+    if(id && body && scrollPositions[id]) body.scrollTop = scrollPositions[id];
+  });
 }
 
 function cardHTML(p, est){
