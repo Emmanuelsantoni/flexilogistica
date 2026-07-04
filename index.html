@@ -994,6 +994,9 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
     </div>
   </div>
 </div>
+
+<!-- ══════ MODAL USUARIO ══════ -->
+<div class="modal-bg" id="modal-usuario">
   <div class="modal-box">
     <div class="modal-header">
       <span class="modal-title" id="modal-usuario-title">👤 Usuario</span>
@@ -3699,7 +3702,7 @@ async function abrirAdjuntos(pedidoId, pedidoNum){
   _adjPedidoNum = pedidoNum;
   document.getElementById("adj-pedido-num").textContent = "#"+pedidoNum;
   document.getElementById("adj-upload-progress").style.display="none";
-  document.getElementById("modal-adjuntos").classList.add("open");
+  document.getElementById("modal-adjuntos").classList.add("on");
   await cargarListaAdjuntos();
 }
 
@@ -3890,7 +3893,7 @@ function abrirModalTarea(){
   document.getElementById("t-desc").value="";
   document.getElementById("t-recurrencia").value="mensual";
   document.getElementById("t-error").style.display="none";
-  document.getElementById("modal-tarea").classList.add("open");
+  document.getElementById("modal-tarea").classList.add("on");
 }
 
 function editarTarea(id){
@@ -3903,7 +3906,7 @@ function editarTarea(id){
   document.getElementById("t-desc").value=t.descripcion||"";
   document.getElementById("t-recurrencia").value=t.recurrencia||"mensual";
   document.getElementById("t-error").style.display="none";
-  document.getElementById("modal-tarea").classList.add("open");
+  document.getElementById("modal-tarea").classList.add("on");
 }
 
 async function guardarTarea(){
