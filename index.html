@@ -362,6 +362,37 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 @media print{
   @page{size:A4 landscape;margin:8mm;}
 }
+
+/* ── TAREAS ─────────────────────────────────── */
+.tfil-btn{background:#1E293B;border:1px solid #334155;color:#94A3B8;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;}
+.tfil-btn:hover{border-color:#6C63FF;color:#F1F5F9;}
+.tfil-btn.tfil-on{background:#6C63FF22;border-color:#6C63FF;color:#A5B4FF;}
+.tarea-card{background:#111827;border:1px solid #1E293B;border-radius:12px;padding:14px 16px;display:flex;align-items:flex-start;gap:14px;transition:border-color .2s;}
+.tarea-card:hover{border-color:#334155;}
+.tarea-card.realizada{opacity:.6;}
+.tarea-check{width:22px;height:22px;border-radius:6px;border:2px solid #334155;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;background:transparent;margin-top:1px;}
+.tarea-check.on{background:#22C55E;border-color:#22C55E;color:#fff;}
+.tarea-nombre{font-size:14px;font-weight:700;color:#F1F5F9;margin-bottom:3px;}
+.tarea-desc{font-size:12px;color:#64748B;line-height:1.5;}
+.tarea-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;letter-spacing:.5px;}
+.tarea-badge.semanal{background:#0EA5E922;color:#38BDF8;}
+.tarea-badge.mensual{background:#8B5CF622;color:#A78BFA;}
+.tarea-badge.unica{background:#F5922022;color:#FB923C;}
+.tarea-periodo{font-size:10px;color:#475569;margin-left:6px;}
+.tarea-acciones{margin-left:auto;display:flex;gap:6px;flex-shrink:0;}
+.tarea-btn-sm{background:transparent;border:1px solid #334155;color:#64748B;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;transition:all .15s;}
+.tarea-btn-sm:hover{border-color:#6C63FF;color:#A5B4FF;}
+.tarea-btn-sm.del:hover{border-color:#EF4444;color:#EF4444;}
+
+/* ── ADJUNTOS ────────────────────────────────── */
+.adj-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#0F172A;border:1px solid #1E293B;border-radius:8px;margin-bottom:6px;}
+.adj-icon{font-size:20px;flex-shrink:0;}
+.adj-nombre{font-size:12px;color:#F1F5F9;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.adj-fecha{font-size:10px;color:#475569;white-space:nowrap;}
+.adj-btn{background:transparent;border:1px solid #334155;color:#64748B;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;white-space:nowrap;}
+.adj-btn:hover{border-color:#6C63FF;color:#A5B4FF;}
+.adj-btn.del:hover{border-color:#EF4444;color:#EF4444;}
+.pc-adj-badge{display:inline-flex;align-items:center;gap:3px;background:#6C63FF22;border:1px solid #6C63FF44;color:#A5B4FF;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;cursor:pointer;margin-left:4px;}
 </style>
 </head>
 <body>
@@ -791,6 +822,25 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
     <div class="usuarios-grid" id="usuarios-grid">Cargando...</div>
   </div>
 
+  <!-- ══════ SECCIÓN TAREAS ══════ -->
+  <div class="section" id="sec-tareas"><div id="top-sec-tareas" style="height:0;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-size:18px;font-weight:800;color:#F1F5F9;">✅ Tareas administrativas</div>
+        <div style="font-size:12px;color:#64748B;margin-top:2px;">Checklist recurrente del equipo de administración</div>
+      </div>
+      <button onclick="abrirModalTarea()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;">+ Nueva tarea</button>
+    </div>
+    <div id="tareas-filtros" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="tfil-btn tfil-on" onclick="setFiltroTareas('todas')">Todas</button>
+      <button class="tfil-btn" onclick="setFiltroTareas('semanal')">📅 Semanales</button>
+      <button class="tfil-btn" onclick="setFiltroTareas('mensual')">🗓 Mensuales</button>
+      <button class="tfil-btn" onclick="setFiltroTareas('pendiente')">⏳ Pendientes</button>
+      <button class="tfil-btn" onclick="setFiltroTareas('realizada')">✅ Realizadas</button>
+    </div>
+    <div id="tareas-lista" style="display:flex;flex-direction:column;gap:10px;">Cargando...</div>
+  </div>
+
 </div><!-- /app -->
 
 <!-- ══════ MODAL LOGIFLOW ══════ -->
@@ -893,8 +943,57 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div>
 </div>
 
-<!-- ══════ MODAL USUARIO ══════ -->
-<div class="modal-bg" id="modal-usuario">
+<!-- ══════ MODAL TAREA ══════ -->
+<div class="modal-bg" id="modal-tarea">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-tarea-title">✅ Nueva tarea</span>
+      <button class="modal-close" onclick="cerrarModal('modal-tarea')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="t-id">
+      <label class="m-label">Nombre de la tarea *</label>
+      <input id="t-nombre" class="m-input" placeholder="Ej: Pagar factura de luz">
+      <label class="m-label">Descripción / detalle</label>
+      <textarea id="t-desc" class="m-input" style="min-height:60px;resize:vertical;" placeholder="Pasos, notas, etc."></textarea>
+      <label class="m-label">Recurrencia *</label>
+      <select id="t-recurrencia" class="m-select">
+        <option value="semanal">📅 Semanal</option>
+        <option value="mensual">🗓 Mensual</option>
+        <option value="unica">🔂 Única vez</option>
+      </select>
+      <div id="t-error" class="m-error" style="display:none;"></div>
+      <button class="btn-primary" onclick="guardarTarea()">Guardar tarea</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL ADJUNTOS ══════ -->
+<div class="modal-bg" id="modal-adjuntos">
+  <div class="modal-box" style="max-width:520px;">
+    <div class="modal-header">
+      <span class="modal-title">📎 Adjuntos del pedido <span id="adj-pedido-num" style="color:#6C63FF;"></span></span>
+      <button class="modal-close" onclick="cerrarModal('modal-adjuntos')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="adj-lista" style="margin-bottom:16px;min-height:40px;"></div>
+      <div style="border:2px dashed #334155;border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;"
+           onclick="document.getElementById('adj-file-input').click()"
+           ondragover="event.preventDefault();this.style.borderColor='#6C63FF'"
+           ondragleave="this.style.borderColor='#334155'"
+           ondrop="handleAdjDrop(event)">
+        <div style="font-size:28px;margin-bottom:6px;">📄</div>
+        <div style="font-size:13px;color:#94A3B8;">Hacé click o arrastrá archivos aquí</div>
+        <div style="font-size:11px;color:#475569;margin-top:4px;">PDF, imágenes — máx. 10MB por archivo</div>
+      </div>
+      <input type="file" id="adj-file-input" multiple accept=".pdf,image/*" style="display:none;" onchange="subirAdjuntos(this.files)">
+      <div id="adj-upload-progress" style="margin-top:10px;display:none;">
+        <div style="font-size:12px;color:#94A3B8;margin-bottom:4px;" id="adj-progress-txt">Subiendo...</div>
+        <div style="background:#1E293B;border-radius:4px;height:6px;"><div id="adj-progress-bar" style="background:#6C63FF;height:6px;border-radius:4px;width:0%;transition:width .3s;"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
   <div class="modal-box">
     <div class="modal-header">
       <span class="modal-title" id="modal-usuario-title">👤 Usuario</span>
@@ -1005,7 +1104,7 @@ const LABEL_ACCION = {
   listo_transporte:"✈ Confirmar Despacho", listo_privado:"🚗 Confirmar Entrega"
 };
 const ROL_TABS = {
-  admin:   [{id:"sec-flexi",label:"◈ Presupuesto"},{id:"sec-presupuestos",label:"💾 Guardados"},{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"},{id:"sec-calc",label:"🧮 Calculadora"},{id:"sec-etiquetas",label:"🏷 Etiquetas"},{id:"sec-usuarios",label:"👤 Usuarios"}],
+  admin:   [{id:"sec-flexi",label:"◈ Presupuesto"},{id:"sec-presupuestos",label:"💾 Guardados"},{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"},{id:"sec-calc",label:"🧮 Calculadora"},{id:"sec-etiquetas",label:"🏷 Etiquetas"},{id:"sec-tareas",label:"✅ Tareas"},{id:"sec-usuarios",label:"👤 Usuarios"}],
   deposito:[{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"}],
   entrega: [{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"}],
 };
@@ -1039,7 +1138,7 @@ async function syncAll(){
   try{
     setSyncState("syncing");
     const [{data:p},{data:u}] = await Promise.all([
-      db.from("pedidos").select("id,numero,estado,fecha,cliente,telefono,direccion,observaciones,productos,origen_flexi,historial_estados,prioridad,creado_por,updated_at").order("numero",{ascending:false}),
+      db.from("pedidos").select("*").order("numero",{ascending:false}),
       db.from("usuarios").select("*").order("nombre"),
     ]);
     allPedidos = p||[];
@@ -1196,6 +1295,7 @@ function showSection(id, btn){
   } else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
   else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
   else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
+  else if(id==="sec-tareas"){ renderTareas(); }
 }
 
 function setSyncState(st){
@@ -1223,13 +1323,6 @@ function renderKanban(){
     if(stats) stats.innerHTML = "";
     return;
   }
-  // Guardar scroll de cada columna antes de re-renderizar
-  const scrollPositions = {};
-  document.querySelectorAll(".k-col").forEach(col=>{
-    const id = col.dataset.estado;
-    const body = col.querySelector(".k-col-body");
-    if(id && body) scrollPositions[id] = body.scrollTop;
-  });
   const activos = allPedidos.filter(p=>p.estado!=="entregado");
   // Stats
   const statsEl = document.getElementById("kanban-stats");
@@ -1250,7 +1343,6 @@ function renderKanban(){
     const peds = pedsRaw;
     const col = document.createElement("div");
     col.className = "k-col";
-    col.dataset.estado = est.id;
     col.innerHTML = `
       <div class="k-col-header" style="background:${est.color}11;">
         <div class="k-col-title"><div class="k-col-dot" style="background:${est.color}"></div><span style="color:${est.color}">${est.label.toUpperCase()}</span></div>
@@ -1266,12 +1358,6 @@ function renderKanban(){
     addBtn.innerHTML=`<button onclick="abrirModalNuevoPedido()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:12px 18px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;">+ Nuevo pedido</button>`;
     board.appendChild(addBtn);
   }
-  // Restaurar posición de scroll de cada columna
-  document.querySelectorAll(".k-col").forEach(col=>{
-    const id = col.dataset.estado;
-    const body = col.querySelector(".k-col-body");
-    if(id && body && scrollPositions[id]) body.scrollTop = scrollPositions[id];
-  });
 }
 
 function cardHTML(p, est){
@@ -1379,6 +1465,7 @@ function cardHTML(p, est){
       ${puedeRetroceder?`<button class="pc-btn-editar" onclick="cambiarEstado('${p.id}','${antEst}')" title="Volver estado anterior" style="font-size:11px;padding:8px;">← Volver</button>`:''}
       ${puedeEtiqueta?`<button class="pc-btn-etiqueta" onclick="abrirEtiqueta('${p.id}')" title="Imprimir etiqueta">🖨</button>`:''}
       ${(p.origen_flexi||p.imagen_diseno||p.datos_presupuesto)?`<button class="pc-btn-etiqueta" onclick="verDiseno('${p.id}')" title="Ver presupuesto PDF" style="font-size:13px;">🖼</button>`:''}
+      <button class="pc-btn-etiqueta" onclick="abrirAdjuntos('${p.id}','${p.numero}')" title="Adjuntos" style="font-size:13px;position:relative;">📎${(p.cant_adjuntos>0)?`<span style="position:absolute;top:-4px;right:-4px;background:#6C63FF;color:#fff;border-radius:8px;padding:0 4px;font-size:8px;font-weight:800;">${p.cant_adjuntos}</span>`:""}</button>
       <button class="pc-btn-etiqueta" onclick="imprimirPedidoKanban('${p.id}')" title="Imprimir pedido" style="font-size:13px;">📋</button>
       ${puedeEditar?`<button class="pc-btn-editar" onclick="abrirEditarPedido('${p.id}')" title="Editar">✏</button>`:''}
       ${puedeEditar?`<button class="pc-btn-editar" onclick="eliminarPedido('${p.id}','${p.numero}')" title="Eliminar" style="color:#FF6B6B;" onmouseenter="this.style.borderColor='#FF6B6B'" onmouseleave="this.style.borderColor='#334155'">🗑</button>`:''}
@@ -2542,25 +2629,11 @@ function imprimirPedidoKanban(id){
   win.document.close();
 }
 
-async function verDiseno(id){
+function verDiseno(id){
   const p = allPedidos.find(x=>x.id===id);
-  if(!p) return;
-  // Bajar campos pesados solo ahora (no vienen en la query general)
-  let imagen_diseno = p.imagen_diseno||null;
-  let datos_presupuesto = p.datos_presupuesto||null;
-  if(!imagen_diseno && !datos_presupuesto){
-    try{
-      const {data} = await db.from("pedidos").select("imagen_diseno,datos_presupuesto").eq("id",id).single();
-      imagen_diseno = data?.imagen_diseno||null;
-      datos_presupuesto = data?.datos_presupuesto||null;
-      // cachear en el objeto local para no volver a bajar
-      p.imagen_diseno = imagen_diseno;
-      p.datos_presupuesto = datos_presupuesto;
-    }catch(e){}
-  }
-  if(!imagen_diseno && !datos_presupuesto) return;
-  const d = datos_presupuesto||{};
-  const img = imagen_diseno;
+  if(!p||!p.imagen_diseno) return;
+  const d = p.datos_presupuesto||{};
+  const img = p.imagen_diseno;
   const fmtAR = n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n);
   const embStr2 = pz=>{const cj=Math.floor(pz/64),su=pz%64;return[cj>0?cj+" cj":"",su>0?su+" u":""].filter(Boolean).join(" + ")||"0 u";};
 
@@ -2576,7 +2649,6 @@ async function verDiseno(id){
 
   const totalPz = (d.colores||[]).reduce((s,c)=>s+c.cantidad,0);
   const sinPintar = d.sinPintar||0;
-  const pintadasv = d.pintadas||totalPz||0;
 
   const printHTML="<!DOCTYPE html><html><head><meta charset='UTF-8'>"
   +"<style>"
@@ -2625,7 +2697,7 @@ async function verDiseno(id){
   +(d.extraPzas>0?"<br>+ "+d.extraPzas+" adicionales":"")
   +"<br><span style='font-weight:700;color:#cc3300;'>"+new Intl.NumberFormat('es-AR').format(d.pintadas||0)+" total</span>"
   +"</div></div>"
-  +"<div class='cv'>"+(img?"<img src='"+img+"'>":"<div style='color:#aaa;font-size:12px;text-align:center;padding:20px;'>Sin imagen de diseño</div>")+"</div>"
+  +"<div class='cv'><img src='"+img+"'></div>"
   +(sinPintar>0?"<div style='font-size:8px;color:#666;margin-top:2px;'>Las celdas claras son baldosas sin pintar ("+sinPintar+" baldosas)</div>":"")
   +"<div class='legend'>"+legendHTML
   +"<div class='emb-total'><div style='font-size:7px;letter-spacing:1px;text-transform:uppercase;color:#888;'>Total pedido embalado</div>"
@@ -2638,35 +2710,11 @@ async function verDiseno(id){
   +"<div class='line'><b>"+(d.cliente||p.cliente)+"</b></div>"
   +"<div class='line'>"+(d.tel||p.telefono||"")+(d.ciudad?" · "+d.ciudad:"")+"</div>"
   +(d.email?"<div class='lsm'>"+d.email+"</div>":"")
-  +(()=>{
-    const entregaMap={"pendiente":"⏳ Pendiente","en_preparacion":"🔧 En preparación","listo_fabrica":"🏭 Retira en Fábrica","listo_santoni":"🏪 Retira en Santoni","listo_transporte":"📦 Envío Interior","listo_privado":"🚗 Envío Privado","entregado":"✅ Entregado"};
-    // 1) Si el estado ya indica tipo de entrega, usarlo directo
-    let etiqueta = entregaMap[p.estado]||"";
-    let dir = p.direccion&&p.direccion.trim()&&p.direccion!==p.cliente?p.direccion:"";
-    // 2) Si el estado es genérico (en_preparacion, pendiente), buscar en observaciones
-    if(!etiqueta || etiqueta==="🔧 En preparación" || etiqueta==="⏳ Pendiente"){
-      const obs = p.observaciones||"";
-      const partes = obs.split("|").map(s=>s.trim());
-      const entregaParte = partes.find(s=>s.startsWith("🏭")||s.startsWith("🏪")||s.startsWith("📦")||s.startsWith("🚗"));
-      if(entregaParte){
-        // puede ser "🚗 Envío Privado → Helguera 4932"
-        const flechaIdx = entregaParte.indexOf("→");
-        if(flechaIdx>-1){
-          etiqueta = entregaParte.slice(0,flechaIdx).trim();
-          if(!dir) dir = entregaParte.slice(flechaIdx+1).trim();
-        } else {
-          etiqueta = entregaParte;
-        }
-      } else {
-        etiqueta = etiqueta || (d.entrega||"");
-      }
-    }
-    return "<div class='lsm' style='margin-top:4px;'><strong>"+etiqueta+"</strong>"+(dir?" &rarr; "+dir:"")+"</div>";
-  })()+"</div>"
+  +"<div class='lsm' style='margin-top:4px;'>"+(p.estado==="listo_fabrica"?"🏭 Retira en Fábrica":p.estado==="listo_santoni"?"🏪 Retira en Santoni":p.estado==="listo_transporte"?"📦 Envío Interior":p.estado==="listo_privado"?"🚗 Envío Privado":(d.entrega||""))+"</div></div>"
   +"<div class='sec'><div class='stitle'>Medidas</div>"
   +"<div class='dgrid'>"
   +"<div class='dbox'><div class='v'>"+(d.dim||"")+"</div><div class='l'>Dimensiones</div></div>"
-  +"<div class=\'dbox\'><div class=\'v ac\'>"+(pintadasv/16).toFixed(2)+" m2</div><div class=\'l\'>M2 cotizados</div></div>"
+  +"<div class=\'dbox\'><div class=\'v ac\'>"+( pintadasv/16).toFixed(2)+" m2</div><div class=\'l\'>M2 cotizados</div></div>"
   +"<div class='dbox'><div class='v gr'>"+new Intl.NumberFormat("es-AR").format(d.pintadas||totalPz)+"</div><div class='l'>Piezas cotizadas</div></div>"
   +"<div class='dbox'><div class='v gr'>"+embStr2(d.pintadas||totalPz)+"</div><div class='l'>Embalaje</div></div>"
   +"</div>"
@@ -2677,22 +2725,7 @@ async function verDiseno(id){
   +(d.pm2>0?"<div style='font-size:9px;color:#888;'>Por m2: "+fmtAR(d.pm2)+" x "+(d.pintadas?((d.pintadas/16).toFixed(2)):d.m2cot)+" m2</div>":"")
   +(d.ppz>0?"<div style='font-size:9px;color:#888;'>Por pieza: "+fmtAR(d.ppz)+" x "+new Intl.NumberFormat("es-AR").format(d.pintadas||0)+" pzas</div>":"")
   +"</div>"
-  +(()=>{
-    const obsPresup = d.obs||"";
-    const obsKanban = p.observaciones||"";
-    // obsKanban suele ser "timbre 457 | Diseño: ... | Envío | Total: $..."
-    // Separamos por | y filtramos las partes que son meta-datos (Diseño:, Total:, emojis de entrega)
-    const partesKanban = obsKanban.split("|").map(s=>s.trim()).filter(s=>
-      s && !s.startsWith("Diseño:") && !s.startsWith("Total:") &&
-      !s.startsWith("🏭") && !s.startsWith("🏪") && !s.startsWith("📦") && !s.startsWith("🚗") &&
-      s !== obsPresup
-    );
-    const obsExtra = partesKanban.join(" · ");
-    const obsFinal = [obsPresup, obsExtra].filter(Boolean).join("\n");
-    return obsFinal
-      ? "<div class='sec'><div class='stitle'>Observaciones</div><div style='font-size:11px;color:#444;line-height:1.8;white-space:pre-line;'>"+obsFinal+"</div></div>"
-      : "";
-  })()
+  +(d.obs?"<div class='sec'><div class='stitle'>Observaciones</div><div style='font-size:11px;color:#444;line-height:1.6;'>"+d.obs+"</div></div>":"")
   +"<div class='footer'>FlexiFloor® — Baldosas Plasticas Encastrables<br>Validez del presupuesto: 7 dias corridos</div>"
   +"</div></div></body></html>";
 
@@ -3653,6 +3686,250 @@ function nuevoPresup(){
   document.getElementById("dims-card").style.display="none";
   fpg("fpg-client",document.querySelectorAll(".flexi-nav button")[0]);
   toast("Nuevo presupuesto listo","ok");
+}
+
+// ══════════════════════════════════════════════════
+//  ADJUNTOS — Supabase Storage
+// ══════════════════════════════════════════════════
+let _adjPedidoId = null;
+let _adjPedidoNum = null;
+
+async function abrirAdjuntos(pedidoId, pedidoNum){
+  _adjPedidoId = pedidoId;
+  _adjPedidoNum = pedidoNum;
+  document.getElementById("adj-pedido-num").textContent = "#"+pedidoNum;
+  document.getElementById("adj-upload-progress").style.display="none";
+  document.getElementById("modal-adjuntos").classList.add("open");
+  await cargarListaAdjuntos();
+}
+
+async function cargarListaAdjuntos(){
+  const lista = document.getElementById("adj-lista");
+  lista.innerHTML = `<div style="color:#64748B;font-size:12px;padding:8px 0;">Cargando...</div>`;
+  try{
+    const { data, error } = await db.storage.from("pedidos-adjuntos").list(_adjPedidoId+"/", {sortBy:{column:"created_at",order:"desc"}});
+    if(error) throw error;
+    if(!data||data.length===0){
+      lista.innerHTML=`<div style="color:#475569;font-size:12px;padding:8px 0;text-align:center;">Sin adjuntos todavía</div>`;
+      return;
+    }
+    lista.innerHTML = data.map(f=>{
+      const ext = f.name.split(".").pop().toLowerCase();
+      const icono = ext==="pdf"?"📄":["jpg","jpeg","png","webp","gif"].includes(ext)?"🖼️":"📁";
+      const fecha = f.created_at ? new Date(f.created_at).toLocaleDateString("es-AR") : "";
+      return `<div class="adj-item">
+        <span class="adj-icon">${icono}</span>
+        <span class="adj-nombre" title="${f.name}">${f.name.replace(_adjPedidoId+"_","")}</span>
+        <span class="adj-fecha">${fecha}</span>
+        <button class="adj-btn" onclick="descargarAdjunto('${f.name}')">↓ Ver</button>
+        <button class="adj-btn del" onclick="eliminarAdjunto('${f.name}')">✕</button>
+      </div>`;
+    }).join("");
+    // actualizar cant_adjuntos en el pedido local
+    const p = allPedidos.find(x=>x.id===_adjPedidoId);
+    if(p){ p.cant_adjuntos = data.length; renderKanban(); }
+  }catch(e){
+    lista.innerHTML=`<div style="color:#EF4444;font-size:12px;">Error al cargar adjuntos</div>`;
+  }
+}
+
+async function descargarAdjunto(fileName){
+  try{
+    const { data } = await db.storage.from("pedidos-adjuntos").createSignedUrl(_adjPedidoId+"/"+fileName, 300);
+    if(data?.signedUrl) window.open(data.signedUrl,"_blank");
+  }catch(e){ alert("No se pudo abrir el archivo"); }
+}
+
+async function eliminarAdjunto(fileName){
+  if(!confirm("¿Eliminar este adjunto?")) return;
+  try{
+    await db.storage.from("pedidos-adjuntos").remove([_adjPedidoId+"/"+fileName]);
+    await cargarListaAdjuntos();
+  }catch(e){ alert("Error al eliminar"); }
+}
+
+function handleAdjDrop(e){
+  e.preventDefault();
+  e.currentTarget.style.borderColor="#334155";
+  const files = e.dataTransfer.files;
+  if(files.length) subirAdjuntos(files);
+}
+
+async function subirAdjuntos(files){
+  const prog = document.getElementById("adj-upload-progress");
+  const bar = document.getElementById("adj-progress-bar");
+  const txt = document.getElementById("adj-progress-txt");
+  prog.style.display="block";
+  const total = files.length;
+  let ok=0;
+  for(let i=0;i<total;i++){
+    const file = files[i];
+    if(file.size > 10*1024*1024){ alert(`"${file.name}" supera los 10MB`); continue; }
+    txt.textContent = `Subiendo ${i+1} de ${total}: ${file.name}`;
+    bar.style.width = Math.round(((i)/total)*100)+"%";
+    const safeName = _adjPedidoId+"_"+Date.now()+"_"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+    try{
+      const { error } = await db.storage.from("pedidos-adjuntos").upload(_adjPedidoId+"/"+safeName, file, {upsert:false});
+      if(!error) ok++;
+    }catch(e){}
+  }
+  bar.style.width="100%";
+  txt.textContent = `✓ ${ok} de ${total} subido${ok!==1?"s":""}`;
+  setTimeout(()=>prog.style.display="none",2000);
+  document.getElementById("adj-file-input").value="";
+  await cargarListaAdjuntos();
+}
+
+// ══════════════════════════════════════════════════
+//  TAREAS ADMINISTRATIVAS
+// ══════════════════════════════════════════════════
+let allTareas = [];
+let filtroTareas = "todas";
+let _editTareaId = null;
+
+function periodoKey(recurrencia){
+  const now = new Date();
+  if(recurrencia==="semanal"){
+    // Semana ISO: año + número de semana
+    const d = new Date(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()));
+    const dayNum = d.getUTCDay()||7;
+    d.setUTCDate(d.getUTCDate()+4-dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    const wk = Math.ceil((((d-yearStart)/86400000)+1)/7);
+    return `${d.getUTCFullYear()}-W${String(wk).padStart(2,"0")}`;
+  }
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+}
+
+function periodoLabel(recurrencia){
+  const now = new Date();
+  if(recurrencia==="semanal"){
+    const lunes = new Date(now);
+    lunes.setDate(now.getDate()-((now.getDay()||7)-1));
+    const dom = new Date(lunes); dom.setDate(lunes.getDate()+6);
+    return `${lunes.getDate()}/${lunes.getMonth()+1} – ${dom.getDate()}/${dom.getMonth()+1}`;
+  }
+  if(recurrencia==="unica") return "Una vez";
+  return now.toLocaleDateString("es-AR",{month:"long",year:"numeric"});
+}
+
+async function cargarTareas(){
+  try{
+    const { data } = await db.from("tareas").select("*").order("created_at",{ascending:true});
+    allTareas = data||[];
+  }catch(e){ allTareas=[]; }
+}
+
+function setFiltroTareas(f){
+  filtroTareas=f;
+  document.querySelectorAll(".tfil-btn").forEach(b=>b.classList.remove("tfil-on"));
+  event.currentTarget.classList.add("tfil-on");
+  renderTareas();
+}
+
+async function renderTareas(){
+  await cargarTareas();
+  const lista = document.getElementById("tareas-lista");
+  if(!lista) return;
+  let tareas = allTareas;
+  if(filtroTareas==="semanal") tareas=tareas.filter(t=>t.recurrencia==="semanal");
+  else if(filtroTareas==="mensual") tareas=tareas.filter(t=>t.recurrencia==="mensual");
+  else if(filtroTareas==="pendiente") tareas=tareas.filter(t=>{
+    const pk=periodoKey(t.recurrencia);
+    return !(t.realizadas||[]).includes(pk);
+  });
+  else if(filtroTareas==="realizada") tareas=tareas.filter(t=>{
+    const pk=periodoKey(t.recurrencia);
+    return (t.realizadas||[]).includes(pk);
+  });
+  if(tareas.length===0){
+    lista.innerHTML=`<div style="color:#475569;text-align:center;padding:40px;font-size:13px;">No hay tareas en esta categoría</div>`;
+    return;
+  }
+  lista.innerHTML = tareas.map(t=>{
+    const pk = periodoKey(t.recurrencia);
+    const hecha = (t.realizadas||[]).includes(pk);
+    const recLabel = t.recurrencia==="semanal"?"📅 Semanal":t.recurrencia==="mensual"?"🗓 Mensual":"🔂 Única";
+    const periodo = periodoLabel(t.recurrencia);
+    return `<div class="tarea-card${hecha?" realizada":""}">
+      <button class="tarea-check${hecha?" on":""}" onclick="toggleTarea('${t.id}','${pk}',${hecha})" title="${hecha?"Marcar pendiente":"Marcar realizada"}">${hecha?"✓":""}</button>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+          <div class="tarea-nombre" style="${hecha?"text-decoration:line-through;color:#475569;":""}">${t.nombre}</div>
+          <span class="tarea-badge ${t.recurrencia}">${recLabel}</span>
+          <span class="tarea-periodo">${periodo}</span>
+        </div>
+        ${t.descripcion?`<div class="tarea-desc">${t.descripcion}</div>`:""}
+      </div>
+      <div class="tarea-acciones">
+        <button class="tarea-btn-sm" onclick="editarTarea('${t.id}')">✏</button>
+        <button class="tarea-btn-sm del" onclick="eliminarTarea('${t.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+async function toggleTarea(id, periodoKey, yaHecha){
+  const t = allTareas.find(x=>x.id===id);
+  if(!t) return;
+  let realizadas = t.realizadas||[];
+  if(yaHecha) realizadas = realizadas.filter(p=>p!==periodoKey);
+  else realizadas = [...realizadas, periodoKey];
+  try{
+    await db.from("tareas").update({realizadas}).eq("id",id);
+    t.realizadas = realizadas;
+    renderTareas();
+  }catch(e){ alert("Error al actualizar tarea"); }
+}
+
+function abrirModalTarea(){
+  _editTareaId=null;
+  document.getElementById("modal-tarea-title").textContent="✅ Nueva tarea";
+  document.getElementById("t-id").value="";
+  document.getElementById("t-nombre").value="";
+  document.getElementById("t-desc").value="";
+  document.getElementById("t-recurrencia").value="mensual";
+  document.getElementById("t-error").style.display="none";
+  document.getElementById("modal-tarea").classList.add("open");
+}
+
+function editarTarea(id){
+  const t = allTareas.find(x=>x.id===id);
+  if(!t) return;
+  _editTareaId=id;
+  document.getElementById("modal-tarea-title").textContent="✏ Editar tarea";
+  document.getElementById("t-id").value=id;
+  document.getElementById("t-nombre").value=t.nombre||"";
+  document.getElementById("t-desc").value=t.descripcion||"";
+  document.getElementById("t-recurrencia").value=t.recurrencia||"mensual";
+  document.getElementById("t-error").style.display="none";
+  document.getElementById("modal-tarea").classList.add("open");
+}
+
+async function guardarTarea(){
+  const nombre = document.getElementById("t-nombre").value.trim();
+  const desc = document.getElementById("t-desc").value.trim();
+  const recurrencia = document.getElementById("t-recurrencia").value;
+  const errEl = document.getElementById("t-error");
+  if(!nombre){ errEl.textContent="El nombre es obligatorio";errEl.style.display="block";return; }
+  errEl.style.display="none";
+  try{
+    if(_editTareaId){
+      await db.from("tareas").update({nombre,descripcion:desc,recurrencia}).eq("id",_editTareaId);
+    } else {
+      await db.from("tareas").insert({nombre,descripcion:desc,recurrencia,realizadas:[]});
+    }
+    cerrarModal("modal-tarea");
+    renderTareas();
+  }catch(e){ errEl.textContent="Error al guardar";errEl.style.display="block"; }
+}
+
+async function eliminarTarea(id){
+  if(!confirm("¿Eliminar esta tarea?")) return;
+  try{
+    await db.from("tareas").delete().eq("id",id);
+    renderTareas();
+  }catch(e){ alert("Error al eliminar"); }
 }
 </script>
 
