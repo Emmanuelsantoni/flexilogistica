@@ -382,7 +382,9 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 .tarea-acciones{margin-left:auto;display:flex;gap:6px;flex-shrink:0;}
 .tarea-btn-sm{background:transparent;border:1px solid #334155;color:#64748B;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;transition:all .15s;}
 .tarea-btn-sm:hover{border-color:#6C63FF;color:#A5B4FF;}
-.tarea-btn-sm.del:hover{border-color:#EF4444;color:#EF4444;}
+.tarea-drag-handle{font-size:16px;color:#334155;cursor:grab;padding:0 6px 0 0;flex-shrink:0;user-select:none;line-height:1;}
+.tarea-drag-handle:active{cursor:grabbing;}
+.tarea-card[draggable="true"]:active{opacity:.5;}
 
 /* ── ADJUNTOS ────────────────────────────────── */
 .adj-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#0F172A;border:1px solid #1E293B;border-radius:8px;margin-bottom:6px;}
@@ -829,7 +831,10 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
         <div style="font-size:18px;font-weight:800;color:#F1F5F9;">✅ Tareas administrativas</div>
         <div style="font-size:12px;color:#64748B;margin-top:2px;">Checklist recurrente del equipo de administración</div>
       </div>
-      <button onclick="abrirModalTarea()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;">+ Nueva tarea</button>
+      <div style="display:flex;gap:8px;">
+        <button onclick="ordenarAlfabetico()" style="background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;">A→Z</button>
+        <button onclick="abrirModalTarea()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;">+ Nueva tarea</button>
+      </div>
     </div>
     <div id="tareas-filtros" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
       <button class="tfil-btn tfil-on" onclick="setFiltroTareas('todas')">Todas</button>
@@ -3818,7 +3823,7 @@ function periodoLabel(recurrencia){
 
 async function cargarTareas(){
   try{
-    const { data } = await db.from("tareas").select("*").order("created_at",{ascending:true});
+    const { data } = await db.from("tareas").select("*").order("orden",{ascending:true}).order("created_at",{ascending:true});
     allTareas = data||[];
   }catch(e){ allTareas=[]; }
 }
@@ -3834,7 +3839,7 @@ async function renderTareas(){
   await cargarTareas();
   const lista = document.getElementById("tareas-lista");
   if(!lista) return;
-  let tareas = allTareas;
+  let tareas = [...allTareas];
   if(filtroTareas==="semanal") tareas=tareas.filter(t=>t.recurrencia==="semanal");
   else if(filtroTareas==="mensual") tareas=tareas.filter(t=>t.recurrencia==="mensual");
   else if(filtroTareas==="pendiente") tareas=tareas.filter(t=>{
@@ -3854,7 +3859,9 @@ async function renderTareas(){
     const hecha = (t.realizadas||[]).includes(pk);
     const recLabel = t.recurrencia==="semanal"?"📅 Semanal":t.recurrencia==="mensual"?"🗓 Mensual":"🔂 Única";
     const periodo = periodoLabel(t.recurrencia);
-    return `<div class="tarea-card${hecha?" realizada":""}">
+    return `<div class="tarea-card${hecha?" realizada":""}" draggable="true" data-id="${t.id}" 
+      ondragstart="tareaDragStart(event)" ondragover="tareaDragOver(event)" ondragleave="tareaDragLeave(event)" ondrop="tareaDrop(event)">
+      <div class="tarea-drag-handle" title="Arrastrar para reordenar">⠿</div>
       <button class="tarea-check${hecha?" on":""}" onclick="toggleTarea('${t.id}','${pk}',${hecha})" title="${hecha?"Marcar pendiente":"Marcar realizada"}">${hecha?"✓":""}</button>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
@@ -3870,6 +3877,58 @@ async function renderTareas(){
       </div>
     </div>`;
   }).join("");
+}
+
+// ── DRAG & DROP ──────────────────────────────────
+let _dragId = null;
+
+function tareaDragStart(e){
+  _dragId = e.currentTarget.dataset.id;
+  e.currentTarget.style.opacity="0.4";
+  e.dataTransfer.effectAllowed="move";
+}
+function tareaDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect="move";
+  e.currentTarget.style.borderColor="#6C63FF";
+  e.currentTarget.style.borderStyle="dashed";
+}
+function tareaDragLeave(e){
+  e.currentTarget.style.borderColor="";
+  e.currentTarget.style.borderStyle="";
+}
+async function tareaDrop(e){
+  e.preventDefault();
+  const targetId = e.currentTarget.dataset.id;
+  e.currentTarget.style.borderColor="";
+  e.currentTarget.style.borderStyle="";
+  document.querySelectorAll(".tarea-card").forEach(c=>c.style.opacity="1");
+  if(!_dragId || _dragId===targetId) return;
+
+  // Reordenar en allTareas
+  const fromIdx = allTareas.findIndex(t=>t.id===_dragId);
+  const toIdx   = allTareas.findIndex(t=>t.id===targetId);
+  if(fromIdx<0||toIdx<0) return;
+  const [moved] = allTareas.splice(fromIdx,1);
+  allTareas.splice(toIdx,0,moved);
+
+  // Guardar nuevo orden en Supabase
+  await guardarOrdenTareas();
+  renderTareas();
+}
+
+async function guardarOrdenTareas(){
+  // Actualizar campo "orden" de cada tarea según posición en allTareas
+  const updates = allTareas.map((t,i)=>
+    db.from("tareas").update({orden:i}).eq("id",t.id)
+  );
+  await Promise.all(updates);
+}
+
+async function ordenarAlfabetico(){
+  allTareas.sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));
+  await guardarOrdenTareas();
+  renderTareas();
 }
 
 async function toggleTarea(id, periodoKey, yaHecha){
