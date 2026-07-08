@@ -2730,11 +2730,23 @@ async function verDiseno(id){
   +"<div class='line'><b>"+(d.cliente||p.cliente)+"</b></div>"
   +"<div class='line'>"+(d.tel||p.telefono||"")+(d.ciudad?" · "+d.ciudad:"")+"</div>"
   +(d.email?"<div class='lsm'>"+d.email+"</div>":"")
-  +"<div class='lsm' style='margin-top:4px;'>"+(p.estado==="listo_fabrica"?"🏭 Retira en Fábrica":p.estado==="listo_santoni"?"🏪 Retira en Santoni":p.estado==="listo_transporte"?"📦 Envío Interior":p.estado==="listo_privado"?"🚗 Envío Privado":(d.entrega||""))+"</div></div>"
+  +(()=>{
+    const entregaMap={"pendiente":"⏳ Pendiente","en_preparacion":"🔧 En preparación","listo_fabrica":"🏭 Retira en Fábrica","listo_santoni":"🏪 Retira en Santoni","listo_transporte":"📦 Envío Interior","listo_privado":"🚗 Envío Privado","entregado":"✅ Entregado"};
+    let etiqueta=entregaMap[p.estado]||"";
+    let dir=p.direccion&&p.direccion.trim()&&p.direccion!==p.cliente?p.direccion:"";
+    if(!etiqueta||etiqueta==="🔧 En preparación"||etiqueta==="⏳ Pendiente"){
+      const obs=p.observaciones||"";
+      const partes=obs.split("|").map(s=>s.trim());
+      const entregaParte=partes.find(s=>s.startsWith("🏭")||s.startsWith("🏪")||s.startsWith("📦")||s.startsWith("🚗"));
+      if(entregaParte){const fi=entregaParte.indexOf("→");if(fi>-1){etiqueta=entregaParte.slice(0,fi).trim();if(!dir)dir=entregaParte.slice(fi+1).trim();}else etiqueta=entregaParte;}
+      else etiqueta=etiqueta||(d.entrega||"");
+    }
+    return "<div class='lsm' style='margin-top:4px;'><strong>"+etiqueta+"</strong>"+(dir?" → "+dir:"")+"</div>";
+  })()+"</div>"
   +"<div class='sec'><div class='stitle'>Medidas</div>"
   +"<div class='dgrid'>"
   +"<div class='dbox'><div class='v'>"+(d.dim||"")+"</div><div class='l'>Dimensiones</div></div>"
-  +"<div class=\'dbox\'><div class=\'v ac\'>"+( pintadasv/16).toFixed(2)+" m2</div><div class=\'l\'>M2 cotizados</div></div>"
+  +"<div class='dbox'><div class='v ac'>"+((d.pintadas||totalPz)/16).toFixed(2)+" m2</div><div class='l'>M2 cotizados</div></div>"
   +"<div class='dbox'><div class='v gr'>"+new Intl.NumberFormat("es-AR").format(d.pintadas||totalPz)+"</div><div class='l'>Piezas cotizadas</div></div>"
   +"<div class='dbox'><div class='v gr'>"+embStr2(d.pintadas||totalPz)+"</div><div class='l'>Embalaje</div></div>"
   +"</div>"
@@ -2745,7 +2757,18 @@ async function verDiseno(id){
   +(d.pm2>0?"<div style='font-size:9px;color:#888;'>Por m2: "+fmtAR(d.pm2)+" x "+(d.pintadas?((d.pintadas/16).toFixed(2)):d.m2cot)+" m2</div>":"")
   +(d.ppz>0?"<div style='font-size:9px;color:#888;'>Por pieza: "+fmtAR(d.ppz)+" x "+new Intl.NumberFormat("es-AR").format(d.pintadas||0)+" pzas</div>":"")
   +"</div>"
-  +(d.obs?"<div class='sec'><div class='stitle'>Observaciones</div><div style='font-size:11px;color:#444;line-height:1.6;'>"+d.obs+"</div></div>":"")
+  +(()=>{
+    const obsPresup=d.obs||"";
+    const obsKanban=p.observaciones||"";
+    const partesKanban=obsKanban.split("|").map(s=>s.trim()).filter(s=>
+      s&&!s.startsWith("Diseño:")&&!s.startsWith("Total:")&&
+      !s.startsWith("🏭")&&!s.startsWith("🏪")&&!s.startsWith("📦")&&!s.startsWith("🚗")&&
+      s!==obsPresup
+    );
+    const obsExtra=partesKanban.join(" · ");
+    const obsFinal=[obsPresup,obsExtra].filter(Boolean).join("\n");
+    return obsFinal?"<div class='sec'><div class='stitle'>Observaciones</div><div style='font-size:11px;color:#444;line-height:1.8;white-space:pre-line;'>"+obsFinal+"</div></div>":"";
+  })()
   +"<div class='footer'>FlexiFloor® — Baldosas Plasticas Encastrables<br>Validez del presupuesto: 7 dias corridos</div>"
   +"</div></div></body></html>";
 
