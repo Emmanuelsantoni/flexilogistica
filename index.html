@@ -2637,11 +2637,23 @@ function imprimirPedidoKanban(id){
   win.document.close();
 }
 
-function verDiseno(id){
+async function verDiseno(id){
   const p = allPedidos.find(x=>x.id===id);
-  if(!p||!p.imagen_diseno) return;
-  const d = p.datos_presupuesto||{};
-  const img = p.imagen_diseno;
+  if(!p) return;
+  let imagen_diseno = p.imagen_diseno||null;
+  let datos_presupuesto = p.datos_presupuesto||null;
+  if(!imagen_diseno && !datos_presupuesto){
+    try{
+      const {data} = await db.from("pedidos").select("imagen_diseno,datos_presupuesto").eq("id",id).single();
+      imagen_diseno = data?.imagen_diseno||null;
+      datos_presupuesto = data?.datos_presupuesto||null;
+      p.imagen_diseno = imagen_diseno;
+      p.datos_presupuesto = datos_presupuesto;
+    }catch(e){}
+  }
+  if(!imagen_diseno && !datos_presupuesto) return;
+  const d = datos_presupuesto||{};
+  const img = imagen_diseno;
   const fmtAR = n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n);
   const embStr2 = pz=>{const cj=Math.floor(pz/64),su=pz%64;return[cj>0?cj+" cj":"",su>0?su+" u":""].filter(Boolean).join(" + ")||"0 u";};
 
@@ -3823,9 +3835,16 @@ function periodoLabel(recurrencia){
 
 async function cargarTareas(){
   try{
-    const { data } = await db.from("tareas").select("*").order("orden",{ascending:true}).order("created_at",{ascending:true});
+    const { data, error } = await db.from("tareas").select("*").order("orden",{ascending:true,nullsFirst:true}).order("created_at",{ascending:true});
+    if(error) throw error;
     allTareas = data||[];
-  }catch(e){ allTareas=[]; }
+  }catch(e){
+    // fallback sin campo orden (por si aún no fue migrado)
+    try{
+      const { data } = await db.from("tareas").select("*").order("created_at",{ascending:true});
+      allTareas = data||[];
+    }catch(e2){ allTareas=[]; }
+  }
 }
 
 function setFiltroTareas(f){
