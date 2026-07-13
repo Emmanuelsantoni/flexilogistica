@@ -1482,8 +1482,8 @@ function showSection(id, btn){
   } else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
   else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
   else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
-  else if(id==="sec-tareas"){ renderTareas().then(()=>{ const a=document.getElementById("top-sec-tareas"); if(a) a.scrollIntoView({behavior:"instant",block:"start"}); }); }
-  else if(id==="sec-marketing"){ renderMarketing().then(()=>{ const a=document.getElementById("top-sec-marketing"); if(a) a.scrollIntoView({behavior:"instant",block:"start"}); }); }
+  else if(id==="sec-tareas"){ renderTareas().then(()=>{ const s=document.getElementById("sec-tareas"); window.scrollTo(0,s?s.offsetTop:0); }); }
+  else if(id==="sec-marketing"){ renderMarketing().then(()=>{ const s=document.getElementById("sec-marketing"); window.scrollTo(0,s?s.offsetTop:0); }); }
 }
 
 function setSyncState(st){
