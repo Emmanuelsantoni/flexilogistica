@@ -57,6 +57,9 @@ button,input,select,textarea{font-family:inherit;}
    APP SHELL
 ══════════════════════════════════════════════════════ */
 #app{display:none;min-height:100vh;flex-direction:column;}
+#sections-container{flex:1;overflow-y:auto;height:calc(100vh - 56px);}
+.section{display:none;padding:16px 16px 40px;background:var(--bg);min-height:calc(100vh - 56px);}
+.section.on{display:block;}
 html,body{height:100%;}
 .topbar{
   background:#1E293B;border-bottom:1px solid #334155;
@@ -491,6 +494,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
     </div>
   </div>
 
+  <div id="sections-container">
   <!-- SECCIÓN: PRESUPUESTADOR -->
   <div class="section" id="sec-flexi">
     <div class="flexi-wrap">
@@ -937,7 +941,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
       <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;" id="mkt-cal-leyenda"></div>
     </div>
 
-  </div>
+  </div><!-- /sections-container -->
 
 </div><!-- /app -->
 
@@ -1461,28 +1465,24 @@ function ajustarMarginSection(){
   document.querySelectorAll(".section").forEach(s => s.style.marginTop = "0px");
 }
 
+function getScroller(){ return document.getElementById("sections-container")||window; }
+
 function showSection(id, btn){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("on"));
   document.getElementById(id).classList.add("on");
   if(btn) btn.classList.add("on");
   currentSection = id;
-
-  const asyncSections = ["sec-tareas","sec-marketing"];
-  if(!asyncSections.includes(id)){
-    const anchor = document.getElementById("top-"+id);
-    if(anchor) anchor.scrollIntoView({behavior:"instant",block:"start"});
-    else window.scrollTo(0,0);
-  }
+  getScroller().scrollTop = 0;
 
   if(id==="sec-kanban"){
     renderKanban();
-    syncAll().then(()=>{ renderKanban(); });
+    syncAll().then(()=>{ renderKanban(); getScroller().scrollTop=0; });
   } else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
   else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
   else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
-  else if(id==="sec-tareas"){ renderTareas().then(()=>{ window.scrollTo(0,0); }); }
-  else if(id==="sec-marketing"){ renderMarketing().then(()=>{ window.scrollTo(0,0); }); }
+  else if(id==="sec-tareas"){ renderTareas().then(()=>{ getScroller().scrollTop=0; }); }
+  else if(id==="sec-marketing"){ renderMarketing().then(()=>{ getScroller().scrollTop=0; }); }
 }
 
 function setSyncState(st){
