@@ -1458,9 +1458,7 @@ function buildTabs(){
   showSection(tabs[0].id, nav.children[0]);
 }
 function ajustarMarginSection(){
-  const topbar = document.querySelector(".topbar");
-  const h = topbar ? topbar.offsetHeight : 55;
-  document.querySelectorAll(".section").forEach(s => s.style.marginTop = h+"px");
+  document.querySelectorAll(".section").forEach(s => s.style.marginTop = "0px");
 }
 
 function showSection(id, btn){
@@ -1482,8 +1480,8 @@ function showSection(id, btn){
   } else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
   else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
   else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
-  else if(id==="sec-tareas"){ renderTareas().then(()=>{ const s=document.getElementById("sec-tareas"); window.scrollTo(0,s?s.offsetTop:0); }); }
-  else if(id==="sec-marketing"){ renderMarketing().then(()=>{ const s=document.getElementById("sec-marketing"); window.scrollTo(0,s?s.offsetTop:0); }); }
+  else if(id==="sec-tareas"){ renderTareas().then(()=>{ window.scrollTo(0,0); }); }
+  else if(id==="sec-marketing"){ renderMarketing().then(()=>{ window.scrollTo(0,0); }); }
 }
 
 function setSyncState(st){
