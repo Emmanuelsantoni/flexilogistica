@@ -1467,16 +1467,17 @@ function showSection(id, btn){
   document.getElementById(id).classList.add("on");
   if(btn) btn.classList.add("on");
   currentSection = id;
-  // Scroll al anchor de la sección
-  const anchor = document.getElementById("top-"+id);
-  if(anchor) anchor.scrollIntoView({behavior:"instant",block:"start"});
-  else window.scrollTo(0,0);
+
+  const asyncSections = ["sec-tareas","sec-marketing"];
+  if(!asyncSections.includes(id)){
+    const anchor = document.getElementById("top-"+id);
+    if(anchor) anchor.scrollIntoView({behavior:"instant",block:"start"});
+    else window.scrollTo(0,0);
+  }
+
   if(id==="sec-kanban"){
     renderKanban();
-    syncAll().then(()=>{
-      renderKanban();
-      if(anchor) anchor.scrollIntoView({behavior:"instant",block:"start"});
-    });
+    syncAll().then(()=>{ renderKanban(); });
   } else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
   else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
   else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
