@@ -345,10 +345,10 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 }
 
 /* DISEÑO — layout lateral */
-.design-layout{display:flex;height:calc(100vh - 50px);overflow:hidden;}
-.design-sidebar{width:220px;flex-shrink:0;background:#0F172A;border-right:1px solid var(--border);overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:12px;}
-.design-canvas-area{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:12px;background:var(--bg);}
-.design-canvas-area .paint-wrap{flex:1;overflow:auto;background:#111;border:1px solid var(--border);border-radius:8px;}
+.design-layout{display:flex;min-height:calc(100vh - 50px);}
+.design-sidebar{width:220px;flex-shrink:0;background:#0F172A;border-right:1px solid var(--border);overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:12px;position:sticky;top:0;height:calc(100vh - 50px);}
+.design-canvas-area{flex:1;display:flex;flex-direction:column;padding:12px;background:var(--bg);}
+.design-canvas-area .paint-wrap{overflow:visible;background:transparent;border:none;border-radius:0;}
 .dsb-section{display:flex;flex-direction:column;gap:6px;}
 .dsb-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;}
 .dsb-tool{background:#1E293B;border:1px solid var(--border);color:#94A3B8;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;text-align:left;transition:all .15s;}
