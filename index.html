@@ -57,6 +57,9 @@ button,input,select,textarea{font-family:inherit;}
    APP SHELL
 ══════════════════════════════════════════════════════ */
 #app{display:none;min-height:100vh;flex-direction:column;}
+#sections-container{flex:1;overflow-y:auto;height:calc(100vh - 56px);}
+.section{display:none;padding:16px 16px 40px;background:var(--bg);min-height:calc(100vh - 56px);}
+.section.on{display:block;}
 html,body{height:100%;}
 .topbar{
   background:#1E293B;border-bottom:1px solid #334155;
@@ -92,7 +95,6 @@ html,body{height:100%;}
    FLEXI (presupuestador) — estilos originales
 ══════════════════════════════════════════════════════ */
 .flexi-wrap{max-width:520px;margin:0 auto;}
-.flexi-wrap:has(#fpg-paint.on){max-width:100%;}
 nav.flexi-nav{display:flex;background:var(--card);border-radius:var(--radius);overflow:hidden;
   border:1px solid var(--border);margin-bottom:14px;}
 nav.flexi-nav button{flex:1;padding:9px 2px;font-size:9px;font-weight:700;letter-spacing:.3px;
@@ -102,7 +104,6 @@ nav.flexi-nav button span{display:block;font-size:8px;margin-bottom:2px;}
 nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 .fpg{display:none;padding-bottom:80px;}
 .fpg.on{display:block;}
-#fpg-paint.on{padding-bottom:0;}
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
 .ctitle{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
   color:var(--accent);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
@@ -344,65 +345,76 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 }
 
 /* DISEÑO — layout lateral */
-.design-layout{
-  display:flex;
-  gap:0;
-  height:calc(100vh - 96px); /* topbar + nav flexi */
-  overflow:hidden;
-}
-.design-sidebar{
-  width:220px;
-  flex-shrink:0;
-  background:#0F172A;
-  border-right:1px solid var(--border);
-  overflow-y:auto;
-  padding:12px 10px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-.design-canvas-area{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  padding:12px;
-  background:var(--bg);
-}
-.design-canvas-area .paint-wrap{
-  flex:1;
-  overflow:auto;
-  background:#111;
-  border:1px solid var(--border);
-  border-radius:8px;
-}
-.dsb-section{ display:flex; flex-direction:column; gap:6px; }
-.dsb-label{ font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); font-weight:700; }
-.dsb-tool{
-  background:#1E293B; border:1px solid var(--border); color:#94A3B8;
-  border-radius:6px; padding:7px 10px; cursor:pointer; font-size:12px;
-  font-weight:600; text-align:left; transition:all .15s;
-}
-.dsb-tool:hover{ border-color:var(--accent); color:#F1F5F9; }
-.dsb-tool.on{ background:var(--accent); border-color:var(--accent); color:#fff; }
+.design-layout{display:flex;height:calc(100vh - 96px);overflow:hidden;}
+.design-sidebar{width:220px;flex-shrink:0;background:#0F172A;border-right:1px solid var(--border);overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:12px;}
+.design-canvas-area{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:12px;background:var(--bg);}
+.design-canvas-area .paint-wrap{flex:1;overflow:auto;background:#111;border:1px solid var(--border);border-radius:8px;}
+.dsb-section{display:flex;flex-direction:column;gap:6px;}
+.dsb-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;}
+.dsb-tool{background:#1E293B;border:1px solid var(--border);color:#94A3B8;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;text-align:left;transition:all .15s;}
+.dsb-tool:hover{border-color:var(--accent);color:#F1F5F9;}
+.dsb-tool.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+.design-sidebar .paint-colors{display:flex;flex-wrap:wrap;gap:5px;}
 
-/* paint-colors en sidebar — vertical compacto */
-.design-sidebar .paint-colors{
-  display:flex; flex-wrap:wrap; gap:5px;
-}
-.design-sidebar .paint-colors .pc{
-  width:26px; height:26px; border-radius:4px;
-}
+/* FULLSCREEN DISEÑO */
+#fpg-paint.fullscreen-mode{position:fixed;inset:0;z-index:500;background:var(--bg);overflow-y:auto;padding:16px;display:block!important;}
+#fpg-paint.fullscreen-mode .paint-wrap{max-height:calc(100vh - 280px);}
+.fullscreen-close-btn{position:fixed;top:12px;right:12px;z-index:600;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;}
 
-/* FULLSCREEN DISEÑO (modo legacy, ya no se usa pero no lo rompemos) */
-#fpg-paint.fullscreen-mode{
-  position:fixed;inset:0;z-index:500;background:var(--bg);
-  overflow-y:auto;padding:16px;display:block!important;
-}
-.fullscreen-close-btn{
-  position:fixed;top:12px;right:12px;z-index:600;
-  background:var(--accent);color:#fff;border:none;border-radius:8px;
-  padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;
+/* ── MARKETING ───────────────────────────────── */
+.mkt-tab{background:transparent;border:none;border-bottom:3px solid transparent;color:#64748B;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;margin-bottom:-1px;}
+.mkt-tab:hover{color:#F1F5F9;}
+.mkt-tab.mkt-tab-on{color:#F1F5F9;border-bottom-color:#6C63FF;}
+.btn-mkt-add{background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:9px 18px;cursor:pointer;font-size:13px;font-weight:700;}
+.btn-mkt-nav{background:#1E293B;border:1px solid #334155;color:#94A3B8;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:18px;font-weight:700;}
+.btn-mkt-nav:hover{border-color:#6C63FF;color:#F1F5F9;}
+
+/* Ideas */
+.idea-card{background:#111827;border:1px solid #1E293B;border-radius:12px;overflow:hidden;transition:border-color .2s;}
+.idea-card:hover{border-color:#334155;}
+.idea-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;}
+.idea-check{width:20px;height:20px;border-radius:5px;border:2px solid #334155;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .15s;}
+.idea-check.on{background:#6C63FF;border-color:#6C63FF;color:#fff;}
+.idea-titulo{flex:1;font-size:13px;font-weight:700;color:#F1F5F9;}
+.idea-expand{color:#475569;font-size:11px;transition:transform .2s;}
+.idea-body{padding:0 14px 14px 44px;display:none;}
+.idea-body.open{display:block;}
+.idea-nota{font-size:12px;color:#64748B;line-height:1.6;white-space:pre-wrap;margin-bottom:8px;}
+.idea-acciones{display:flex;gap:6px;}
+
+/* Canales */
+.canal-card{background:#111827;border:1px solid #1E293B;border-radius:14px;overflow:hidden;}
+.canal-header{padding:16px;border-bottom:1px solid #1E293B;display:flex;align-items:center;gap:10px;}
+.canal-emoji{font-size:24px;}
+.canal-nombre{font-size:15px;font-weight:800;color:#F1F5F9;flex:1;}
+.canal-body{padding:14px;}
+.canal-subtab{display:flex;gap:4px;margin-bottom:12px;}
+.canal-stab{background:#0F172A;border:1px solid #1E293B;color:#64748B;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700;transition:all .15s;}
+.canal-stab.on{background:#6C63FF22;border-color:#6C63FF;color:#A5B4FF;}
+.canal-desc{font-size:12px;color:#94A3B8;line-height:1.6;white-space:pre-wrap;}
+.pub-item{display:flex;align-items:flex-start;gap:8px;padding:8px;background:#0F172A;border:1px solid #1E293B;border-radius:8px;margin-bottom:6px;}
+.pub-fecha{font-size:10px;color:#6C63FF;font-weight:800;white-space:nowrap;min-width:60px;}
+.pub-texto{font-size:12px;color:#F1F5F9;flex:1;line-height:1.4;}
+.pub-confirmada{border-left:3px solid #22C55E;}
+.pub-idea{border-left:3px solid #6C63FF;}
+
+/* Calendario */
+.cal-dia-header{text-align:center;font-size:10px;font-weight:700;color:#475569;padding:6px 0;letter-spacing:1px;}
+.cal-dia{background:#111827;border:1px solid #1E293B;border-radius:8px;padding:6px;min-height:80px;position:relative;}
+.cal-dia.hoy{border-color:#6C63FF;}
+.cal-dia.otro-mes{opacity:.35;}
+.cal-dia-num{font-size:11px;font-weight:700;color:#64748B;margin-bottom:4px;}
+.cal-dia.hoy .cal-dia-num{color:#A5B4FF;}
+.cal-pub-chip{font-size:9px;padding:2px 5px;border-radius:4px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;font-weight:600;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:#0F172A;}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:10px;}
+
+/* FLEXI PDF (original) */
+@media print{
+  @page{size:A4 landscape;margin:8mm;}
 }
 
 /* ── TAREAS ─────────────────────────────────── */
@@ -424,9 +436,9 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 .tarea-acciones{margin-left:auto;display:flex;gap:6px;flex-shrink:0;}
 .tarea-btn-sm{background:transparent;border:1px solid #334155;color:#64748B;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;transition:all .15s;}
 .tarea-btn-sm:hover{border-color:#6C63FF;color:#A5B4FF;}
-.tarea-btn-sm.del:hover{border-color:#EF4444;color:#EF4444;}
 .tarea-drag-handle{font-size:16px;color:#334155;cursor:grab;padding:0 6px 0 0;flex-shrink:0;user-select:none;line-height:1;}
 .tarea-drag-handle:active{cursor:grabbing;}
+.tarea-card[draggable="true"]:active{opacity:.5;}
 
 /* ── ADJUNTOS ────────────────────────────────── */
 .adj-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#0F172A;border:1px solid #1E293B;border-radius:8px;margin-bottom:6px;}
@@ -436,54 +448,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 .adj-btn{background:transparent;border:1px solid #334155;color:#64748B;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;white-space:nowrap;}
 .adj-btn:hover{border-color:#6C63FF;color:#A5B4FF;}
 .adj-btn.del:hover{border-color:#EF4444;color:#EF4444;}
-
-/* ── MARKETING ───────────────────────────────── */
-.mkt-tab{background:transparent;border:none;border-bottom:3px solid transparent;color:#64748B;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;margin-bottom:-1px;}
-.mkt-tab:hover{color:#F1F5F9;}
-.mkt-tab.mkt-tab-on{color:#F1F5F9;border-bottom-color:#6C63FF;}
-.btn-mkt-add{background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:9px 18px;cursor:pointer;font-size:13px;font-weight:700;}
-.btn-mkt-nav{background:#1E293B;border:1px solid #334155;color:#94A3B8;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:18px;font-weight:700;}
-.btn-mkt-nav:hover{border-color:#6C63FF;color:#F1F5F9;}
-.idea-card{background:#111827;border:1px solid #1E293B;border-radius:12px;overflow:hidden;transition:border-color .2s;}
-.idea-card:hover{border-color:#334155;}
-.idea-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;}
-.idea-check{width:20px;height:20px;border-radius:5px;border:2px solid #334155;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .15s;}
-.idea-check.on{background:#6C63FF;border-color:#6C63FF;color:#fff;}
-.idea-titulo{flex:1;font-size:13px;font-weight:700;color:#F1F5F9;}
-.idea-body{padding:0 14px 14px 44px;display:none;}
-.idea-body.open{display:block;}
-.idea-nota{font-size:12px;color:#64748B;line-height:1.6;white-space:pre-wrap;margin-bottom:8px;}
-.canal-card{background:#111827;border:1px solid #1E293B;border-radius:14px;overflow:hidden;}
-.canal-header{padding:16px;border-bottom:1px solid #1E293B;display:flex;align-items:center;gap:10px;}
-.canal-emoji{font-size:24px;}
-.canal-nombre{font-size:15px;font-weight:800;color:#F1F5F9;flex:1;}
-.canal-body{padding:14px;}
-.canal-subtab{display:flex;gap:4px;margin-bottom:12px;}
-.canal-stab{background:#0F172A;border:1px solid #1E293B;color:#64748B;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700;transition:all .15s;}
-.canal-stab.on{background:#6C63FF22;border-color:#6C63FF;color:#A5B4FF;}
-.canal-desc{font-size:12px;color:#94A3B8;line-height:1.6;white-space:pre-wrap;}
-.pub-item{display:flex;align-items:flex-start;gap:8px;padding:8px;background:#0F172A;border:1px solid #1E293B;border-radius:8px;margin-bottom:6px;}
-.pub-fecha{font-size:10px;color:#6C63FF;font-weight:800;white-space:nowrap;min-width:60px;}
-.pub-texto{font-size:12px;color:#F1F5F9;flex:1;line-height:1.4;}
-.pub-confirmada{border-left:3px solid #22C55E;}
-.pub-idea{border-left:3px solid #6C63FF;}
-.cal-dia-header{text-align:center;font-size:10px;font-weight:700;color:#475569;padding:6px 0;letter-spacing:1px;}
-.cal-dia{background:#111827;border:1px solid #1E293B;border-radius:8px;padding:6px;min-height:80px;}
-.cal-dia.hoy{border-color:#6C63FF;}
-.cal-dia.otro-mes{opacity:.35;}
-.cal-dia-num{font-size:11px;font-weight:700;color:#64748B;margin-bottom:4px;}
-.cal-dia.hoy .cal-dia-num{color:#A5B4FF;}
-.cal-pub-chip{font-size:9px;padding:2px 5px;border-radius:4px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
-
-/* SCROLLBAR */
-::-webkit-scrollbar{width:5px;height:5px;}
-::-webkit-scrollbar-track{background:#0F172A;}
-::-webkit-scrollbar-thumb{background:#334155;border-radius:10px;}
-
-/* FLEXI PDF (original) */
-@media print{
-  @page{size:A4 landscape;margin:8mm;}
-}
+.pc-adj-badge{display:inline-flex;align-items:center;gap:3px;background:#6C63FF22;border:1px solid #6C63FF44;color:#A5B4FF;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;cursor:pointer;margin-left:4px;}
 </style>
 </head>
 <body>
@@ -534,8 +499,8 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
     </div>
   </div>
 
+  <div id="sections-container">
   <!-- SECCIÓN: PRESUPUESTADOR -->
-  <div id="sections-container" style="flex:1;overflow-y:auto;height:calc(100vh - 56px);">
   <div class="section" id="sec-flexi">
     <div class="flexi-wrap">
 
@@ -607,24 +572,18 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 
           <!-- PANEL LATERAL IZQUIERDO -->
           <div class="design-sidebar">
-
-            <!-- Color activo -->
             <div class="dsb-section">
               <div class="dsb-label">Color activo</div>
               <div class="paint-colors" id="paint-colors"></div>
-              <div class="sel-preview" style="margin-top:8px;">
+              <div class="sel-preview" style="margin-top:6px;">
                 <div class="sel-dot" id="sel-dot" style="background:#333;border:1px solid #555;"></div>
                 <div class="sel-name" id="sel-name" style="font-size:11px;">Seleccioná un color</div>
               </div>
             </div>
-
-            <!-- Color predominante -->
             <div class="dsb-section" style="background:#1a0a00;border:1px solid var(--accent);border-radius:6px;padding:8px;">
               <div class="dsb-label" style="color:var(--accent);">⬛ Relleno rápido</div>
               <div style="display:flex;flex-wrap:wrap;gap:4px;" id="pred-colors"></div>
             </div>
-
-            <!-- Herramientas -->
             <div class="dsb-section">
               <div class="dsb-label">Herramienta</div>
               <div style="display:flex;flex-direction:column;gap:4px;">
@@ -634,8 +593,6 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
                 <button class="dsb-tool" id="tb-pat" onclick="togglePatternMode()">🔲 Patrón</button>
               </div>
             </div>
-
-            <!-- Acciones -->
             <div class="dsb-section">
               <div class="dsb-label">Acciones</div>
               <div style="display:flex;flex-direction:column;gap:4px;">
@@ -643,8 +600,6 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
                 <button class="dsb-tool" onclick="clearGrid()">⟳ Limpiar</button>
               </div>
             </div>
-
-            <!-- Zoom -->
             <div class="dsb-section" id="zoom-bar" style="display:none;">
               <div class="dsb-label">Zoom — <span id="zoom-label" style="color:var(--accent);">100%</span></div>
               <div style="display:flex;align-items:center;gap:6px;">
@@ -652,35 +607,27 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
                 <input type="range" id="zoom-slider" min="20" max="200" value="100" oninput="zoomSet(this.value)" style="flex:1;accent-color:var(--accent);height:4px;background:var(--border);border:none;padding:0;margin:0;cursor:pointer;">
                 <button onclick="zoomChange(10)" style="width:28px;height:28px;background:#222;border:1px solid var(--border);color:var(--white);font-size:16px;font-weight:700;border-radius:4px;cursor:pointer;flex-shrink:0;">+</button>
               </div>
-              <button onclick="zoomFit()" style="margin-top:6px;width:100%;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:#222;border:1px solid var(--border);color:var(--white);padding:6px;border-radius:4px;cursor:pointer;">↔ Ajustar</button>
+              <button onclick="zoomFit()" style="width:100%;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:#222;border:1px solid var(--border);color:var(--white);padding:6px;border-radius:4px;cursor:pointer;">↔ Ajustar</button>
             </div>
-
-            <!-- Resumen colores -->
             <div class="dsb-section">
-              <div class="dsb-label">Resumen</div>
+              <div class="dsb-label">Resumen colores</div>
               <div class="legend" id="legend-live" style="font-size:11px;"><div style="color:var(--muted);font-size:11px;">Pintá para ver el resumen.</div></div>
             </div>
-
-            <!-- Siguiente -->
-            <button class="fbtn fbtn-pri" style="margin-top:auto;width:100%;" onclick="fpg('fpg-ajuste',document.querySelectorAll('.flexi-nav button')[3]);startAjuste()">Siguiente →</button>
+            <button class="fbtn fbtn-pri" style="margin-top:auto;width:100%;margin-bottom:8px;" onclick="fpg('fpg-ajuste',document.querySelectorAll('.flexi-nav button')[3]);startAjuste()">Siguiente →</button>
           </div>
 
-          <!-- ÁREA DEL CANVAS -->
+          <!-- ÁREA CANVAS -->
           <div class="design-canvas-area">
-            <!-- Patrón (se muestra sobre el canvas cuando está activo) -->
+            <!-- Patrón -->
             <div id="pattern-bar" style="display:none;background:#0d1117;border:1px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:10px;">
               <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;font-weight:700;">🔲 Diseñá el patrón a repetir</div>
               <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
                 <div>
                   <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Tamaño</div>
                   <div style="display:flex;gap:6px;align-items:center;">
-                    <select id="pat-cols" onchange="reconstruirPatronUI()" style="background:#111;border:1px solid var(--border);color:var(--white);padding:5px 8px;border-radius:4px;font-size:13px;">
-                      <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option>
-                    </select>
+                    <select id="pat-cols" onchange="reconstruirPatronUI()" style="background:#111;border:1px solid var(--border);color:var(--white);padding:5px 8px;border-radius:4px;font-size:13px;"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select>
                     <span style="color:var(--muted);">×</span>
-                    <select id="pat-rows" onchange="reconstruirPatronUI()" style="background:#111;border:1px solid var(--border);color:var(--white);padding:5px 8px;border-radius:4px;font-size:13px;">
-                      <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option>
-                    </select>
+                    <select id="pat-rows" onchange="reconstruirPatronUI()" style="background:#111;border:1px solid var(--border);color:var(--white);padding:5px 8px;border-radius:4px;font-size:13px;"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select>
                     <span style="color:var(--muted);font-size:11px;">baldosas</span>
                   </div>
                 </div>
@@ -694,17 +641,14 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
                 </div>
               </div>
             </div>
-
-            <!-- Info dimensiones -->
+            <!-- Info dims -->
             <div id="canvas-dims-info" style="display:none;font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;display:flex;gap:16px;flex-wrap:wrap;">
               <span>📐 Diagrama: <strong id="canvas-dim-txt" style="color:var(--white);">—</strong></span>
               <span>🔲 Celdas: <strong id="canvas-celdas-txt" style="color:var(--accent);">—</strong></span>
               <span>📦 M² cotizados: <strong id="canvas-m2-txt" style="color:var(--green);">—</strong></span>
             </div>
-
-            <!-- Canvas -->
             <div id="no-dims" style="background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:40px;text-align:center;color:var(--muted);font-size:12px;">⚠ Primero ingresá las medidas en el paso 2.</div>
-            <div class="paint-wrap" id="paint-wrap" style="display:none;flex:1;overflow:auto;">
+            <div class="paint-wrap" id="paint-wrap" style="display:none;">
               <div id="cv-sizer" style="display:inline-block;"><canvas id="fcv" style="display:block;cursor:crosshair;touch-action:none;"></canvas></div>
             </div>
             <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="paint-info"></div>
@@ -946,44 +890,161 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   </div>
 
   <!-- ══════ SECCIÓN TAREAS ══════ -->
-  <div class="section" id="sec-tareas" style="padding-top:8px;">
+  <div class="section" id="sec-tareas" style="padding-top:8px;"><div id="top-sec-tareas" style="height:0;position:relative;top:-8px;"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
-      <div><div style="font-size:18px;font-weight:800;color:#F1F5F9;">✅ Tareas administrativas</div><div style="font-size:12px;color:#64748B;margin-top:2px;">Checklist recurrente del equipo de administración</div></div>
+      <div>
+        <div style="font-size:18px;font-weight:800;color:#F1F5F9;">✅ Tareas administrativas</div>
+        <div style="font-size:12px;color:#64748B;margin-top:2px;">Checklist recurrente del equipo de administración</div>
+      </div>
       <div style="display:flex;gap:8px;">
         <button onclick="ordenarAlfabetico()" style="background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;">A→Z</button>
         <button onclick="abrirModalTarea()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;">+ Nueva tarea</button>
       </div>
     </div>
     <div id="tareas-filtros" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-      <button class="tfil-btn tfil-on" onclick="setFiltroTareas('todas',event)">Todas</button>
-      <button class="tfil-btn" onclick="setFiltroTareas('semanal',event)">📅 Semanales</button>
-      <button class="tfil-btn" onclick="setFiltroTareas('mensual',event)">🗓 Mensuales</button>
-      <button class="tfil-btn" onclick="setFiltroTareas('pendiente',event)">⏳ Pendientes</button>
-      <button class="tfil-btn" onclick="setFiltroTareas('realizada',event)">✅ Realizadas</button>
+      <button class="tfil-btn tfil-on" onclick="setFiltroTareas('todas')">Todas</button>
+      <button class="tfil-btn" onclick="setFiltroTareas('semanal')">📅 Semanales</button>
+      <button class="tfil-btn" onclick="setFiltroTareas('mensual')">🗓 Mensuales</button>
+      <button class="tfil-btn" onclick="setFiltroTareas('pendiente')">⏳ Pendientes</button>
+      <button class="tfil-btn" onclick="setFiltroTareas('realizada')">✅ Realizadas</button>
     </div>
     <div id="tareas-lista" style="display:flex;flex-direction:column;gap:10px;">Cargando...</div>
   </div>
 
   <!-- ══════ SECCIÓN MARKETING ══════ -->
-  <div class="section" id="sec-marketing" style="padding-top:8px;">
+  <div class="section" id="sec-marketing" style="padding-top:8px;"><div id="top-sec-marketing" style="height:0;position:relative;top:-8px;"></div>
+
+    <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-      <div><div style="font-size:18px;font-weight:800;color:#F1F5F9;">📣 Marketing</div><div style="font-size:12px;color:#64748B;margin-top:2px;">Estrategia de contenido, campañas y calendario</div></div>
+      <div>
+        <div style="font-size:18px;font-weight:800;color:#F1F5F9;">📣 Marketing</div>
+        <div style="font-size:12px;color:#64748B;margin-top:2px;">Estrategia de contenido, campañas y calendario</div>
+      </div>
     </div>
-    <div style="display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid #1E293B;">
+
+    <!-- Sub-tabs -->
+    <div style="display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid #1E293B;padding-bottom:0;">
       <button class="mkt-tab mkt-tab-on" onclick="setMktTab('ideas',this)">💡 Ideas</button>
       <button class="mkt-tab" onclick="setMktTab('canales',this)">📱 Canales</button>
       <button class="mkt-tab" onclick="setMktTab('calendario',this)">📅 Calendario</button>
     </div>
-    <div id="mkt-tab-ideas"><div style="display:flex;justify-content:flex-end;margin-bottom:12px;"><button onclick="abrirModalIdea()" class="btn-mkt-add">+ Nueva idea</button></div><div id="mkt-ideas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div>
-    <div id="mkt-tab-canales" style="display:none;"><div style="display:flex;justify-content:flex-end;margin-bottom:12px;"><button onclick="abrirModalCanal()" class="btn-mkt-add">+ Nuevo canal</button></div><div id="mkt-canales-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;"></div></div>
-    <div id="mkt-tab-calendario" style="display:none;">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;"><button onclick="mktCalPrev()" class="btn-mkt-nav">‹</button><div id="mkt-cal-titulo" style="font-size:15px;font-weight:800;color:#F1F5F9;min-width:160px;text-align:center;"></div><button onclick="mktCalNext()" class="btn-mkt-nav">›</button></div>
-      <div id="mkt-calendario" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+
+    <!-- TAB: IDEAS -->
+    <div id="mkt-tab-ideas">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+        <button onclick="abrirModalIdea()" class="btn-mkt-add">+ Nueva idea</button>
+      </div>
+      <div id="mkt-ideas-lista" style="display:flex;flex-direction:column;gap:10px;"></div>
     </div>
-  </div>
+
+    <!-- TAB: CANALES -->
+    <div id="mkt-tab-canales" style="display:none;">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+        <button onclick="abrirModalCanal()" class="btn-mkt-add">+ Nuevo canal</button>
+      </div>
+      <div id="mkt-canales-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;"></div>
+    </div>
+
+    <!-- TAB: CALENDARIO -->
+    <div id="mkt-tab-calendario" style="display:none;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <button onclick="mktCalPrev()" class="btn-mkt-nav">‹</button>
+        <div id="mkt-cal-titulo" style="font-size:15px;font-weight:800;color:#F1F5F9;min-width:160px;text-align:center;"></div>
+        <button onclick="mktCalNext()" class="btn-mkt-nav">›</button>
+      </div>
+      <div id="mkt-calendario" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+      <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;" id="mkt-cal-leyenda"></div>
+    </div>
 
   </div><!-- /sections-container -->
+
 </div><!-- /app -->
+
+<!-- ══════ MODAL IDEA ══════ -->
+<div class="modal-bg" id="modal-idea">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-idea-title">💡 Nueva idea</span>
+      <button class="modal-close" onclick="cerrarModal('modal-idea')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="idea-id">
+      <label class="m-label">Título *</label>
+      <input id="idea-titulo" class="m-input" placeholder="Ej: Reel de instalación de baldosas">
+      <label class="m-label">Descripción / notas</label>
+      <textarea id="idea-nota" class="m-input" style="min-height:80px;resize:vertical;" placeholder="Detalles, referencias, hashtags..."></textarea>
+      <label class="m-label">Red social</label>
+      <select id="idea-red" class="m-select">
+        <option value="general">🌐 General</option>
+        <option value="instagram">📸 Instagram</option>
+        <option value="facebook">📘 Facebook</option>
+        <option value="tiktok">🎵 TikTok</option>
+        <option value="google">🔍 Google</option>
+        <option value="youtube">▶ YouTube</option>
+      </select>
+      <div id="idea-error" class="m-error" style="display:none;"></div>
+      <button class="btn-primary" onclick="guardarIdea()">Guardar idea</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL CANAL ══════ -->
+<div class="modal-bg" id="modal-canal">
+  <div class="modal-box" style="max-width:540px;">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-canal-title">📱 Nuevo canal</span>
+      <button class="modal-close" onclick="cerrarModal('modal-canal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="canal-id">
+      <div style="display:grid;grid-template-columns:60px 1fr;gap:10px;">
+        <div>
+          <label class="m-label">Emoji</label>
+          <input id="canal-emoji" class="m-input" placeholder="📸" style="font-size:20px;text-align:center;" maxlength="4">
+        </div>
+        <div>
+          <label class="m-label">Nombre del canal *</label>
+          <input id="canal-nombre" class="m-input" placeholder="Ej: Instagram FlexiFloor">
+        </div>
+      </div>
+      <label class="m-label">Descripción / objetivo</label>
+      <textarea id="canal-desc" class="m-input" style="min-height:70px;resize:vertical;" placeholder="Qué tipo de contenido, tono, objetivo..."></textarea>
+      <label class="m-label">Formas de realizarlo</label>
+      <textarea id="canal-formas" class="m-input" style="min-height:70px;resize:vertical;" placeholder="Pasos, herramientas, responsables..."></textarea>
+      <label class="m-label">Presupuesto estimado</label>
+      <input id="canal-presupuesto" class="m-input" placeholder="Ej: $50.000/mes">
+      <div id="canal-error" class="m-error" style="display:none;"></div>
+      <button class="btn-primary" onclick="guardarCanal()">Guardar canal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL PUBLICACION ══════ -->
+<div class="modal-bg" id="modal-publicacion">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-pub-title">📅 Nueva publicación</span>
+      <button class="modal-close" onclick="cerrarModal('modal-publicacion')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pub-id">
+      <input type="hidden" id="pub-canal-id">
+      <label class="m-label">Contenido / descripción *</label>
+      <textarea id="pub-texto" class="m-input" style="min-height:70px;resize:vertical;" placeholder="¿Qué se va a publicar?"></textarea>
+      <label class="m-label">Estado</label>
+      <select id="pub-estado" class="m-select" onchange="toggleFechaPub()">
+        <option value="idea">💡 Idea</option>
+        <option value="confirmada">✅ Confirmada con fecha</option>
+      </select>
+      <div id="pub-fecha-group" style="display:none;margin-top:8px;">
+        <label class="m-label">Fecha de publicación</label>
+        <input id="pub-fecha" class="m-input" type="date">
+      </div>
+      <div id="pub-error" class="m-error" style="display:none;"></div>
+      <button class="btn-primary" onclick="guardarPublicacion()">Guardar</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══════ MODAL LOGIFLOW ══════ -->
 <div class="modal-bg" id="modal-logi">
@@ -1083,17 +1144,27 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
       <div id="etiqueta-preview-wrap"></div>
     </div>
   </div>
+</div>
 
 <!-- ══════ MODAL TAREA ══════ -->
 <div class="modal-bg" id="modal-tarea">
   <div class="modal-box">
-    <div class="modal-header"><span class="modal-title" id="modal-tarea-title">✅ Nueva tarea</span><button class="modal-close" onclick="cerrarModal('modal-tarea')">✕</button></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-tarea-title">✅ Nueva tarea</span>
+      <button class="modal-close" onclick="cerrarModal('modal-tarea')">✕</button>
+    </div>
     <div class="modal-body">
       <input type="hidden" id="t-id">
-      <label class="m-label">Nombre *</label><input id="t-nombre" class="m-input" placeholder="Ej: Pagar factura de luz">
-      <label class="m-label">Descripción</label><textarea id="t-desc" class="m-input" style="min-height:60px;resize:vertical;" placeholder="Pasos, notas..."></textarea>
+      <label class="m-label">Nombre de la tarea *</label>
+      <input id="t-nombre" class="m-input" placeholder="Ej: Pagar factura de luz">
+      <label class="m-label">Descripción / detalle</label>
+      <textarea id="t-desc" class="m-input" style="min-height:60px;resize:vertical;" placeholder="Pasos, notas, etc."></textarea>
       <label class="m-label">Recurrencia *</label>
-      <select id="t-recurrencia" class="m-select"><option value="semanal">📅 Semanal</option><option value="mensual">🗓 Mensual</option><option value="unica">🔂 Única vez</option></select>
+      <select id="t-recurrencia" class="m-select">
+        <option value="semanal">📅 Semanal</option>
+        <option value="mensual">🗓 Mensual</option>
+        <option value="unica">🔂 Única vez</option>
+      </select>
       <div id="t-error" class="m-error" style="display:none;"></div>
       <button class="btn-primary" onclick="guardarTarea()">Guardar tarea</button>
     </div>
@@ -1103,70 +1174,26 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 <!-- ══════ MODAL ADJUNTOS ══════ -->
 <div class="modal-bg" id="modal-adjuntos">
   <div class="modal-box" style="max-width:520px;">
-    <div class="modal-header"><span class="modal-title">📎 Adjuntos — pedido <span id="adj-pedido-num" style="color:#6C63FF;"></span></span><button class="modal-close" onclick="cerrarModal('modal-adjuntos')">✕</button></div>
+    <div class="modal-header">
+      <span class="modal-title">📎 Adjuntos del pedido <span id="adj-pedido-num" style="color:#6C63FF;"></span></span>
+      <button class="modal-close" onclick="cerrarModal('modal-adjuntos')">✕</button>
+    </div>
     <div class="modal-body">
       <div id="adj-lista" style="margin-bottom:16px;min-height:40px;"></div>
-      <div style="border:2px dashed #334155;border-radius:10px;padding:20px;text-align:center;cursor:pointer;" onclick="document.getElementById('adj-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='#6C63FF'" ondragleave="this.style.borderColor='#334155'" ondrop="handleAdjDrop(event)">
+      <div style="border:2px dashed #334155;border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;"
+           onclick="document.getElementById('adj-file-input').click()"
+           ondragover="event.preventDefault();this.style.borderColor='#6C63FF'"
+           ondragleave="this.style.borderColor='#334155'"
+           ondrop="handleAdjDrop(event)">
         <div style="font-size:28px;margin-bottom:6px;">📄</div>
-        <div style="font-size:13px;color:#94A3B8;">Click o arrastrá archivos acá</div>
-        <div style="font-size:11px;color:#475569;margin-top:4px;">PDF, imágenes — máx. 10MB</div>
+        <div style="font-size:13px;color:#94A3B8;">Hacé click o arrastrá archivos aquí</div>
+        <div style="font-size:11px;color:#475569;margin-top:4px;">PDF, imágenes — máx. 10MB por archivo</div>
       </div>
       <input type="file" id="adj-file-input" multiple accept=".pdf,image/*" style="display:none;" onchange="subirAdjuntos(this.files)">
       <div id="adj-upload-progress" style="margin-top:10px;display:none;">
         <div style="font-size:12px;color:#94A3B8;margin-bottom:4px;" id="adj-progress-txt">Subiendo...</div>
         <div style="background:#1E293B;border-radius:4px;height:6px;"><div id="adj-progress-bar" style="background:#6C63FF;height:6px;border-radius:4px;width:0%;transition:width .3s;"></div></div>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════ MODAL IDEA ══════ -->
-<div class="modal-bg" id="modal-idea">
-  <div class="modal-box">
-    <div class="modal-header"><span class="modal-title" id="modal-idea-title">💡 Nueva idea</span><button class="modal-close" onclick="cerrarModal('modal-idea')">✕</button></div>
-    <div class="modal-body">
-      <input type="hidden" id="idea-id">
-      <label class="m-label">Título *</label><input id="idea-titulo" class="m-input" placeholder="Ej: Reel de instalación">
-      <label class="m-label">Descripción / notas</label><textarea id="idea-nota" class="m-input" style="min-height:80px;resize:vertical;"></textarea>
-      <label class="m-label">Red social</label>
-      <select id="idea-red" class="m-select"><option value="general">🌐 General</option><option value="instagram">📸 Instagram</option><option value="facebook">📘 Facebook</option><option value="tiktok">🎵 TikTok</option><option value="google">🔍 Google</option><option value="youtube">▶ YouTube</option></select>
-      <div id="idea-error" class="m-error" style="display:none;"></div>
-      <button class="btn-primary" onclick="guardarIdea()">Guardar idea</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════ MODAL CANAL ══════ -->
-<div class="modal-bg" id="modal-canal">
-  <div class="modal-box" style="max-width:540px;">
-    <div class="modal-header"><span class="modal-title" id="modal-canal-title">📱 Nuevo canal</span><button class="modal-close" onclick="cerrarModal('modal-canal')">✕</button></div>
-    <div class="modal-body">
-      <input type="hidden" id="canal-id">
-      <div style="display:grid;grid-template-columns:60px 1fr;gap:10px;">
-        <div><label class="m-label">Emoji</label><input id="canal-emoji" class="m-input" placeholder="📸" style="font-size:20px;text-align:center;" maxlength="4"></div>
-        <div><label class="m-label">Nombre *</label><input id="canal-nombre" class="m-input" placeholder="Ej: Instagram FlexiFloor"></div>
-      </div>
-      <label class="m-label">Descripción / objetivo</label><textarea id="canal-desc" class="m-input" style="min-height:70px;resize:vertical;"></textarea>
-      <label class="m-label">Cómo realizarlo</label><textarea id="canal-formas" class="m-input" style="min-height:70px;resize:vertical;"></textarea>
-      <label class="m-label">Presupuesto estimado</label><input id="canal-presupuesto" class="m-input" placeholder="Ej: $50.000/mes">
-      <div id="canal-error" class="m-error" style="display:none;"></div>
-      <button class="btn-primary" onclick="guardarCanal()">Guardar canal</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════ MODAL PUBLICACION ══════ -->
-<div class="modal-bg" id="modal-publicacion">
-  <div class="modal-box">
-    <div class="modal-header"><span class="modal-title" id="modal-pub-title">📅 Nueva publicación</span><button class="modal-close" onclick="cerrarModal('modal-publicacion')">✕</button></div>
-    <div class="modal-body">
-      <input type="hidden" id="pub-id"><input type="hidden" id="pub-canal-id">
-      <label class="m-label">Contenido *</label><textarea id="pub-texto" class="m-input" style="min-height:70px;resize:vertical;"></textarea>
-      <label class="m-label">Estado</label>
-      <select id="pub-estado" class="m-select" onchange="toggleFechaPub()"><option value="idea">💡 Idea</option><option value="confirmada">✅ Confirmada con fecha</option></select>
-      <div id="pub-fecha-group" style="display:none;margin-top:8px;"><label class="m-label">Fecha</label><input id="pub-fecha" class="m-input" type="date"></div>
-      <div id="pub-error" class="m-error" style="display:none;"></div>
-      <button class="btn-primary" onclick="guardarPublicacion()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1453,22 +1480,19 @@ function ajustarMarginSection(){
   document.querySelectorAll(".section").forEach(s => s.style.marginTop = "0px");
 }
 
+function getScroller(){ return document.getElementById("sections-container")||window; }
+
 function showSection(id, btn){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("on"));
   document.getElementById(id).classList.add("on");
   if(btn) btn.classList.add("on");
   currentSection = id;
-  // Scroll al anchor de la sección
-  const anchor = document.getElementById("top-"+id);
-  if(anchor) anchor.scrollIntoView({behavior:"instant",block:"start"});
-  else window.scrollTo(0,0);
+  getScroller().scrollTop = 0;
+
   if(id==="sec-kanban"){
     renderKanban();
-    syncAll().then(()=>{
-      renderKanban();
-      if(anchor) anchor.scrollIntoView({behavior:"instant",block:"start"});
-    });
+    syncAll().then(()=>{ renderKanban(); getScroller().scrollTop=0; });
   } else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
   else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
   else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
@@ -2907,16 +2931,16 @@ async function verDiseno(id){
     if(!etiqueta||etiqueta==="🔧 En preparación"||etiqueta==="⏳ Pendiente"){
       const obs=p.observaciones||"";
       const partes=obs.split("|").map(s=>s.trim());
-      const ep=partes.find(s=>s.startsWith("🏭")||s.startsWith("🏪")||s.startsWith("📦")||s.startsWith("🚗"));
-      if(ep){const fi=ep.indexOf("→");if(fi>-1){etiqueta=ep.slice(0,fi).trim();if(!dir)dir=ep.slice(fi+1).trim();}else etiqueta=ep;}
+      const entregaParte=partes.find(s=>s.startsWith("🏭")||s.startsWith("🏪")||s.startsWith("📦")||s.startsWith("🚗"));
+      if(entregaParte){const fi=entregaParte.indexOf("→");if(fi>-1){etiqueta=entregaParte.slice(0,fi).trim();if(!dir)dir=entregaParte.slice(fi+1).trim();}else etiqueta=entregaParte;}
       else etiqueta=etiqueta||(d.entrega||"");
     }
     return "<div class='lsm' style='margin-top:4px;'><strong>"+etiqueta+"</strong>"+(dir?" → "+dir:"")+"</div>";
-  })()+\"</div>\"
+  })()+"</div>"
   +"<div class='sec'><div class='stitle'>Medidas</div>"
   +"<div class='dgrid'>"
   +"<div class='dbox'><div class='v'>"+(d.dim||"")+"</div><div class='l'>Dimensiones</div></div>"
-  +"<div class=\'dbox\'><div class=\'v ac\'>"+((d.pintadas||totalPz||0)/16).toFixed(2)+" m2</div><div class=\'l\'>M2 cotizados</div></div>"
+  +"<div class='dbox'><div class='v ac'>"+((d.pintadas||totalPz)/16).toFixed(2)+" m2</div><div class='l'>M2 cotizados</div></div>"
   +"<div class='dbox'><div class='v gr'>"+new Intl.NumberFormat("es-AR").format(d.pintadas||totalPz)+"</div><div class='l'>Piezas cotizadas</div></div>"
   +"<div class='dbox'><div class='v gr'>"+embStr2(d.pintadas||totalPz)+"</div><div class='l'>Embalaje</div></div>"
   +"</div>"
@@ -2927,7 +2951,18 @@ async function verDiseno(id){
   +(d.pm2>0?"<div style='font-size:9px;color:#888;'>Por m2: "+fmtAR(d.pm2)+" x "+(d.pintadas?((d.pintadas/16).toFixed(2)):d.m2cot)+" m2</div>":"")
   +(d.ppz>0?"<div style='font-size:9px;color:#888;'>Por pieza: "+fmtAR(d.ppz)+" x "+new Intl.NumberFormat("es-AR").format(d.pintadas||0)+" pzas</div>":"")
   +"</div>"
-  +(d.obs?"<div class='sec'><div class='stitle'>Observaciones</div><div style='font-size:11px;color:#444;line-height:1.6;'>"+d.obs+"</div></div>":"")
+  +(()=>{
+    const obsPresup=d.obs||"";
+    const obsKanban=p.observaciones||"";
+    const partesKanban=obsKanban.split("|").map(s=>s.trim()).filter(s=>
+      s&&!s.startsWith("Diseño:")&&!s.startsWith("Total:")&&
+      !s.startsWith("🏭")&&!s.startsWith("🏪")&&!s.startsWith("📦")&&!s.startsWith("🚗")&&
+      s!==obsPresup
+    );
+    const obsExtra=partesKanban.join(" · ");
+    const obsFinal=[obsPresup,obsExtra].filter(Boolean).join("\n");
+    return obsFinal?"<div class='sec'><div class='stitle'>Observaciones</div><div style='font-size:11px;color:#444;line-height:1.8;white-space:pre-line;'>"+obsFinal+"</div></div>":"";
+  })()
   +"<div class='footer'>FlexiFloor® — Baldosas Plasticas Encastrables<br>Validez del presupuesto: 7 dias corridos</div>"
   +"</div></div></body></html>";
 
@@ -3141,7 +3176,6 @@ function fpg(id, btn){
   if(el){el.classList.add("on");el.style.display="block";}
   document.querySelectorAll(".flexi-nav button").forEach(b=>b.classList.remove("on"));
   if(btn)btn.classList.add("on");
-  // Ancho completo en paso diseño, limitado en el resto
   const wrap = document.querySelector(".flexi-wrap");
   if(wrap) wrap.style.maxWidth = id==="fpg-paint" ? "100%" : "520px";
 }
@@ -3893,91 +3927,535 @@ function nuevoPresup(){
   toast("Nuevo presupuesto listo","ok");
 }
 
-function getScroller(){ return document.getElementById("sections-container")||window; }
+// ══════════════════════════════════════════════════
+//  MARKETING
+// ══════════════════════════════════════════════════
+let mktIdeas=[], mktCanales=[], mktPublicaciones=[];
+let mktTabActual='ideas';
+let mktCalFecha = new Date();
+let _editIdeaId=null, _editCanalId=null, _editPubId=null, _editPubCanalId=null;
 
-// ══════ ADJUNTOS ══════
-let _adjPedidoId=null,_adjPedidoNum=null;
-async function abrirAdjuntos(pedidoId,pedidoNum){
-  _adjPedidoId=pedidoId;_adjPedidoNum=pedidoNum;
-  document.getElementById("adj-pedido-num").textContent="#"+pedidoNum;
+const RED_COLORS={'instagram':'#E1306C','facebook':'#1877F2','tiktok':'#000000','google':'#4285F4','youtube':'#FF0000','general':'#6C63FF'};
+const RED_LABELS={'instagram':'📸 Instagram','facebook':'📘 Facebook','tiktok':'🎵 TikTok','google':'🔍 Google','youtube':'▶ YouTube','general':'🌐 General'};
+
+function setMktTab(tab, btn){
+  mktTabActual=tab;
+  document.querySelectorAll('.mkt-tab').forEach(b=>b.classList.remove('mkt-tab-on'));
+  btn.classList.add('mkt-tab-on');
+  ['ideas','canales','calendario'].forEach(t=>{
+    const el=document.getElementById('mkt-tab-'+t);
+    if(el) el.style.display=t===tab?'block':'none';
+  });
+  if(tab==='ideas') renderIdeas();
+  else if(tab==='canales') renderCanales();
+  else if(tab==='calendario') renderCalendario();
+}
+
+async function renderMarketing(){
+  await Promise.all([cargarMktIdeas(), cargarMktCanales(), cargarMktPublicaciones()]);
+  if(mktTabActual==='ideas') renderIdeas();
+  else if(mktTabActual==='canales') renderCanales();
+  else renderCalendario();
+}
+
+// ── IDEAS ─────────────────────────────────────────
+async function cargarMktIdeas(){
+  try{ const{data}=await db.from('mkt_ideas').select('*').order('created_at',{ascending:false}); mktIdeas=data||[]; }catch(e){ mktIdeas=[]; }
+}
+
+function renderIdeas(){
+  const el=document.getElementById('mkt-ideas-lista');
+  if(!el) return;
+  if(!mktIdeas.length){ el.innerHTML='<div style="color:#475569;text-align:center;padding:40px;font-size:13px;">Sin ideas todavía. ¡Agregá la primera!</div>'; return; }
+  el.innerHTML=mktIdeas.map(idea=>{
+    const color=RED_COLORS[idea.red||'general']||'#6C63FF';
+    return `<div class="idea-card" id="idea-card-${idea.id}">
+      <div class="idea-header" onclick="toggleIdeaBody('${idea.id}')">
+        <div class="idea-check${idea.completada?' on':''}" onclick="event.stopPropagation();toggleIdea('${idea.id}',${idea.completada})">${idea.completada?'✓':''}</div>
+        <div class="idea-titulo" style="${idea.completada?'text-decoration:line-through;color:#475569;':''}">${idea.titulo}</div>
+        <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${color}22;color:${color};font-weight:700;flex-shrink:0;">${RED_LABELS[idea.red||'general']}</span>
+        <span class="idea-expand" id="idea-arrow-${idea.id}">▼</span>
+      </div>
+      <div class="idea-body" id="idea-body-${idea.id}">
+        ${idea.nota?`<div class="idea-nota">${idea.nota}</div>`:'<div class="idea-nota" style="color:#334155;font-style:italic;">Sin notas</div>'}
+        <div class="idea-acciones">
+          <button class="tarea-btn-sm" onclick="editarIdea('${idea.id}')">✏ Editar</button>
+          <button class="tarea-btn-sm del" onclick="eliminarIdea('${idea.id}')">🗑 Eliminar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleIdeaBody(id){
+  const body=document.getElementById('idea-body-'+id);
+  const arrow=document.getElementById('idea-arrow-'+id);
+  if(!body) return;
+  const open=body.classList.toggle('open');
+  if(arrow) arrow.style.transform=open?'rotate(180deg)':'';
+}
+
+async function toggleIdea(id, actual){
+  try{
+    await db.from('mkt_ideas').update({completada:!actual}).eq('id',id);
+    await cargarMktIdeas(); renderIdeas();
+  }catch(e){}
+}
+
+function abrirModalIdea(){
+  _editIdeaId=null;
+  document.getElementById('modal-idea-title').textContent='💡 Nueva idea';
+  document.getElementById('idea-id').value='';
+  document.getElementById('idea-titulo').value='';
+  document.getElementById('idea-nota').value='';
+  document.getElementById('idea-red').value='general';
+  document.getElementById('idea-error').style.display='none';
+  document.getElementById('modal-idea').classList.add('on');
+}
+
+function editarIdea(id){
+  const idea=mktIdeas.find(x=>x.id===id); if(!idea) return;
+  _editIdeaId=id;
+  document.getElementById('modal-idea-title').textContent='✏ Editar idea';
+  document.getElementById('idea-id').value=id;
+  document.getElementById('idea-titulo').value=idea.titulo||'';
+  document.getElementById('idea-nota').value=idea.nota||'';
+  document.getElementById('idea-red').value=idea.red||'general';
+  document.getElementById('idea-error').style.display='none';
+  document.getElementById('modal-idea').classList.add('on');
+}
+
+async function guardarIdea(){
+  const titulo=document.getElementById('idea-titulo').value.trim();
+  const nota=document.getElementById('idea-nota').value.trim();
+  const red=document.getElementById('idea-red').value;
+  const errEl=document.getElementById('idea-error');
+  if(!titulo){ errEl.textContent='El título es obligatorio'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+  try{
+    if(_editIdeaId) await db.from('mkt_ideas').update({titulo,nota,red}).eq('id',_editIdeaId);
+    else await db.from('mkt_ideas').insert({titulo,nota,red,completada:false});
+    cerrarModal('modal-idea');
+    await cargarMktIdeas(); renderIdeas();
+  }catch(e){ errEl.textContent='Error al guardar'; errEl.style.display='block'; }
+}
+
+async function eliminarIdea(id){
+  if(!confirm('¿Eliminar esta idea?')) return;
+  try{ await db.from('mkt_ideas').delete().eq('id',id); await cargarMktIdeas(); renderIdeas(); }catch(e){}
+}
+
+// ── CANALES ───────────────────────────────────────
+async function cargarMktCanales(){
+  try{ const{data}=await db.from('mkt_canales').select('*').order('created_at',{ascending:true}); mktCanales=data||[]; }catch(e){ mktCanales=[]; }
+}
+
+async function cargarMktPublicaciones(){
+  try{ const{data}=await db.from('mkt_publicaciones').select('*').order('fecha',{ascending:true,nullsLast:true}); mktPublicaciones=data||[]; }catch(e){ mktPublicaciones=[]; }
+}
+
+function renderCanales(){
+  const el=document.getElementById('mkt-canales-grid'); if(!el) return;
+  if(!mktCanales.length){ el.innerHTML='<div style="color:#475569;font-size:13px;padding:20px;">Sin canales. Agregá uno con "+ Nuevo canal"</div>'; return; }
+  el.innerHTML=mktCanales.map(c=>{
+    const pubs=mktPublicaciones.filter(p=>p.canal_id===c.id);
+    const confirmadas=pubs.filter(p=>p.estado==='confirmada').length;
+    const ideas=pubs.filter(p=>p.estado==='idea').length;
+    return `<div class="canal-card">
+      <div class="canal-header">
+        <span class="canal-emoji">${c.emoji||'📱'}</span>
+        <span class="canal-nombre">${c.nombre}</span>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <span style="font-size:10px;background:#22C55E22;color:#22C55E;padding:2px 7px;border-radius:10px;font-weight:700;">${confirmadas} conf.</span>
+          <span style="font-size:10px;background:#6C63FF22;color:#A5B4FF;padding:2px 7px;border-radius:10px;font-weight:700;">${ideas} ideas</span>
+        </div>
+        <button class="tarea-btn-sm" onclick="editarCanal('${c.id}')" style="margin-left:4px;">✏</button>
+        <button class="tarea-btn-sm del" onclick="eliminarCanal('${c.id}')">🗑</button>
+      </div>
+      <div class="canal-body">
+        <div class="canal-subtab" id="cstab-${c.id}">
+          <button class="canal-stab on" onclick="setCanalStab('${c.id}','info',this)">📋 Info</button>
+          <button class="canal-stab" onclick="setCanalStab('${c.id}','ideas',this)">💡 Ideas</button>
+          <button class="canal-stab" onclick="setCanalStab('${c.id}','confirmadas',this)">✅ Confirmadas</button>
+        </div>
+        <div id="canal-panel-info-${c.id}">
+          ${c.descripcion?`<div class="canal-desc" style="margin-bottom:8px;">${c.descripcion}</div>`:''}
+          ${c.formas?`<div style="font-size:10px;color:#475569;font-weight:700;margin-bottom:4px;letter-spacing:.5px;">CÓMO REALIZARLO</div><div class="canal-desc">${c.formas}</div>`:''}
+          ${c.presupuesto?`<div style="margin-top:8px;font-size:11px;background:#22C55E11;border:1px solid #22C55E33;border-radius:6px;padding:5px 9px;color:#22C55E;font-weight:700;">💰 ${c.presupuesto}</div>`:''}
+        </div>
+        <div id="canal-panel-ideas-${c.id}" style="display:none;">
+          ${pubs.filter(p=>p.estado==='idea').map(p=>`
+            <div class="pub-item pub-idea">
+              <div style="flex:1;">
+                <div class="pub-texto">${p.texto}</div>
+              </div>
+              <button class="tarea-btn-sm" onclick="editarPublicacion('${p.id}','${c.id}')">✏</button>
+              <button class="tarea-btn-sm del" onclick="eliminarPublicacion('${p.id}','${c.id}')">✕</button>
+            </div>`).join('')||'<div style="color:#334155;font-size:12px;padding:8px 0;">Sin ideas todavía</div>'}
+          <button onclick="abrirModalPublicacion('${c.id}','idea')" style="margin-top:8px;background:transparent;border:1px dashed #334155;color:#64748B;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;width:100%;">+ Agregar idea</button>
+        </div>
+        <div id="canal-panel-confirmadas-${c.id}" style="display:none;">
+          ${pubs.filter(p=>p.estado==='confirmada').map(p=>`
+            <div class="pub-item pub-confirmada">
+              <div class="pub-fecha">${p.fecha?new Date(p.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'}):'Sin fecha'}</div>
+              <div class="pub-texto">${p.texto}</div>
+              <button class="tarea-btn-sm" onclick="editarPublicacion('${p.id}','${c.id}')">✏</button>
+              <button class="tarea-btn-sm del" onclick="eliminarPublicacion('${p.id}','${c.id}')">✕</button>
+            </div>`).join('')||'<div style="color:#334155;font-size:12px;padding:8px 0;">Sin publicaciones confirmadas</div>'}
+          <button onclick="abrirModalPublicacion('${c.id}','confirmada')" style="margin-top:8px;background:transparent;border:1px dashed #334155;color:#64748B;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;width:100%;">+ Agregar publicación</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setCanalStab(canalId, panel, btn){
+  ['info','ideas','confirmadas'].forEach(p=>{
+    const el=document.getElementById(`canal-panel-${p}-${canalId}`);
+    if(el) el.style.display=p===panel?'block':'none';
+  });
+  document.querySelectorAll(`#cstab-${canalId} .canal-stab`).forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function abrirModalCanal(){
+  _editCanalId=null;
+  document.getElementById('modal-canal-title').textContent='📱 Nuevo canal';
+  ['canal-id','canal-nombre','canal-desc','canal-formas','canal-presupuesto'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('canal-emoji').value='📱';
+  document.getElementById('canal-error').style.display='none';
+  document.getElementById('modal-canal').classList.add('on');
+}
+
+function editarCanal(id){
+  const c=mktCanales.find(x=>x.id===id); if(!c) return;
+  _editCanalId=id;
+  document.getElementById('modal-canal-title').textContent='✏ Editar canal';
+  document.getElementById('canal-id').value=id;
+  document.getElementById('canal-nombre').value=c.nombre||'';
+  document.getElementById('canal-emoji').value=c.emoji||'📱';
+  document.getElementById('canal-desc').value=c.descripcion||'';
+  document.getElementById('canal-formas').value=c.formas||'';
+  document.getElementById('canal-presupuesto').value=c.presupuesto||'';
+  document.getElementById('canal-error').style.display='none';
+  document.getElementById('modal-canal').classList.add('on');
+}
+
+async function guardarCanal(){
+  const nombre=document.getElementById('canal-nombre').value.trim();
+  const emoji=document.getElementById('canal-emoji').value.trim()||'📱';
+  const descripcion=document.getElementById('canal-desc').value.trim();
+  const formas=document.getElementById('canal-formas').value.trim();
+  const presupuesto=document.getElementById('canal-presupuesto').value.trim();
+  const errEl=document.getElementById('canal-error');
+  if(!nombre){ errEl.textContent='El nombre es obligatorio'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+  try{
+    if(_editCanalId) await db.from('mkt_canales').update({nombre,emoji,descripcion,formas,presupuesto}).eq('id',_editCanalId);
+    else await db.from('mkt_canales').insert({nombre,emoji,descripcion,formas,presupuesto});
+    cerrarModal('modal-canal');
+    await Promise.all([cargarMktCanales(),cargarMktPublicaciones()]); renderCanales();
+  }catch(e){ errEl.textContent='Error al guardar'; errEl.style.display='block'; }
+}
+
+async function eliminarCanal(id){
+  if(!confirm('¿Eliminar este canal y todas sus publicaciones?')) return;
+  try{
+    await db.from('mkt_publicaciones').delete().eq('canal_id',id);
+    await db.from('mkt_canales').delete().eq('id',id);
+    await Promise.all([cargarMktCanales(),cargarMktPublicaciones()]); renderCanales();
+  }catch(e){}
+}
+
+// ── PUBLICACIONES ─────────────────────────────────
+function toggleFechaPub(){
+  const estado=document.getElementById('pub-estado').value;
+  document.getElementById('pub-fecha-group').style.display=estado==='confirmada'?'block':'none';
+}
+
+function abrirModalPublicacion(canalId, estadoDefault='idea'){
+  _editPubId=null; _editPubCanalId=canalId;
+  document.getElementById('modal-pub-title').textContent='📅 Nueva publicación';
+  document.getElementById('pub-id').value='';
+  document.getElementById('pub-canal-id').value=canalId;
+  document.getElementById('pub-texto').value='';
+  document.getElementById('pub-estado').value=estadoDefault;
+  document.getElementById('pub-fecha').value='';
+  document.getElementById('pub-fecha-group').style.display=estadoDefault==='confirmada'?'block':'none';
+  document.getElementById('pub-error').style.display='none';
+  document.getElementById('modal-publicacion').classList.add('on');
+}
+
+function editarPublicacion(id, canalId){
+  const p=mktPublicaciones.find(x=>x.id===id); if(!p) return;
+  _editPubId=id; _editPubCanalId=canalId;
+  document.getElementById('modal-pub-title').textContent='✏ Editar publicación';
+  document.getElementById('pub-id').value=id;
+  document.getElementById('pub-canal-id').value=canalId;
+  document.getElementById('pub-texto').value=p.texto||'';
+  document.getElementById('pub-estado').value=p.estado||'idea';
+  document.getElementById('pub-fecha').value=p.fecha||'';
+  document.getElementById('pub-fecha-group').style.display=p.estado==='confirmada'?'block':'none';
+  document.getElementById('pub-error').style.display='none';
+  document.getElementById('modal-publicacion').classList.add('on');
+}
+
+async function guardarPublicacion(){
+  const texto=document.getElementById('pub-texto').value.trim();
+  const estado=document.getElementById('pub-estado').value;
+  const fecha=document.getElementById('pub-fecha').value||null;
+  const canal_id=document.getElementById('pub-canal-id').value;
+  const errEl=document.getElementById('pub-error');
+  if(!texto){ errEl.textContent='El contenido es obligatorio'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+  try{
+    if(_editPubId) await db.from('mkt_publicaciones').update({texto,estado,fecha}).eq('id',_editPubId);
+    else await db.from('mkt_publicaciones').insert({texto,estado,fecha,canal_id});
+    cerrarModal('modal-publicacion');
+    await Promise.all([cargarMktCanales(),cargarMktPublicaciones()]); renderCanales();
+  }catch(e){ errEl.textContent='Error al guardar'; errEl.style.display='block'; }
+}
+
+async function eliminarPublicacion(id, canalId){
+  if(!confirm('¿Eliminar esta publicación?')) return;
+  try{
+    await db.from('mkt_publicaciones').delete().eq('id',id);
+    await Promise.all([cargarMktCanales(),cargarMktPublicaciones()]); renderCanales();
+  }catch(e){}
+}
+
+// ── CALENDARIO ────────────────────────────────────
+function mktCalPrev(){ mktCalFecha=new Date(mktCalFecha.getFullYear(),mktCalFecha.getMonth()-1,1); renderCalendario(); }
+function mktCalNext(){ mktCalFecha=new Date(mktCalFecha.getFullYear(),mktCalFecha.getMonth()+1,1); renderCalendario(); }
+
+function renderCalendario(){
+  const el=document.getElementById('mkt-calendario'); if(!el) return;
+  const titulo=document.getElementById('mkt-cal-titulo');
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  const año=mktCalFecha.getFullYear(), mes=mktCalFecha.getMonth();
+  titulo.textContent=new Date(año,mes,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}).toUpperCase();
+
+  const diasSemana=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+  let html=diasSemana.map(d=>`<div class="cal-dia-header">${d}</div>`).join('');
+
+  const primerDia=new Date(año,mes,1).getDay();
+  const ultimoDia=new Date(año,mes+1,0).getDate();
+
+  // días del mes anterior
+  for(let i=0;i<primerDia;i++){
+    const d=new Date(año,mes,0-(primerDia-1-i));
+    html+=`<div class="cal-dia otro-mes"><div class="cal-dia-num">${d.getDate()}</div></div>`;
+  }
+
+  // días del mes
+  for(let d=1;d<=ultimoDia;d++){
+    const fecha=new Date(año,mes,d); fecha.setHours(0,0,0,0);
+    const fechaStr=`${año}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const pubsDelDia=mktPublicaciones.filter(p=>p.estado==='confirmada'&&p.fecha===fechaStr);
+    const esHoy=fecha.getTime()===hoy.getTime();
+    html+=`<div class="cal-dia${esHoy?' hoy':''}">
+      <div class="cal-dia-num">${d}</div>
+      ${pubsDelDia.map(p=>{
+        const canal=mktCanales.find(c=>c.id===p.canal_id);
+        const color=canal?'#6C63FF':'#22C55E';
+        return `<div class="cal-pub-chip" style="background:${color}22;color:${color};border:1px solid ${color}44;" title="${p.texto}">${canal?canal.emoji||'📱':''} ${p.texto.slice(0,18)}${p.texto.length>18?'…':''}</div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // días del mes siguiente
+  const totalCeldas=primerDia+ultimoDia;
+  const celdas=Math.ceil(totalCeldas/7)*7;
+  for(let i=1;i<=celdas-totalCeldas;i++){
+    html+=`<div class="cal-dia otro-mes"><div class="cal-dia-num">${i}</div></div>`;
+  }
+
+  el.innerHTML=html;
+
+  // leyenda
+  const leyenda=document.getElementById('mkt-cal-leyenda');
+  const canalesConPubs=[...new Set(mktPublicaciones.filter(p=>p.estado==='confirmada'&&p.fecha&&p.fecha.startsWith(`${año}-${String(mes+1).padStart(2,'0')}`)).map(p=>p.canal_id))];
+  leyenda.innerHTML=canalesConPubs.map(cid=>{
+    const c=mktCanales.find(x=>x.id===cid);
+    return c?`<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94A3B8;"><div style="width:10px;height:10px;border-radius:3px;background:#6C63FF;"></div>${c.emoji||''} ${c.nombre}</div>`:'';
+  }).join('');
+}
+let _adjPedidoId = null;
+let _adjPedidoNum = null;
+
+async function abrirAdjuntos(pedidoId, pedidoNum){
+  _adjPedidoId = pedidoId;
+  _adjPedidoNum = pedidoNum;
+  document.getElementById("adj-pedido-num").textContent = "#"+pedidoNum;
   document.getElementById("adj-upload-progress").style.display="none";
   document.getElementById("modal-adjuntos").classList.add("on");
   await cargarListaAdjuntos();
 }
+
 async function cargarListaAdjuntos(){
-  const lista=document.getElementById("adj-lista");
-  lista.innerHTML='<div style="color:#64748B;font-size:12px;padding:8px 0;">Cargando...</div>';
+  const lista = document.getElementById("adj-lista");
+  lista.innerHTML = `<div style="color:#64748B;font-size:12px;padding:8px 0;">Cargando...</div>`;
   try{
-    const{data,error}=await db.storage.from("pedidos-adjuntos").list(_adjPedidoId+"/",{sortBy:{column:"created_at",order:"desc"}});
-    if(error)throw error;
-    if(!data||data.length===0){lista.innerHTML='<div style="color:#475569;font-size:12px;padding:8px 0;text-align:center;">Sin adjuntos todavía</div>';return;}
-    lista.innerHTML=data.map(f=>{
-      const ext=f.name.split(".").pop().toLowerCase();
-      const icono=ext==="pdf"?"📄":["jpg","jpeg","png","webp","gif"].includes(ext)?"🖼️":"📁";
-      const fecha=f.created_at?new Date(f.created_at).toLocaleDateString("es-AR"):"";
-      return`<div class="adj-item"><span class="adj-icon">${icono}</span><span class="adj-nombre" title="${f.name}">${f.name.replace(_adjPedidoId+"_","")}</span><span class="adj-fecha">${fecha}</span><button class="adj-btn" onclick="descargarAdjunto('${f.name}')">↓ Ver</button><button class="adj-btn del" onclick="eliminarAdjunto('${f.name}')">✕</button></div>`;
+    const { data, error } = await db.storage.from("pedidos-adjuntos").list(_adjPedidoId+"/", {sortBy:{column:"created_at",order:"desc"}});
+    if(error) throw error;
+    if(!data||data.length===0){
+      lista.innerHTML=`<div style="color:#475569;font-size:12px;padding:8px 0;text-align:center;">Sin adjuntos todavía</div>`;
+      return;
+    }
+    lista.innerHTML = data.map(f=>{
+      const ext = f.name.split(".").pop().toLowerCase();
+      const icono = ext==="pdf"?"📄":["jpg","jpeg","png","webp","gif"].includes(ext)?"🖼️":"📁";
+      const fecha = f.created_at ? new Date(f.created_at).toLocaleDateString("es-AR") : "";
+      return `<div class="adj-item">
+        <span class="adj-icon">${icono}</span>
+        <span class="adj-nombre" title="${f.name}">${f.name.replace(_adjPedidoId+"_","")}</span>
+        <span class="adj-fecha">${fecha}</span>
+        <button class="adj-btn" onclick="descargarAdjunto('${f.name}')">↓ Ver</button>
+        <button class="adj-btn del" onclick="eliminarAdjunto('${f.name}')">✕</button>
+      </div>`;
     }).join("");
-    const p=allPedidos.find(x=>x.id===_adjPedidoId);
-    if(p){p.cant_adjuntos=data.length;renderKanban();}
-  }catch(e){lista.innerHTML='<div style="color:#EF4444;font-size:12px;">Error al cargar</div>';}
-}
-async function descargarAdjunto(fileName){
-  try{const{data}=await db.storage.from("pedidos-adjuntos").createSignedUrl(_adjPedidoId+"/"+fileName,300);if(data?.signedUrl)window.open(data.signedUrl,"_blank");}catch(e){alert("No se pudo abrir");}
-}
-async function eliminarAdjunto(fileName){
-  if(!confirm("¿Eliminar este adjunto?"))return;
-  try{await db.storage.from("pedidos-adjuntos").remove([_adjPedidoId+"/"+fileName]);await cargarListaAdjuntos();}catch(e){alert("Error al eliminar");}
-}
-function handleAdjDrop(e){e.preventDefault();e.currentTarget.style.borderColor="#334155";const files=e.dataTransfer.files;if(files.length)subirAdjuntos(files);}
-async function subirAdjuntos(files){
-  const prog=document.getElementById("adj-upload-progress"),bar=document.getElementById("adj-progress-bar"),txt=document.getElementById("adj-progress-txt");
-  prog.style.display="block";const total=files.length;let ok=0;
-  for(let i=0;i<total;i++){
-    const file=files[i];if(file.size>10*1024*1024){alert(`"${file.name}" supera los 10MB`);continue;}
-    txt.textContent=`Subiendo ${i+1} de ${total}: ${file.name}`;bar.style.width=Math.round((i/total)*100)+"%";
-    const safeName=_adjPedidoId+"_"+Date.now()+"_"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-    try{const{error}=await db.storage.from("pedidos-adjuntos").upload(_adjPedidoId+"/"+safeName,file,{upsert:false});if(!error)ok++;}catch(e){}
+    // actualizar cant_adjuntos en el pedido local
+    const p = allPedidos.find(x=>x.id===_adjPedidoId);
+    if(p){ p.cant_adjuntos = data.length; renderKanban(); }
+  }catch(e){
+    lista.innerHTML=`<div style="color:#EF4444;font-size:12px;">Error al cargar adjuntos</div>`;
   }
-  bar.style.width="100%";txt.textContent=`✓ ${ok} de ${total} subido${ok!==1?"s":""}`;
+}
+
+async function descargarAdjunto(fileName){
+  try{
+    const { data } = await db.storage.from("pedidos-adjuntos").createSignedUrl(_adjPedidoId+"/"+fileName, 300);
+    if(data?.signedUrl) window.open(data.signedUrl,"_blank");
+  }catch(e){ alert("No se pudo abrir el archivo"); }
+}
+
+async function eliminarAdjunto(fileName){
+  if(!confirm("¿Eliminar este adjunto?")) return;
+  try{
+    await db.storage.from("pedidos-adjuntos").remove([_adjPedidoId+"/"+fileName]);
+    await cargarListaAdjuntos();
+  }catch(e){ alert("Error al eliminar"); }
+}
+
+function handleAdjDrop(e){
+  e.preventDefault();
+  e.currentTarget.style.borderColor="#334155";
+  const files = e.dataTransfer.files;
+  if(files.length) subirAdjuntos(files);
+}
+
+async function subirAdjuntos(files){
+  const prog = document.getElementById("adj-upload-progress");
+  const bar = document.getElementById("adj-progress-bar");
+  const txt = document.getElementById("adj-progress-txt");
+  prog.style.display="block";
+  const total = files.length;
+  let ok=0;
+  for(let i=0;i<total;i++){
+    const file = files[i];
+    if(file.size > 10*1024*1024){ alert(`"${file.name}" supera los 10MB`); continue; }
+    txt.textContent = `Subiendo ${i+1} de ${total}: ${file.name}`;
+    bar.style.width = Math.round(((i)/total)*100)+"%";
+    const safeName = _adjPedidoId+"_"+Date.now()+"_"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+    try{
+      const { error } = await db.storage.from("pedidos-adjuntos").upload(_adjPedidoId+"/"+safeName, file, {upsert:false});
+      if(!error) ok++;
+    }catch(e){}
+  }
+  bar.style.width="100%";
+  txt.textContent = `✓ ${ok} de ${total} subido${ok!==1?"s":""}`;
   setTimeout(()=>prog.style.display="none",2000);
   document.getElementById("adj-file-input").value="";
   await cargarListaAdjuntos();
 }
 
-// ══════ TAREAS ══════
-let allTareas=[],filtroTareas="todas",_editTareaId=null;
-function periodoKey(r){const n=new Date();if(r==="semanal"){const d=new Date(Date.UTC(n.getFullYear(),n.getMonth(),n.getDate()));const dy=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-dy);const ys=new Date(Date.UTC(d.getUTCFullYear(),0,1));const wk=Math.ceil((((d-ys)/86400000)+1)/7);return`${d.getUTCFullYear()}-W${String(wk).padStart(2,"0")}`;}return`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}`;}
-function periodoLabel(r){const n=new Date();if(r==="semanal"){const l=new Date(n);l.setDate(n.getDate()-((n.getDay()||7)-1));const d=new Date(l);d.setDate(l.getDate()+6);return`${l.getDate()}/${l.getMonth()+1} – ${d.getDate()}/${d.getMonth()+1}`;}if(r==="unica")return"Una vez";return n.toLocaleDateString("es-AR",{month:"long",year:"numeric"});}
-async function cargarTareas(){
-  try{const{data,error}=await db.from("tareas").select("*").order("orden",{ascending:true,nullsFirst:true}).order("created_at",{ascending:true});if(error)throw error;allTareas=data||[];}
-  catch(e){try{const{data}=await db.from("tareas").select("*").order("created_at",{ascending:true});allTareas=data||[];}catch(e2){allTareas=[];}}
+// ══════════════════════════════════════════════════
+//  TAREAS ADMINISTRATIVAS
+// ══════════════════════════════════════════════════
+let allTareas = [];
+let filtroTareas = "todas";
+let _editTareaId = null;
+
+function periodoKey(recurrencia){
+  const now = new Date();
+  if(recurrencia==="semanal"){
+    // Semana ISO: año + número de semana
+    const d = new Date(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()));
+    const dayNum = d.getUTCDay()||7;
+    d.setUTCDate(d.getUTCDate()+4-dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    const wk = Math.ceil((((d-yearStart)/86400000)+1)/7);
+    return `${d.getUTCFullYear()}-W${String(wk).padStart(2,"0")}`;
+  }
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
 }
-function setFiltroTareas(f,e){
+
+function periodoLabel(recurrencia){
+  const now = new Date();
+  if(recurrencia==="semanal"){
+    const lunes = new Date(now);
+    lunes.setDate(now.getDate()-((now.getDay()||7)-1));
+    const dom = new Date(lunes); dom.setDate(lunes.getDate()+6);
+    return `${lunes.getDate()}/${lunes.getMonth()+1} – ${dom.getDate()}/${dom.getMonth()+1}`;
+  }
+  if(recurrencia==="unica") return "Una vez";
+  return now.toLocaleDateString("es-AR",{month:"long",year:"numeric"});
+}
+
+async function cargarTareas(){
+  try{
+    const { data, error } = await db.from("tareas").select("*").order("orden",{ascending:true,nullsFirst:true}).order("created_at",{ascending:true});
+    if(error) throw error;
+    allTareas = data||[];
+  }catch(e){
+    // fallback sin campo orden (por si aún no fue migrado)
+    try{
+      const { data } = await db.from("tareas").select("*").order("created_at",{ascending:true});
+      allTareas = data||[];
+    }catch(e2){ allTareas=[]; }
+  }
+}
+
+function setFiltroTareas(f){
   filtroTareas=f;
   document.querySelectorAll(".tfil-btn").forEach(b=>b.classList.remove("tfil-on"));
-  if(e&&e.target)e.target.classList.add("tfil-on");
+  event.currentTarget.classList.add("tfil-on");
   renderTareas();
 }
+
 async function renderTareas(){
   await cargarTareas();
-  const lista=document.getElementById("tareas-lista");if(!lista)return;
-  let tareas=[...allTareas];
-  if(filtroTareas==="semanal")tareas=tareas.filter(t=>t.recurrencia==="semanal");
-  else if(filtroTareas==="mensual")tareas=tareas.filter(t=>t.recurrencia==="mensual");
-  else if(filtroTareas==="pendiente")tareas=tareas.filter(t=>!(t.realizadas||[]).includes(periodoKey(t.recurrencia)));
-  else if(filtroTareas==="realizada")tareas=tareas.filter(t=>(t.realizadas||[]).includes(periodoKey(t.recurrencia)));
-  if(!tareas.length){lista.innerHTML='<div style="color:#475569;text-align:center;padding:40px;font-size:13px;">No hay tareas en esta categoría</div>';return;}
-  lista.innerHTML=tareas.map(t=>{
-    const pk=periodoKey(t.recurrencia),hecha=(t.realizadas||[]).includes(pk);
-    const recLabel=t.recurrencia==="semanal"?"📅 Semanal":t.recurrencia==="mensual"?"🗓 Mensual":"🔂 Única";
-    return`<div class="tarea-card${hecha?" realizada":""}" draggable="true" data-id="${t.id}" ondragstart="tareaDragStart(event)" ondragover="tareaDragOver(event)" ondragleave="tareaDragLeave(event)" ondrop="tareaDrop(event)">
-      <div class="tarea-drag-handle">⠿</div>
-      <button class="tarea-check${hecha?" on":""}" onclick="toggleTarea('${t.id}','${pk}',${hecha})">${hecha?"✓":""}</button>
+  const lista = document.getElementById("tareas-lista");
+  if(!lista) return;
+  let tareas = [...allTareas];
+  if(filtroTareas==="semanal") tareas=tareas.filter(t=>t.recurrencia==="semanal");
+  else if(filtroTareas==="mensual") tareas=tareas.filter(t=>t.recurrencia==="mensual");
+  else if(filtroTareas==="pendiente") tareas=tareas.filter(t=>{
+    const pk=periodoKey(t.recurrencia);
+    return !(t.realizadas||[]).includes(pk);
+  });
+  else if(filtroTareas==="realizada") tareas=tareas.filter(t=>{
+    const pk=periodoKey(t.recurrencia);
+    return (t.realizadas||[]).includes(pk);
+  });
+  if(tareas.length===0){
+    lista.innerHTML=`<div style="color:#475569;text-align:center;padding:40px;font-size:13px;">No hay tareas en esta categoría</div>`;
+    return;
+  }
+  lista.innerHTML = tareas.map(t=>{
+    const pk = periodoKey(t.recurrencia);
+    const hecha = (t.realizadas||[]).includes(pk);
+    const recLabel = t.recurrencia==="semanal"?"📅 Semanal":t.recurrencia==="mensual"?"🗓 Mensual":"🔂 Única";
+    const periodo = periodoLabel(t.recurrencia);
+    return `<div class="tarea-card${hecha?" realizada":""}" draggable="true" data-id="${t.id}" 
+      ondragstart="tareaDragStart(event)" ondragover="tareaDragOver(event)" ondragleave="tareaDragLeave(event)" ondrop="tareaDrop(event)">
+      <div class="tarea-drag-handle" title="Arrastrar para reordenar">⠿</div>
+      <button class="tarea-check${hecha?" on":""}" onclick="toggleTarea('${t.id}','${pk}',${hecha})" title="${hecha?"Marcar pendiente":"Marcar realizada"}">${hecha?"✓":""}</button>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
           <div class="tarea-nombre" style="${hecha?"text-decoration:line-through;color:#475569;":""}">${t.nombre}</div>
           <span class="tarea-badge ${t.recurrencia}">${recLabel}</span>
-          <span class="tarea-periodo">${periodoLabel(t.recurrencia)}</span>
+          <span class="tarea-periodo">${periodo}</span>
         </div>
         ${t.descripcion?`<div class="tarea-desc">${t.descripcion}</div>`:""}
       </div>
@@ -3988,182 +4466,120 @@ async function renderTareas(){
     </div>`;
   }).join("");
 }
-async function toggleTarea(id,pk,actual){
-  const t=allTareas.find(x=>x.id===id);if(!t)return;
-  let r=t.realizadas||[];r=actual?r.filter(p=>p!==pk):[...r,pk];
-  try{await db.from("tareas").update({realizadas:r}).eq("id",id);t.realizadas=r;renderTareas();}catch(e){}
+
+// ── DRAG & DROP ──────────────────────────────────
+let _dragId = null;
+
+function tareaDragStart(e){
+  _dragId = e.currentTarget.dataset.id;
+  e.currentTarget.style.opacity="0.4";
+  e.dataTransfer.effectAllowed="move";
 }
+function tareaDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect="move";
+  e.currentTarget.style.borderColor="#6C63FF";
+  e.currentTarget.style.borderStyle="dashed";
+}
+function tareaDragLeave(e){
+  e.currentTarget.style.borderColor="";
+  e.currentTarget.style.borderStyle="";
+}
+async function tareaDrop(e){
+  e.preventDefault();
+  const targetId = e.currentTarget.dataset.id;
+  e.currentTarget.style.borderColor="";
+  e.currentTarget.style.borderStyle="";
+  document.querySelectorAll(".tarea-card").forEach(c=>c.style.opacity="1");
+  if(!_dragId || _dragId===targetId) return;
+
+  // Reordenar en allTareas
+  const fromIdx = allTareas.findIndex(t=>t.id===_dragId);
+  const toIdx   = allTareas.findIndex(t=>t.id===targetId);
+  if(fromIdx<0||toIdx<0) return;
+  const [moved] = allTareas.splice(fromIdx,1);
+  allTareas.splice(toIdx,0,moved);
+
+  // Guardar nuevo orden en Supabase
+  await guardarOrdenTareas();
+  renderTareas();
+}
+
+async function guardarOrdenTareas(){
+  // Actualizar campo "orden" de cada tarea según posición en allTareas
+  const updates = allTareas.map((t,i)=>
+    db.from("tareas").update({orden:i}).eq("id",t.id)
+  );
+  await Promise.all(updates);
+}
+
+async function ordenarAlfabetico(){
+  allTareas.sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));
+  await guardarOrdenTareas();
+  renderTareas();
+}
+
+async function toggleTarea(id, periodoKey, yaHecha){
+  const t = allTareas.find(x=>x.id===id);
+  if(!t) return;
+  let realizadas = t.realizadas||[];
+  if(yaHecha) realizadas = realizadas.filter(p=>p!==periodoKey);
+  else realizadas = [...realizadas, periodoKey];
+  try{
+    await db.from("tareas").update({realizadas}).eq("id",id);
+    t.realizadas = realizadas;
+    renderTareas();
+  }catch(e){ alert("Error al actualizar tarea"); }
+}
+
 function abrirModalTarea(){
   _editTareaId=null;
   document.getElementById("modal-tarea-title").textContent="✅ Nueva tarea";
-  ["t-nombre","t-desc"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("t-id").value="";
+  document.getElementById("t-nombre").value="";
+  document.getElementById("t-desc").value="";
   document.getElementById("t-recurrencia").value="mensual";
   document.getElementById("t-error").style.display="none";
   document.getElementById("modal-tarea").classList.add("on");
 }
+
 function editarTarea(id){
-  const t=allTareas.find(x=>x.id===id);if(!t)return;
+  const t = allTareas.find(x=>x.id===id);
+  if(!t) return;
   _editTareaId=id;
   document.getElementById("modal-tarea-title").textContent="✏ Editar tarea";
+  document.getElementById("t-id").value=id;
   document.getElementById("t-nombre").value=t.nombre||"";
   document.getElementById("t-desc").value=t.descripcion||"";
   document.getElementById("t-recurrencia").value=t.recurrencia||"mensual";
   document.getElementById("t-error").style.display="none";
   document.getElementById("modal-tarea").classList.add("on");
 }
+
 async function guardarTarea(){
-  const nombre=document.getElementById("t-nombre").value.trim(),desc=document.getElementById("t-desc").value.trim(),recurrencia=document.getElementById("t-recurrencia").value;
-  const errEl=document.getElementById("t-error");
-  if(!nombre){errEl.textContent="El nombre es obligatorio";errEl.style.display="block";return;}
+  const nombre = document.getElementById("t-nombre").value.trim();
+  const desc = document.getElementById("t-desc").value.trim();
+  const recurrencia = document.getElementById("t-recurrencia").value;
+  const errEl = document.getElementById("t-error");
+  if(!nombre){ errEl.textContent="El nombre es obligatorio";errEl.style.display="block";return; }
   errEl.style.display="none";
   try{
-    if(_editTareaId)await db.from("tareas").update({nombre,descripcion:desc,recurrencia}).eq("id",_editTareaId);
-    else await db.from("tareas").insert({nombre,descripcion:desc,recurrencia,realizadas:[]});
-    cerrarModal("modal-tarea");renderTareas();
-  }catch(e){errEl.textContent="Error al guardar";errEl.style.display="block";}
-}
-async function eliminarTarea(id){if(!confirm("¿Eliminar esta tarea?"))return;try{await db.from("tareas").delete().eq("id",id);renderTareas();}catch(e){}}
-let _dragId=null;
-function tareaDragStart(e){_dragId=e.currentTarget.dataset.id;e.currentTarget.style.opacity="0.4";e.dataTransfer.effectAllowed="move";}
-function tareaDragOver(e){e.preventDefault();e.currentTarget.style.borderColor="#6C63FF";e.currentTarget.style.borderStyle="dashed";}
-function tareaDragLeave(e){e.currentTarget.style.borderColor="";e.currentTarget.style.borderStyle="";}
-async function tareaDrop(e){
-  e.preventDefault();const targetId=e.currentTarget.dataset.id;
-  e.currentTarget.style.borderColor="";e.currentTarget.style.borderStyle="";
-  document.querySelectorAll(".tarea-card").forEach(c=>c.style.opacity="1");
-  if(!_dragId||_dragId===targetId)return;
-  const fi=allTareas.findIndex(t=>t.id===_dragId),ti=allTareas.findIndex(t=>t.id===targetId);
-  if(fi<0||ti<0)return;
-  const[moved]=allTareas.splice(fi,1);allTareas.splice(ti,0,moved);
-  await Promise.all(allTareas.map((t,i)=>db.from("tareas").update({orden:i}).eq("id",t.id)));
-  renderTareas();
-}
-async function ordenarAlfabetico(){
-  allTareas.sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));
-  await Promise.all(allTareas.map((t,i)=>db.from("tareas").update({orden:i}).eq("id",t.id)));
-  renderTareas();
+    if(_editTareaId){
+      await db.from("tareas").update({nombre,descripcion:desc,recurrencia}).eq("id",_editTareaId);
+    } else {
+      await db.from("tareas").insert({nombre,descripcion:desc,recurrencia,realizadas:[]});
+    }
+    cerrarModal("modal-tarea");
+    renderTareas();
+  }catch(e){ errEl.textContent="Error al guardar";errEl.style.display="block"; }
 }
 
-// ══════ MARKETING ══════
-let mktIdeas=[],mktCanales=[],mktPublicaciones=[],mktTabActual="ideas",mktCalFecha=new Date();
-let _editIdeaId=null,_editCanalId=null,_editPubId=null,_editPubCanalId=null;
-const RED_COLORS={instagram:"#E1306C",facebook:"#1877F2",tiktok:"#000000",google:"#4285F4",youtube:"#FF0000",general:"#6C63FF"};
-const RED_LABELS={instagram:"📸 Instagram",facebook:"📘 Facebook",tiktok:"🎵 TikTok",google:"🔍 Google",youtube:"▶ YouTube",general:"🌐 General"};
-function setMktTab(tab,btn){
-  mktTabActual=tab;
-  document.querySelectorAll(".mkt-tab").forEach(b=>b.classList.remove("mkt-tab-on"));btn.classList.add("mkt-tab-on");
-  ["ideas","canales","calendario"].forEach(t=>{const el=document.getElementById("mkt-tab-"+t);if(el)el.style.display=t===tab?"block":"none";});
-  if(tab==="ideas")renderIdeas();else if(tab==="canales")renderCanales();else renderCalendario();
-}
-async function renderMarketing(){
-  await Promise.all([cargarMktIdeas(),cargarMktCanales(),cargarMktPublicaciones()]);
-  if(mktTabActual==="ideas")renderIdeas();else if(mktTabActual==="canales")renderCanales();else renderCalendario();
-}
-async function cargarMktIdeas(){try{const{data}=await db.from("mkt_ideas").select("*").order("created_at",{ascending:false});mktIdeas=data||[];}catch(e){mktIdeas=[];}}
-async function cargarMktCanales(){try{const{data}=await db.from("mkt_canales").select("*").order("created_at",{ascending:true});mktCanales=data||[];}catch(e){mktCanales=[];}}
-async function cargarMktPublicaciones(){try{const{data}=await db.from("mkt_publicaciones").select("*").order("fecha",{ascending:true,nullsLast:true});mktPublicaciones=data||[];}catch(e){mktPublicaciones=[];}}
-function renderIdeas(){
-  const el=document.getElementById("mkt-ideas-lista");if(!el)return;
-  if(!mktIdeas.length){el.innerHTML='<div style="color:#475569;text-align:center;padding:40px;font-size:13px;">Sin ideas todavía. ¡Agregá la primera!</div>';return;}
-  el.innerHTML=mktIdeas.map(idea=>{
-    const color=RED_COLORS[idea.red||"general"]||"#6C63FF";
-    return`<div class="idea-card" id="idea-card-${idea.id}">
-      <div class="idea-header" onclick="toggleIdeaBody('${idea.id}')">
-        <div class="idea-check${idea.completada?" on":""}" onclick="event.stopPropagation();toggleIdea('${idea.id}',${idea.completada})">${idea.completada?"✓":""}</div>
-        <div class="idea-titulo" style="${idea.completada?"text-decoration:line-through;color:#475569;":""}">${idea.titulo}</div>
-        <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${color}22;color:${color};font-weight:700;flex-shrink:0;">${RED_LABELS[idea.red||"general"]}</span>
-        <span id="idea-arrow-${idea.id}" style="color:#475569;font-size:11px;transition:transform .2s;">▼</span>
-      </div>
-      <div class="idea-body" id="idea-body-${idea.id}">
-        ${idea.nota?`<div class="idea-nota">${idea.nota}</div>`:'<div class="idea-nota" style="color:#334155;font-style:italic;">Sin notas</div>'}
-        <div style="display:flex;gap:6px;"><button class="tarea-btn-sm" onclick="editarIdea('${idea.id}')">✏ Editar</button><button class="tarea-btn-sm del" onclick="eliminarIdea('${idea.id}')">🗑 Eliminar</button></div>
-      </div>
-    </div>`;
-  }).join("");
-}
-function toggleIdeaBody(id){const body=document.getElementById("idea-body-"+id),arrow=document.getElementById("idea-arrow-"+id);if(!body)return;const open=body.classList.toggle("open");if(arrow)arrow.style.transform=open?"rotate(180deg)":"";}
-async function toggleIdea(id,actual){try{await db.from("mkt_ideas").update({completada:!actual}).eq("id",id);await cargarMktIdeas();renderIdeas();}catch(e){}}
-function abrirModalIdea(){_editIdeaId=null;document.getElementById("modal-idea-title").textContent="💡 Nueva idea";["idea-titulo","idea-nota"].forEach(id=>document.getElementById(id).value="");document.getElementById("idea-red").value="general";document.getElementById("idea-error").style.display="none";document.getElementById("modal-idea").classList.add("on");}
-function editarIdea(id){const idea=mktIdeas.find(x=>x.id===id);if(!idea)return;_editIdeaId=id;document.getElementById("modal-idea-title").textContent="✏ Editar idea";document.getElementById("idea-titulo").value=idea.titulo||"";document.getElementById("idea-nota").value=idea.nota||"";document.getElementById("idea-red").value=idea.red||"general";document.getElementById("idea-error").style.display="none";document.getElementById("modal-idea").classList.add("on");}
-async function guardarIdea(){
-  const titulo=document.getElementById("idea-titulo").value.trim(),nota=document.getElementById("idea-nota").value.trim(),red=document.getElementById("idea-red").value,errEl=document.getElementById("idea-error");
-  if(!titulo){errEl.textContent="El título es obligatorio";errEl.style.display="block";return;}errEl.style.display="none";
-  try{if(_editIdeaId)await db.from("mkt_ideas").update({titulo,nota,red}).eq("id",_editIdeaId);else await db.from("mkt_ideas").insert({titulo,nota,red,completada:false});cerrarModal("modal-idea");await cargarMktIdeas();renderIdeas();}catch(e){errEl.textContent="Error al guardar";errEl.style.display="block";}
-}
-async function eliminarIdea(id){if(!confirm("¿Eliminar?"))return;try{await db.from("mkt_ideas").delete().eq("id",id);await cargarMktIdeas();renderIdeas();}catch(e){}}
-function renderCanales(){
-  const el=document.getElementById("mkt-canales-grid");if(!el)return;
-  if(!mktCanales.length){el.innerHTML='<div style="color:#475569;font-size:13px;padding:20px;">Sin canales. Agregá uno con "+ Nuevo canal"</div>';return;}
-  el.innerHTML=mktCanales.map(c=>{
-    const pubs=mktPublicaciones.filter(p=>p.canal_id===c.id),confirmadas=pubs.filter(p=>p.estado==="confirmada").length,ideas=pubs.filter(p=>p.estado==="idea").length;
-    return`<div class="canal-card">
-      <div class="canal-header">
-        <span class="canal-emoji">${c.emoji||"📱"}</span><span class="canal-nombre">${c.nombre}</span>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;"><span style="font-size:10px;background:#22C55E22;color:#22C55E;padding:2px 7px;border-radius:10px;font-weight:700;">${confirmadas} conf.</span><span style="font-size:10px;background:#6C63FF22;color:#A5B4FF;padding:2px 7px;border-radius:10px;font-weight:700;">${ideas} ideas</span></div>
-        <button class="tarea-btn-sm" onclick="editarCanal('${c.id}')">✏</button><button class="tarea-btn-sm del" onclick="eliminarCanal('${c.id}')">🗑</button>
-      </div>
-      <div class="canal-body">
-        <div class="canal-subtab" id="cstab-${c.id}">
-          <button class="canal-stab on" onclick="setCanalStab('${c.id}','info',this)">📋 Info</button>
-          <button class="canal-stab" onclick="setCanalStab('${c.id}','ideas',this)">💡 Ideas</button>
-          <button class="canal-stab" onclick="setCanalStab('${c.id}','confirmadas',this)">✅ Confirmadas</button>
-        </div>
-        <div id="canal-panel-info-${c.id}">
-          ${c.descripcion?`<div class="canal-desc" style="margin-bottom:8px;">${c.descripcion}</div>`:""}
-          ${c.formas?`<div style="font-size:10px;color:#475569;font-weight:700;margin-bottom:4px;letter-spacing:.5px;">CÓMO REALIZARLO</div><div class="canal-desc">${c.formas}</div>`:""}
-          ${c.presupuesto?`<div style="margin-top:8px;font-size:11px;background:#22C55E11;border:1px solid #22C55E33;border-radius:6px;padding:5px 9px;color:#22C55E;font-weight:700;">💰 ${c.presupuesto}</div>`:""}
-        </div>
-        <div id="canal-panel-ideas-${c.id}" style="display:none;">
-          ${pubs.filter(p=>p.estado==="idea").map(p=>`<div class="pub-item pub-idea"><div style="flex:1;"><div class="pub-texto">${p.texto}</div></div><button class="tarea-btn-sm" onclick="editarPublicacion('${p.id}','${c.id}')">✏</button><button class="tarea-btn-sm del" onclick="eliminarPublicacion('${p.id}')">✕</button></div>`).join("")||'<div style="color:#334155;font-size:12px;padding:8px 0;">Sin ideas</div>'}
-          <button onclick="abrirModalPublicacion('${c.id}','idea')" style="margin-top:8px;background:transparent;border:1px dashed #334155;color:#64748B;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;width:100%;">+ Agregar idea</button>
-        </div>
-        <div id="canal-panel-confirmadas-${c.id}" style="display:none;">
-          ${pubs.filter(p=>p.estado==="confirmada").map(p=>`<div class="pub-item pub-confirmada"><div class="pub-fecha">${p.fecha?new Date(p.fecha+"T00:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"}):"Sin fecha"}</div><div class="pub-texto">${p.texto}</div><button class="tarea-btn-sm" onclick="editarPublicacion('${p.id}','${c.id}')">✏</button><button class="tarea-btn-sm del" onclick="eliminarPublicacion('${p.id}')">✕</button></div>`).join("")||'<div style="color:#334155;font-size:12px;padding:8px 0;">Sin confirmadas</div>'}
-          <button onclick="abrirModalPublicacion('${c.id}','confirmada')" style="margin-top:8px;background:transparent;border:1px dashed #334155;color:#64748B;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;width:100%;">+ Agregar publicación</button>
-        </div>
-      </div>
-    </div>`;
-  }).join("");
-}
-function setCanalStab(canalId,panel,btn){["info","ideas","confirmadas"].forEach(p=>{const el=document.getElementById(`canal-panel-${p}-${canalId}`);if(el)el.style.display=p===panel?"block":"none";});document.querySelectorAll(`#cstab-${canalId} .canal-stab`).forEach(b=>b.classList.remove("on"));btn.classList.add("on");}
-function abrirModalCanal(){_editCanalId=null;document.getElementById("modal-canal-title").textContent="📱 Nuevo canal";["canal-nombre","canal-desc","canal-formas","canal-presupuesto"].forEach(id=>document.getElementById(id).value="");document.getElementById("canal-emoji").value="📱";document.getElementById("canal-error").style.display="none";document.getElementById("modal-canal").classList.add("on");}
-function editarCanal(id){const c=mktCanales.find(x=>x.id===id);if(!c)return;_editCanalId=id;document.getElementById("modal-canal-title").textContent="✏ Editar canal";document.getElementById("canal-nombre").value=c.nombre||"";document.getElementById("canal-emoji").value=c.emoji||"📱";document.getElementById("canal-desc").value=c.descripcion||"";document.getElementById("canal-formas").value=c.formas||"";document.getElementById("canal-presupuesto").value=c.presupuesto||"";document.getElementById("canal-error").style.display="none";document.getElementById("modal-canal").classList.add("on");}
-async function guardarCanal(){
-  const nombre=document.getElementById("canal-nombre").value.trim(),emoji=document.getElementById("canal-emoji").value.trim()||"📱",descripcion=document.getElementById("canal-desc").value.trim(),formas=document.getElementById("canal-formas").value.trim(),presupuesto=document.getElementById("canal-presupuesto").value.trim(),errEl=document.getElementById("canal-error");
-  if(!nombre){errEl.textContent="El nombre es obligatorio";errEl.style.display="block";return;}errEl.style.display="none";
-  try{if(_editCanalId)await db.from("mkt_canales").update({nombre,emoji,descripcion,formas,presupuesto}).eq("id",_editCanalId);else await db.from("mkt_canales").insert({nombre,emoji,descripcion,formas,presupuesto});cerrarModal("modal-canal");await Promise.all([cargarMktCanales(),cargarMktPublicaciones()]);renderCanales();}catch(e){errEl.textContent="Error";errEl.style.display="block";}
-}
-async function eliminarCanal(id){if(!confirm("¿Eliminar canal y sus publicaciones?"))return;try{await db.from("mkt_publicaciones").delete().eq("canal_id",id);await db.from("mkt_canales").delete().eq("id",id);await Promise.all([cargarMktCanales(),cargarMktPublicaciones()]);renderCanales();}catch(e){}}
-function toggleFechaPub(){document.getElementById("pub-fecha-group").style.display=document.getElementById("pub-estado").value==="confirmada"?"block":"none";}
-function abrirModalPublicacion(canalId,estadoDefault="idea"){_editPubId=null;_editPubCanalId=canalId;document.getElementById("modal-pub-title").textContent="📅 Nueva publicación";document.getElementById("pub-canal-id").value=canalId;document.getElementById("pub-texto").value="";document.getElementById("pub-estado").value=estadoDefault;document.getElementById("pub-fecha").value="";document.getElementById("pub-fecha-group").style.display=estadoDefault==="confirmada"?"block":"none";document.getElementById("pub-error").style.display="none";document.getElementById("modal-publicacion").classList.add("on");}
-function editarPublicacion(id,canalId){const p=mktPublicaciones.find(x=>x.id===id);if(!p)return;_editPubId=id;_editPubCanalId=canalId;document.getElementById("modal-pub-title").textContent="✏ Editar publicación";document.getElementById("pub-canal-id").value=canalId;document.getElementById("pub-texto").value=p.texto||"";document.getElementById("pub-estado").value=p.estado||"idea";document.getElementById("pub-fecha").value=p.fecha||"";document.getElementById("pub-fecha-group").style.display=p.estado==="confirmada"?"block":"none";document.getElementById("pub-error").style.display="none";document.getElementById("modal-publicacion").classList.add("on");}
-async function guardarPublicacion(){
-  const texto=document.getElementById("pub-texto").value.trim(),estado=document.getElementById("pub-estado").value,fecha=document.getElementById("pub-fecha").value||null,canal_id=document.getElementById("pub-canal-id").value,errEl=document.getElementById("pub-error");
-  if(!texto){errEl.textContent="El contenido es obligatorio";errEl.style.display="block";return;}errEl.style.display="none";
-  try{if(_editPubId)await db.from("mkt_publicaciones").update({texto,estado,fecha}).eq("id",_editPubId);else await db.from("mkt_publicaciones").insert({texto,estado,fecha,canal_id});cerrarModal("modal-publicacion");await Promise.all([cargarMktCanales(),cargarMktPublicaciones()]);renderCanales();}catch(e){errEl.textContent="Error";errEl.style.display="block";}
-}
-async function eliminarPublicacion(id){if(!confirm("¿Eliminar?"))return;try{await db.from("mkt_publicaciones").delete().eq("id",id);await Promise.all([cargarMktCanales(),cargarMktPublicaciones()]);renderCanales();}catch(e){}}
-function mktCalPrev(){mktCalFecha=new Date(mktCalFecha.getFullYear(),mktCalFecha.getMonth()-1,1);renderCalendario();}
-function mktCalNext(){mktCalFecha=new Date(mktCalFecha.getFullYear(),mktCalFecha.getMonth()+1,1);renderCalendario();}
-function renderCalendario(){
-  const el=document.getElementById("mkt-calendario");if(!el)return;
-  const titulo=document.getElementById("mkt-cal-titulo"),hoy=new Date();hoy.setHours(0,0,0,0);
-  const año=mktCalFecha.getFullYear(),mes=mktCalFecha.getMonth();
-  titulo.textContent=new Date(año,mes,1).toLocaleDateString("es-AR",{month:"long",year:"numeric"}).toUpperCase();
-  const dias=["DOM","LUN","MAR","MIÉ","JUE","VIE","SÁB"];
-  let html=dias.map(d=>`<div class="cal-dia-header">${d}</div>`).join("");
-  const primerDia=new Date(año,mes,1).getDay(),ultimoDia=new Date(año,mes+1,0).getDate();
-  for(let i=0;i<primerDia;i++){const d=new Date(año,mes,0-(primerDia-1-i));html+=`<div class="cal-dia otro-mes"><div class="cal-dia-num">${d.getDate()}</div></div>`;}
-  for(let d=1;d<=ultimoDia;d++){
-    const fecha=new Date(año,mes,d);fecha.setHours(0,0,0,0);
-    const fechaStr=`${año}-${String(mes+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-    const pubsDelDia=mktPublicaciones.filter(p=>p.estado==="confirmada"&&p.fecha===fechaStr);
-    const esHoy=fecha.getTime()===hoy.getTime();
-    html+=`<div class="cal-dia${esHoy?" hoy":""}"><div class="cal-dia-num">${d}</div>${pubsDelDia.map(p=>{const canal=mktCanales.find(c=>c.id===p.canal_id);return`<div class="cal-pub-chip" style="background:#6C63FF22;color:#A5B4FF;border:1px solid #6C63FF44;" title="${p.texto}">${canal?canal.emoji||"📱":""} ${p.texto.slice(0,16)}${p.texto.length>16?"…":""}</div>`;}).join("")}</div>`;
-  }
-  const total=primerDia+ultimoDia,celdas=Math.ceil(total/7)*7;
-  for(let i=1;i<=celdas-total;i++)html+=`<div class="cal-dia otro-mes"><div class="cal-dia-num">${i}</div></div>`;
-  el.innerHTML=html;
+async function eliminarTarea(id){
+  if(!confirm("¿Eliminar esta tarea?")) return;
+  try{
+    await db.from("tareas").delete().eq("id",id);
+    renderTareas();
+  }catch(e){ alert("Error al eliminar"); }
 }
 </script>
 
