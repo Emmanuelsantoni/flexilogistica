@@ -345,7 +345,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 }
 
 /* DISEÑO — layout lateral */
-.design-layout{display:flex;height:calc(100vh - 96px);overflow:hidden;}
+.design-layout{display:flex;height:calc(100vh - 50px);overflow:hidden;}
 .design-sidebar{width:220px;flex-shrink:0;background:#0F172A;border-right:1px solid var(--border);overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:12px;}
 .design-canvas-area{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:12px;background:var(--bg);}
 .design-canvas-area .paint-wrap{flex:1;overflow:auto;background:#111;border:1px solid var(--border);border-radius:8px;}
@@ -3100,7 +3100,9 @@ function zoomChange(delta){ZOOM=Math.max(20,Math.min(300,ZOOM+delta));applyZoom(
 function zoomFit(){
   const wrap=document.getElementById("paint-wrap");
   if(!wrap||!FS.cols)return;
-  BASE_CELL=Math.max(14,Math.min(48,Math.floor((wrap.clientWidth-8)/FS.cols)));
+  const cellByW=Math.floor((wrap.clientWidth-16)/FS.cols);
+  const cellByH=Math.floor((wrap.clientHeight-16)/FS.rows);
+  BASE_CELL=Math.max(4,Math.min(48,Math.min(cellByW,cellByH)));
   ZOOM=100;applyZoom();
 }
 
@@ -3192,7 +3194,7 @@ function initPaintCanvas(){
   if(FS.grid.length!==needed){FS.grid=new Array(needed).fill(-1);gridHistory=[];}
   // Mostrar panel
   document.getElementById("paint-wrap").style.display="block";
-  document.getElementById("zoom-bar").style.display="flex";
+  document.getElementById("zoom-bar").style.display="block";
   // Calcular tamaño de celda
   const wrap=document.getElementById("paint-wrap");
   const maxW=(wrap?wrap.clientWidth:600)-4;
