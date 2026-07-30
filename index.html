@@ -344,22 +344,17 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   .et-color-dot{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
 
-/* DISEÑO — layout lateral */
-.design-layout{display:flex;min-height:calc(100vh - 50px);}
-.design-sidebar{width:220px;flex-shrink:0;background:#0F172A;border-right:1px solid var(--border);overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:12px;position:sticky;top:0;height:calc(100vh - 50px);}
-.design-canvas-area{flex:1;display:flex;flex-direction:column;padding:12px;background:var(--bg);}
-.design-canvas-area .paint-wrap{overflow:visible;background:transparent;border:none;border-radius:0;}
-.dsb-section{display:flex;flex-direction:column;gap:6px;}
-.dsb-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;}
-.dsb-tool{background:#1E293B;border:1px solid var(--border);color:#94A3B8;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;text-align:left;transition:all .15s;}
-.dsb-tool:hover{border-color:var(--accent);color:#F1F5F9;}
-.dsb-tool.on{background:var(--accent);border-color:var(--accent);color:#fff;}
-.design-sidebar .paint-colors{display:flex;flex-wrap:wrap;gap:5px;}
-
 /* FULLSCREEN DISEÑO */
-#fpg-paint.fullscreen-mode{position:fixed;inset:0;z-index:500;background:var(--bg);overflow-y:auto;padding:16px;display:block!important;}
+#fpg-paint.fullscreen-mode{
+  position:fixed;inset:0;z-index:500;background:var(--bg);
+  overflow-y:auto;padding:16px;display:block!important;
+}
 #fpg-paint.fullscreen-mode .paint-wrap{max-height:calc(100vh - 280px);}
-.fullscreen-close-btn{position:fixed;top:12px;right:12px;z-index:600;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;}
+.fullscreen-close-btn{
+  position:fixed;top:12px;right:12px;z-index:600;
+  background:var(--accent);color:#fff;border:none;border-radius:8px;
+  padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;
+}
 
 /* ── MARKETING ───────────────────────────────── */
 .mkt-tab{background:transparent;border:none;border-bottom:3px solid transparent;color:#64748B;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;margin-bottom:-1px;}
@@ -568,93 +563,83 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 
       <!-- PG 3 DISEÑO -->
       <div class="fpg" id="fpg-paint">
-        <div class="design-layout">
-
-          <!-- PANEL LATERAL IZQUIERDO -->
-          <div class="design-sidebar">
-            <div class="dsb-section">
-              <div class="dsb-label">Color activo</div>
-              <div class="paint-colors" id="paint-colors"></div>
-              <div class="sel-preview" style="margin-top:6px;">
-                <div class="sel-dot" id="sel-dot" style="background:#333;border:1px solid #555;"></div>
-                <div class="sel-name" id="sel-name" style="font-size:11px;">Seleccioná un color</div>
-              </div>
-            </div>
-            <div class="dsb-section" style="background:#1a0a00;border:1px solid var(--accent);border-radius:6px;padding:8px;">
-              <div class="dsb-label" style="color:var(--accent);">⬛ Relleno rápido</div>
-              <div style="display:flex;flex-wrap:wrap;gap:4px;" id="pred-colors"></div>
-            </div>
-            <div class="dsb-section">
-              <div class="dsb-label">Herramienta</div>
-              <div style="display:flex;flex-direction:column;gap:4px;">
-                <button class="dsb-tool on" id="tb-p" onclick="setTool('p')">✏ Pintar</button>
-                <button class="dsb-tool" id="tb-b" onclick="setTool('b')">✕ Borrar</button>
-                <button class="dsb-tool" id="tb-m" onclick="setTool('m')">✋ Mover</button>
-                <button class="dsb-tool" id="tb-pat" onclick="togglePatternMode()">🔲 Patrón</button>
-              </div>
-            </div>
-            <div class="dsb-section">
-              <div class="dsb-label">Acciones</div>
-              <div style="display:flex;flex-direction:column;gap:4px;">
-                <button class="dsb-tool" onclick="undoGrid()">↩ Deshacer</button>
-                <button class="dsb-tool" onclick="clearGrid()">⟳ Limpiar</button>
-              </div>
-            </div>
-            <div class="dsb-section" id="zoom-bar" style="display:none;">
-              <div class="dsb-label">Zoom — <span id="zoom-label" style="color:var(--accent);">100%</span></div>
-              <div style="display:flex;align-items:center;gap:6px;">
-                <button onclick="zoomChange(-10)" style="width:28px;height:28px;background:#222;border:1px solid var(--border);color:var(--white);font-size:16px;font-weight:700;border-radius:4px;cursor:pointer;flex-shrink:0;">−</button>
-                <input type="range" id="zoom-slider" min="20" max="200" value="100" oninput="zoomSet(this.value)" style="flex:1;accent-color:var(--accent);height:4px;background:var(--border);border:none;padding:0;margin:0;cursor:pointer;">
-                <button onclick="zoomChange(10)" style="width:28px;height:28px;background:#222;border:1px solid var(--border);color:var(--white);font-size:16px;font-weight:700;border-radius:4px;cursor:pointer;flex-shrink:0;">+</button>
-              </div>
-              <button onclick="zoomFit()" style="width:100%;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:#222;border:1px solid var(--border);color:var(--white);padding:6px;border-radius:4px;cursor:pointer;">↔ Ajustar</button>
-            </div>
-            <div class="dsb-section">
-              <div class="dsb-label">Resumen colores</div>
-              <div class="legend" id="legend-live" style="font-size:11px;"><div style="color:var(--muted);font-size:11px;">Pintá para ver el resumen.</div></div>
-            </div>
-            <button class="fbtn fbtn-pri" style="margin-top:auto;width:100%;margin-bottom:8px;" onclick="fpg('fpg-ajuste',document.querySelectorAll('.flexi-nav button')[3]);startAjuste()">Siguiente →</button>
+        <div class="card">
+          <div class="ctitle">Diseño del espacio</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;">Seleccioná un color y tocá cada baldosa. Cada cuadrado = 1 baldosa 25×25 cm.</div>
+          <label>Color activo</label>
+          <div class="paint-colors" id="paint-colors"></div>
+          <div class="sel-preview">
+            <div class="sel-dot" id="sel-dot" style="background:#333;border:1px solid #555;"></div>
+            <div class="sel-name" id="sel-name">Seleccioná un color</div>
           </div>
-
-          <!-- ÁREA CANVAS -->
-          <div class="design-canvas-area">
-            <!-- Patrón -->
-            <div id="pattern-bar" style="display:none;background:#0d1117;border:1px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:10px;">
-              <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;font-weight:700;">🔲 Diseñá el patrón a repetir</div>
-              <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
-                <div>
-                  <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Tamaño</div>
-                  <div style="display:flex;gap:6px;align-items:center;">
-                    <select id="pat-cols" onchange="reconstruirPatronUI()" style="background:#111;border:1px solid var(--border);color:var(--white);padding:5px 8px;border-radius:4px;font-size:13px;"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select>
-                    <span style="color:var(--muted);">×</span>
-                    <select id="pat-rows" onchange="reconstruirPatronUI()" style="background:#111;border:1px solid var(--border);color:var(--white);padding:5px 8px;border-radius:4px;font-size:13px;"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select>
-                    <span style="color:var(--muted);font-size:11px;">baldosas</span>
-                  </div>
-                </div>
-                <div>
-                  <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Tocá cada celda</div>
-                  <div id="patron-grid-ui" style="display:inline-grid;gap:3px;"></div>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:6px;margin-top:18px;">
-                  <button onclick="aplicarPatron()" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:9px 16px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;">✓ Aplicar</button>
-                  <button onclick="cancelarPatron()" style="background:transparent;border:1px solid #444;color:#888;border-radius:6px;padding:9px 16px;cursor:pointer;font-size:12px;">✕ Cancelar</button>
+          <div style="background:#1a0a00;border:1px solid var(--accent);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;">
+            <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;font-weight:700;">⬛ Color predominante (rellena todo)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;" id="pred-colors"></div>
+          </div>
+          <div class="toolbar">
+            <button class="tool-btn on" id="tb-p" onclick="setTool('p')">✏ Pintar</button>
+            <button class="tool-btn" id="tb-b" onclick="setTool('b')">✕ Borrar</button>
+            <button class="tool-btn" id="tb-m" onclick="setTool('m')" style="font-size:16px;">✋ Mover</button>
+            <button class="tool-btn" id="tb-pat" onclick="togglePatternMode()" title="Pintar con patrón repetido">🔲 Patrón</button>
+            <button class="tool-btn" onclick="undoGrid()">↩ Deshacer</button>
+            <button class="tool-btn" onclick="clearGrid()">⟳ Limpiar</button>
+            <button class="tool-btn" onclick="toggleFullscreenDesign()" title="Pantalla completa">⛶ Full</button>
+          </div>
+          <div id="no-dims" style="background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;color:var(--muted);font-size:12px;margin-bottom:10px;">⚠ Primero ingresá las medidas en el paso 2.</div>
+          <div id="zoom-bar" style="display:none;align-items:center;gap:8px;margin-bottom:8px;background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;">
+            <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap;">Zoom</span>
+            <button onclick="zoomChange(-10)" style="width:32px;height:32px;background:#222;border:1px solid var(--border);color:var(--white);font-size:18px;font-weight:700;border-radius:4px;cursor:pointer;flex-shrink:0;">−</button>
+            <input type="range" id="zoom-slider" min="20" max="200" value="100" oninput="zoomSet(this.value)" style="flex:1;accent-color:var(--accent);height:4px;background:var(--border);border:none;padding:0;margin-bottom:0;cursor:pointer;">
+            <button onclick="zoomChange(10)" style="width:32px;height:32px;background:#222;border:1px solid var(--border);color:var(--white);font-size:18px;font-weight:700;border-radius:4px;cursor:pointer;flex-shrink:0;">+</button>
+            <span id="zoom-label" style="font-size:12px;font-weight:700;color:var(--accent);min-width:38px;text-align:right;white-space:nowrap;">100%</span>
+            <button onclick="zoomFit()" style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:#222;border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;flex-shrink:0;">↔ Ajustar</button>
+          </div>
+          <!-- Patrón -->
+          <div id="pattern-bar" style="display:none;background:#0d1117;border:1px solid var(--accent);border-radius:var(--radius);padding:14px;margin-bottom:10px;">
+            <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;font-weight:700;">🔲 Diseñá el patrón a repetir</div>
+            <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+              <!-- Tamaño del patrón -->
+              <div>
+                <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Tamaño</div>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <select id="pat-cols" onchange="reconstruirPatronUI()" style="background:#111;border:1px solid var(--border);color:var(--white);padding:5px 8px;border-radius:4px;font-size:13px;">
+                    <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option>
+                  </select>
+                  <span style="color:var(--muted);">×</span>
+                  <select id="pat-rows" onchange="reconstruirPatronUI()" style="background:#111;border:1px solid var(--border);color:var(--white);padding:5px 8px;border-radius:4px;font-size:13px;">
+                    <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option>
+                  </select>
+                  <span style="color:var(--muted);font-size:11px;">baldosas</span>
                 </div>
               </div>
+              <!-- Grid del patrón -->
+              <div>
+                <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Tocá cada celda para asignar el color activo</div>
+                <div id="patron-grid-ui" style="display:inline-grid;gap:3px;"></div>
+              </div>
+              <!-- Acciones -->
+              <div style="display:flex;flex-direction:column;gap:6px;margin-top:18px;">
+                <button onclick="aplicarPatron()" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:9px 16px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;">✓ Aplicar patrón</button>
+                <button onclick="cancelarPatron()" style="background:transparent;border:1px solid #444;color:#888;border-radius:6px;padding:9px 16px;cursor:pointer;font-size:12px;">✕ Cancelar</button>
+              </div>
             </div>
-            <!-- Info dims -->
-            <div id="canvas-dims-info" style="display:none;font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;display:flex;gap:16px;flex-wrap:wrap;">
-              <span>📐 Diagrama: <strong id="canvas-dim-txt" style="color:var(--white);">—</strong></span>
-              <span>🔲 Celdas: <strong id="canvas-celdas-txt" style="color:var(--accent);">—</strong></span>
-              <span>📦 M² cotizados: <strong id="canvas-m2-txt" style="color:var(--green);">—</strong></span>
-            </div>
-            <div id="no-dims" style="background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:40px;text-align:center;color:var(--muted);font-size:12px;">⚠ Primero ingresá las medidas en el paso 2.</div>
-            <div class="paint-wrap" id="paint-wrap" style="display:none;">
-              <div id="cv-sizer" style="display:inline-block;"><canvas id="fcv" style="display:block;cursor:crosshair;touch-action:none;"></canvas></div>
-            </div>
-            <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="paint-info"></div>
           </div>
-
+          <!-- Info dimensiones del diagrama -->
+          <div id="canvas-dims-info" style="display:none;font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:flex;gap:16px;flex-wrap:wrap;">
+            <span>📐 Diagrama: <strong id="canvas-dim-txt" style="color:var(--white);">—</strong></span>
+            <span>🔲 Celdas: <strong id="canvas-celdas-txt" style="color:var(--accent);">—</strong></span>
+            <span>📦 M² cotizados: <strong id="canvas-m2-txt" style="color:var(--green);">—</strong></span>
+          </div>
+          <div class="paint-wrap" id="paint-wrap" style="display:none;">
+            <div id="cv-sizer" style="display:inline-block;"><canvas id="fcv" style="display:block;cursor:crosshair;touch-action:none;"></canvas></div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;" id="paint-info"></div>
         </div>
+        <div class="card">
+          <div class="ctitle">Colores en diseño</div>
+          <div class="legend" id="legend-live"><div style="color:var(--muted);font-size:12px;">Pintá las baldosas para ver el resumen.</div></div>
+        </div>
+        <button class="fbtn fbtn-pri" onclick="fpg('fpg-ajuste',document.querySelectorAll('.flexi-nav button')[3]);startAjuste()">Siguiente → Ajuste sobrante</button>
       </div>
 
       <!-- PG 4 AJUSTE -->
@@ -1525,6 +1510,13 @@ function renderKanban(){
     if(stats) stats.innerHTML = "";
     return;
   }
+  // Guardar scroll de cada columna antes de re-renderizar
+  const scrollPositions = {};
+  document.querySelectorAll(".k-col").forEach(col=>{
+    const id = col.dataset.estado;
+    const body = col.querySelector(".k-col-body");
+    if(id && body) scrollPositions[id] = body.scrollTop;
+  });
   const activos = allPedidos.filter(p=>p.estado!=="entregado");
   // Stats
   const statsEl = document.getElementById("kanban-stats");
@@ -1545,6 +1537,7 @@ function renderKanban(){
     const peds = pedsRaw;
     const col = document.createElement("div");
     col.className = "k-col";
+    col.dataset.estado = est.id;
     col.innerHTML = `
       <div class="k-col-header" style="background:${est.color}11;">
         <div class="k-col-title"><div class="k-col-dot" style="background:${est.color}"></div><span style="color:${est.color}">${est.label.toUpperCase()}</span></div>
@@ -1560,6 +1553,12 @@ function renderKanban(){
     addBtn.innerHTML=`<button onclick="abrirModalNuevoPedido()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:12px 18px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;">+ Nuevo pedido</button>`;
     board.appendChild(addBtn);
   }
+  // Restaurar scroll de cada columna
+  document.querySelectorAll(".k-col").forEach(col=>{
+    const id = col.dataset.estado;
+    const body = col.querySelector(".k-col-body");
+    if(id && body && scrollPositions[id]) body.scrollTop = scrollPositions[id];
+  });
 }
 
 function cardHTML(p, est){
@@ -1582,13 +1581,13 @@ function cardHTML(p, est){
     "Celeste":"#18BDEB","Verde Agua":"#27C7BD","Verde":"#69BE28"};
   const UxCajaK=64, KgxPzK=0.210, KgxCajaK=UxCajaK*KgxPzK;
   let cajasHTML="";
-  let totalPesoCard=0;
+  let totalPzCard=0;
   (p.productos||[]).forEach(pr=>{
     const total=parseInt(pr.cantidad||1);
     const cajas=Math.floor(total/UxCajaK);
     const sueltas=total%UxCajaK;
-    const pesoColor=total*KgxPzK;
-    totalPesoCard+=pesoColor;
+    const m2Color=(total/16).toFixed(2);
+    totalPzCard+=total;
     const nombreColor = pr.nombre.replace(/^(Baldosa |FlexiFloor )/i,"").trim();
     const hex = COLORES_MAP[nombreColor] || "#555";
     const textColor = ["Blanco","Gris Claro","Gris Medio","Amarillo","Celeste","Verde Agua","Verde"].includes(nombreColor) ? "#222" : "#fff";
@@ -1601,7 +1600,7 @@ function cardHTML(p, est){
         <span style="color:${textColor};font-size:13px;font-weight:900;">${embStr}</span>
       </div>
       <div style="color:${textColor};opacity:.75;font-size:10px;margin-top:3px;">
-        ${fmtNum(total)} pz &nbsp;(${cajasStr}${sueltas>0?" + "+sueltas+" u":""}) &nbsp;· &nbsp;${pesoColor.toFixed(2)} kg
+        ${fmtNum(total)} pz &nbsp;(${cajasStr}${sueltas>0?" + "+sueltas+" u":""}) &nbsp;· &nbsp;${m2Color} m²
       </div>
     </div>`;
   });
@@ -1634,7 +1633,7 @@ function cardHTML(p, est){
     <div class="pc-dir">${p.direccion||''}${p.telefono?' · ☎ '+p.telefono:''}</div>
     <div class="pc-productos">${cajasHTML}
       <div class="pc-totales">
-        <span style="color:#6C63FF;">⚖ Total: ${totalPesoCard.toFixed(2)} kg</span>
+        <span style="color:#6C63FF;">📐 Total: ${(totalPzCard/16).toFixed(2)} m²</span>
       </div>
     </div>
     ${p.observaciones?`<div class="pc-obs">${p.observaciones}</div>`:''}
@@ -2746,12 +2745,12 @@ function imprimirPedidoKanban(id){
     const isLight=["#FFFFFF","#D0D3D4","#9C9C93","#FFD100","#18BDEB","#27C7BD","#69BE28"].includes(hex);
     const txt=isLight?"#333":"#fff";
     const emb=[cj>0?cj+" Cj":"",su>0?su+" u":""].filter(Boolean).join(" + ")||pz+" u";
-    return `<div style="display:flex;align-items:center;justify-content:space-between;background:${hex};border-radius:5px;padding:7px 12px;margin-bottom:5px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    return `<div style="display:flex;align-items:center;justify-content:space-between;background:${hex};border-radius:4px;padding:4px 10px;margin-bottom:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       <div>
-        <div style="color:${txt};font-size:13px;font-weight:800;">${nombre}</div>
-        <div style="color:${txt};opacity:.75;font-size:10px;">${new Intl.NumberFormat("es-AR").format(pz)} pz &nbsp;·&nbsp; ${emb} &nbsp;·&nbsp; ${(pz*KgxPzP).toFixed(2)} kg</div>
+        <div style="color:${txt};font-size:11px;font-weight:800;">${nombre}</div>
+        <div style="color:${txt};opacity:.75;font-size:8px;">${new Intl.NumberFormat("es-AR").format(pz)} pz &nbsp;·&nbsp; ${emb}</div>
       </div>
-      <div style="color:${txt};font-size:14px;font-weight:900;">${emb}</div>
+      <div style="color:${txt};font-size:13px;font-weight:900;">${emb}</div>
     </div>`;
   }).join("");
 
@@ -3100,9 +3099,7 @@ function zoomChange(delta){ZOOM=Math.max(20,Math.min(300,ZOOM+delta));applyZoom(
 function zoomFit(){
   const wrap=document.getElementById("paint-wrap");
   if(!wrap||!FS.cols)return;
-  const cellByW=Math.floor((wrap.clientWidth-16)/FS.cols);
-  const cellByH=Math.floor((wrap.clientHeight-16)/FS.rows);
-  BASE_CELL=Math.max(4,Math.min(48,Math.min(cellByW,cellByH)));
+  BASE_CELL=Math.max(14,Math.min(48,Math.floor((wrap.clientWidth-8)/FS.cols)));
   ZOOM=100;applyZoom();
 }
 
@@ -3178,8 +3175,6 @@ function fpg(id, btn){
   if(el){el.classList.add("on");el.style.display="block";}
   document.querySelectorAll(".flexi-nav button").forEach(b=>b.classList.remove("on"));
   if(btn)btn.classList.add("on");
-  const wrap = document.querySelector(".flexi-wrap");
-  if(wrap) wrap.style.maxWidth = id==="fpg-paint" ? "100%" : "520px";
 }
 
 function initPaintCanvas(){
@@ -3194,7 +3189,7 @@ function initPaintCanvas(){
   if(FS.grid.length!==needed){FS.grid=new Array(needed).fill(-1);gridHistory=[];}
   // Mostrar panel
   document.getElementById("paint-wrap").style.display="block";
-  document.getElementById("zoom-bar").style.display="block";
+  document.getElementById("zoom-bar").style.display="flex";
   // Calcular tamaño de celda
   const wrap=document.getElementById("paint-wrap");
   const maxW=(wrap?wrap.clientWidth:600)-4;
