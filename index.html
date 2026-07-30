@@ -1534,13 +1534,6 @@ function renderKanban(){
     const body = col.querySelector(".k-col-body");
     if(id && body) scrollPositions[id] = body.scrollTop;
   });
-  // Guardar scroll de cada columna antes de re-renderizar
-  const scrollPositions = {};
-  document.querySelectorAll(".k-col").forEach(col=>{
-    const id = col.dataset.estado;
-    const body = col.querySelector(".k-col-body");
-    if(id && body) scrollPositions[id] = body.scrollTop;
-  });
   const activos = allPedidos.filter(p=>p.estado!=="entregado");
   // Stats
   const statsEl = document.getElementById("kanban-stats");
