@@ -1049,8 +1049,16 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
     </div>
     <div style="background:#111827;border:1px solid #1E293B;border-radius:12px;padding:16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-        <div style="font-size:13px;font-weight:800;color:#F1F5F9;">Cobros pendientes</div>
+        <div style="font-size:13px;font-weight:800;color:#F1F5F9;">Cobros pendientes <span style="font-size:11px;color:#64748B;font-weight:400;">— click para seleccionar</span></div>
         <button onclick="abrirCierre()" id="btn-cierre" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;display:none;">✓ Hacer cierre</button>
+      </div>
+      <!-- Panel total seleccionado -->
+      <div id="cobros-seleccion-panel" style="display:none;align-items:center;justify-content:space-between;background:#22C55E11;border:1px solid #22C55E44;border-radius:10px;padding:10px 14px;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:11px;color:#64748B;margin-bottom:2px;" id="cobros-seleccion-count"></div>
+          <div style="font-size:20px;font-weight:900;color:#22C55E;" id="cobros-seleccion-total">$0</div>
+        </div>
+        <button onclick="abrirCierre()" style="background:linear-gradient(135deg,#22C55E,#16A34A);color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;">✓ Hacer cierre</button>
       </div>
       <div id="cobros-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
@@ -4610,9 +4618,13 @@ function fechasTareaEnMes(t, año, mes){
   if(!t.fecha_venc) return [];
   const rec = t.recurrencia||"unica";
   const fv = new Date(t.fecha_venc+"T00:00:00");
+  // Fecha de inicio: la fecha de vencimiento (no mostrar en meses anteriores)
+  const mesInicio = new Date(fv.getFullYear(), fv.getMonth(), 1);
+  const mesActual = new Date(año, mes, 1);
+  if(mesActual < mesInicio) return []; // no mostrar antes de la fecha de referencia
   const fechas=[]; const diasMes=new Date(año,mes+1,0).getDate();
   if(rec==="unica"){ if(fv.getFullYear()===año&&fv.getMonth()===mes) fechas.push(fv.getDate()); }
-  else if(rec==="semanal"){ const dow=fv.getDay(); for(let d=1;d<=diasMes;d++){ if(new Date(año,mes,d).getDay()===dow) fechas.push(d); } }
+  else if(rec==="semanal"){ const dow=fv.getDay(); for(let d=1;d<=diasMes;d++){ const fechaD=new Date(año,mes,d); if(fechaD.getDay()===dow&&fechaD>=fv) fechas.push(d); } }
   else if(rec==="mensual"){ const dia=fv.getDate(); if(dia<=diasMes) fechas.push(dia); }
   else if(rec==="bimestral"){ const mesOrig=fv.getMonth(); const diff=(mes-mesOrig+24)%12; if(diff%2===0){const dia=fv.getDate();if(dia<=diasMes)fechas.push(dia);} }
   else if(rec==="anual"){ if(fv.getMonth()===mes){const dia=fv.getDate();if(dia<=diasMes)fechas.push(dia);} }
@@ -4878,11 +4890,15 @@ function renderCobrosPendientes(){
   document.getElementById("cobros-count-pendiente").textContent=allCobros.length;
   document.getElementById("cobros-count-historial").textContent=allCierres.length;
   document.getElementById("btn-cierre").style.display=allCobros.length?"inline-block":"none";
+  // resetear selección
+  window._cierreSeleccionados={};
+  actualizarTotalSeleccionado();
   if(!allCobros.length){lista.innerHTML=`<div style="color:#475569;font-size:13px;text-align:center;padding:20px;">Sin cobros pendientes</div>`;return;}
   lista.innerHTML=allCobros.map(c=>{
     const prov=allProveedores.find(p=>p.id===c.proveedor_id);
     const fecha=c.fecha?new Date(c.fecha+"T00:00:00").toLocaleDateString("es-AR"):"";
-    return`<div class="cobro-item">
+    return`<div class="cobro-item" id="cobro-row-${c.id}" onclick="toggleCierreCheck('${c.id}',${+c.importe||0})" style="cursor:pointer;">
+      <div class="cobro-check-box" id="cb-${c.id}"></div>
       <div style="flex:1;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <span class="cobro-cliente">${c.cliente||"Sin nombre"}</span>
@@ -4891,10 +4907,43 @@ function renderCobrosPendientes(){
         <div class="cobro-meta">${fecha}${c.notas?" · "+c.notas:""}</div>
       </div>
       <span class="cobro-importe">$${new Intl.NumberFormat("es-AR").format(+c.importe||0)}</span>
-      <button class="tarea-btn-sm" onclick="editarCobro('${c.id}')" style="flex-shrink:0;">✏</button>
-      <button class="tarea-btn-sm del" onclick="eliminarCobro('${c.id}')" style="flex-shrink:0;">🗑</button>
+      <button class="tarea-btn-sm" onclick="event.stopPropagation();editarCobro('${c.id}')" style="flex-shrink:0;">✏</button>
+      <button class="tarea-btn-sm del" onclick="event.stopPropagation();eliminarCobro('${c.id}')" style="flex-shrink:0;">🗑</button>
     </div>`;
   }).join("");
+}
+
+function toggleCierreCheck(id,importe){
+  if(!window._cierreSeleccionados) window._cierreSeleccionados={};
+  const el=document.getElementById("cb-"+id);
+  const row=document.getElementById("cobro-row-"+id);
+  if(window._cierreSeleccionados[id]){
+    delete window._cierreSeleccionados[id];
+    el.classList.remove("on");el.textContent="";
+    if(row) row.style.borderColor="";
+  } else {
+    window._cierreSeleccionados[id]=importe;
+    el.classList.add("on");el.textContent="✓";
+    if(row) row.style.borderColor="#22C55E";
+  }
+  actualizarTotalSeleccionado();
+}
+
+function actualizarTotalSeleccionado(){
+  const sel=window._cierreSeleccionados||{};
+  const ids=Object.keys(sel);
+  const total=ids.reduce((s,k)=>s+(+sel[k]||0),0);
+  const panelEl=document.getElementById("cobros-seleccion-panel");
+  const totalEl=document.getElementById("cobros-seleccion-total");
+  const countEl=document.getElementById("cobros-seleccion-count");
+  if(!panelEl)return;
+  if(ids.length>0){
+    panelEl.style.display="flex";
+    totalEl.textContent="$"+new Intl.NumberFormat("es-AR").format(total);
+    countEl.textContent=ids.length+" cobro"+(ids.length!==1?"s":"")+" seleccionado"+(ids.length!==1?"s":"");
+  } else {
+    panelEl.style.display="none";
+  }
 }
 
 function renderCierresHistorial(){
@@ -4986,23 +5035,28 @@ async function eliminarCobro(id){
 
 // ── CIERRE ──────────────────────────────────────
 function abrirCierre(){
+  const sel=window._cierreSeleccionados||{};
+  const ids=Object.keys(sel);
+  if(!ids.length){alert("Seleccioná al menos un cobro de la lista");return;}
+  // Mostrar en el modal los seleccionados
   const lista=document.getElementById("cierre-cobros-lista");
-  lista.innerHTML=allCobros.map(c=>{
-    const prov=allProveedores.find(p=>p.id===c.proveedor_id);
-    return`<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#0F172A;border:1px solid #1E293B;border-radius:8px;">
-      <div class="cobro-check-box" id="cb-${c.id}" onclick="toggleCierreCheck('${c.id}',${+c.importe||0})"></div>
+  lista.innerHTML=ids.map(id=>{
+    const c=allCobros.find(x=>x.id===id);
+    const prov=allProveedores.find(p=>p.id===c?.proveedor_id);
+    return`<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#0F172A;border:1px solid #22C55E33;border-radius:8px;">
+      <div style="width:20px;height:20px;background:#22C55E;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;flex-shrink:0;">✓</div>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:#F1F5F9;">${c.cliente}</div>
-        <div style="font-size:10px;color:#475569;">${prov?prov.nombre:""} · ${c.fecha||""}</div>
+        <div style="font-size:13px;font-weight:700;color:#F1F5F9;">${c?.cliente||""}</div>
+        <div style="font-size:10px;color:#475569;">${prov?prov.nombre:""} · ${c?.fecha||""}</div>
       </div>
-      <span style="font-size:14px;font-weight:800;color:#22C55E;">$${new Intl.NumberFormat("es-AR").format(+c.importe||0)}</span>
+      <span style="font-size:14px;font-weight:800;color:#22C55E;">$${new Intl.NumberFormat("es-AR").format(+c?.importe||0)}</span>
     </div>`;
   }).join("");
-  document.getElementById("cierre-total").textContent="$0";
-  document.getElementById("cierre-detalle").textContent="";
+  const total=ids.reduce((s,k)=>s+(+sel[k]||0),0);
+  document.getElementById("cierre-total").textContent="$"+new Intl.NumberFormat("es-AR").format(total);
+  document.getElementById("cierre-detalle").textContent=ids.length+" cobro"+(ids.length!==1?"s":"");
   document.getElementById("cierre-notas").value="";
   document.getElementById("modal-cierre").classList.add("on");
-  window._cierreSeleccionados={};
 }
 
 function toggleCierreCheck(id,importe){
