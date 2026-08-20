@@ -933,22 +933,16 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
       </div>
     </div>
 
-    <!-- Sub-tabs -->
-    <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid #1E293B;">
-      <button class="mkt-tab mkt-tab-on" id="tareas-tab-cal" onclick="setTareasTab('calendario',this)">📅 Calendario</button>
-      <button class="mkt-tab" id="tareas-tab-lista" onclick="setTareasTab('lista',this)">☰ Lista</button>
-    </div>
-
-    <!-- TAB CALENDARIO -->
-    <div id="tareas-tab-calendario">
+    <!-- CALENDARIO -->
+    <div style="margin-bottom:8px;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <button onclick="tareasCalPrev()" class="btn-mkt-nav">‹</button>
         <div id="tareas-cal-titulo" style="font-size:15px;font-weight:800;color:#F1F5F9;min-width:180px;text-align:center;"></div>
         <button onclick="tareasCalNext()" class="btn-mkt-nav">›</button>
       </div>
-      <div id="tareas-calendario" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px;"></div>
-      <!-- Panel de tareas del día seleccionado -->
-      <div id="tareas-dia-panel" style="display:none;background:#111827;border:1px solid #1E293B;border-radius:12px;padding:16px;margin-top:8px;">
+      <div id="tareas-calendario" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px;"></div>
+      <!-- Panel del día seleccionado -->
+      <div id="tareas-dia-panel" style="display:none;background:#111827;border:1px solid #6C63FF44;border-radius:12px;padding:16px;margin-bottom:16px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
           <div id="tareas-dia-titulo" style="font-size:14px;font-weight:800;color:#F1F5F9;"></div>
           <button onclick="document.getElementById('tareas-dia-panel').style.display='none'" style="background:transparent;border:none;color:#64748B;cursor:pointer;font-size:16px;">✕</button>
@@ -957,14 +951,15 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
       </div>
     </div>
 
-    <!-- TAB LISTA -->
-    <div id="tareas-tab-lista" style="display:none;">
-      <div id="tareas-filtros" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <button class="tfil-btn tfil-on" onclick="setFiltroTareas('todas',this)">Todas</button>
-        <button class="tfil-btn" onclick="setFiltroTareas('semanal',this)">📅 Semanales</button>
-        <button class="tfil-btn" onclick="setFiltroTareas('mensual',this)">🗓 Mensuales</button>
-        <button class="tfil-btn" onclick="setFiltroTareas('pendiente',this)">⏳ Pendientes</button>
-        <button class="tfil-btn" onclick="setFiltroTareas('realizada',this)">✅ Realizadas</button>
+    <!-- LISTA DE TAREAS (siempre visible) -->
+    <div style="border-top:1px solid #1E293B;padding-top:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:13px;font-weight:800;color:#F1F5F9;">Lista de tareas</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="tfil-btn tfil-on" onclick="setFiltroTareas('todas',this)">Todas</button>
+          <button class="tfil-btn" onclick="setFiltroTareas('pendiente',this)">⏳ Pendientes</button>
+          <button class="tfil-btn" onclick="setFiltroTareas('realizada',this)">✅ Realizadas</button>
+        </div>
       </div>
       <div id="tareas-lista" style="display:flex;flex-direction:column;gap:10px;">Cargando...</div>
     </div>
@@ -4640,17 +4635,6 @@ async function cargarTareas(){
   }catch(e){ try{const{data}=await db.from("tareas").select("*").order("created_at",{ascending:true});allTareas=data||[];}catch(e2){allTareas=[];} }
 }
 
-let tareasTabActual="calendario";
-function setTareasTab(tab,btn){
-  tareasTabActual=tab;
-  document.querySelectorAll("#tareas-tab-cal,#tareas-tab-lista").forEach(b=>b.classList.remove("mkt-tab-on"));
-  if(btn)btn.classList.add("mkt-tab-on");
-  document.getElementById("tareas-tab-calendario").style.display=tab==="calendario"?"block":"none";
-  document.getElementById("tareas-tab-lista").style.display=tab==="lista"?"block":"none";
-  if(tab==="calendario") renderTareasCalendario();
-  else renderTareasLista();
-}
-
 function setFiltroTareas(f,btn){
   filtroTareas=f;
   document.querySelectorAll(".tfil-btn").forEach(b=>b.classList.remove("tfil-on"));
@@ -4660,8 +4644,8 @@ function setFiltroTareas(f,btn){
 
 async function renderTareas(){
   await cargarTareas();
-  if(tareasTabActual==="calendario") renderTareasCalendario();
-  else renderTareasLista();
+  renderTareasCalendario();
+  renderTareasLista();
 }
 
 function tareasCalPrev(){tareasCalFecha=new Date(tareasCalFecha.getFullYear(),tareasCalFecha.getMonth()-1,1);renderTareasCalendario();}
@@ -4722,9 +4706,7 @@ async function toggleTareaCalendario(id,pk,actual){
 async function renderTareasLista(){
   const lista=document.getElementById("tareas-lista");if(!lista)return;
   let tareas=[...allTareas];const now=new Date();
-  if(filtroTareas==="semanal") tareas=tareas.filter(t=>t.recurrencia==="semanal");
-  else if(filtroTareas==="mensual") tareas=tareas.filter(t=>t.recurrencia==="mensual");
-  else if(filtroTareas==="pendiente") tareas=tareas.filter(t=>!(t.realizadas||[]).includes(periodoKey(t,now)));
+  if(filtroTareas==="pendiente") tareas=tareas.filter(t=>!(t.realizadas||[]).includes(periodoKey(t,now)));
   else if(filtroTareas==="realizada") tareas=tareas.filter(t=>(t.realizadas||[]).includes(periodoKey(t,now)));
   if(!tareas.length){lista.innerHTML=`<div style="color:#475569;text-align:center;padding:40px;font-size:13px;">No hay tareas en esta categoría</div>`;return;}
   const recLabels={"semanal":"📅 Semanal","mensual":"🗓 Mensual","bimestral":"🗓 Mes por medio","anual":"📆 Anual","unica":"🔂 Única"};
