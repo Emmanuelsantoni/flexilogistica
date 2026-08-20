@@ -414,6 +414,35 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 .cal-dia.hoy .cal-dia-num{color:#A5B4FF;}
 .cal-pub-chip{font-size:9px;padding:2px 5px;border-radius:4px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;font-weight:600;}
 
+/* ── COBROS CAJA ─────────────────────────────── */
+.cobro-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#0F172A;border:1px solid #1E293B;border-radius:10px;transition:border-color .15s;}
+.cobro-item:hover{border-color:#334155;}
+.cobro-check-box{width:20px;height:20px;border-radius:5px;border:2px solid #334155;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.cobro-check-box.on{background:#22C55E;border-color:#22C55E;color:#fff;font-size:12px;}
+.cobro-importe{font-size:16px;font-weight:900;color:#22C55E;white-space:nowrap;}
+.cobro-cliente{font-size:13px;font-weight:700;color:#F1F5F9;flex:1;}
+.cobro-meta{font-size:10px;color:#475569;}
+.cobro-proveedor-badge{font-size:9px;padding:2px 7px;border-radius:10px;background:#6C63FF22;color:#A5B4FF;font-weight:700;white-space:nowrap;}
+.cierre-item{background:#111827;border:1px solid #1E293B;border-radius:10px;padding:14px;}
+.cierre-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
+.cierre-total-badge{font-size:18px;font-weight:900;color:#22C55E;}
+.cierre-fecha{font-size:11px;color:#475569;}
+.cierre-composicion{font-size:11px;color:#64748B;line-height:1.6;}
+.prov-btn{background:#1E293B;border:1px solid #334155;color:#94A3B8;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:700;transition:all .15s;}
+.prov-btn:hover,.prov-btn.on{background:#6C63FF22;border-color:#6C63FF;color:#A5B4FF;}
+
+/* ── CALENDARIO DE TAREAS ────────────────────── */
+.tareas-cal-dia{background:#111827;border:1px solid #1E293B;border-radius:8px;padding:5px;min-height:72px;cursor:pointer;transition:border-color .15s;}
+.tareas-cal-dia:hover{border-color:#334155;}
+.tareas-cal-dia.hoy{border-color:#6C63FF;}
+.tareas-cal-dia.otro-mes{opacity:.3;}
+.tareas-cal-dia.tiene-tareas{border-color:#334155;}
+.tareas-cal-dia-num{font-size:11px;font-weight:700;color:#64748B;margin-bottom:3px;}
+.tareas-cal-dia.hoy .tareas-cal-dia-num{color:#A5B4FF;}
+.tareas-chip{font-size:8px;padding:2px 5px;border-radius:4px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;}
+.tareas-chip.pendiente{background:#6C63FF22;color:#A5B4FF;border:1px solid #6C63FF33;}
+.tareas-chip.realizada{background:#22C55E22;color:#86EFAC;border:1px solid #22C55E33;text-decoration:line-through;opacity:.7;}
+
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:#0F172A;}
@@ -893,24 +922,52 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 
   <!-- ══════ SECCIÓN TAREAS ══════ -->
   <div class="section" id="sec-tareas" style="padding-top:8px;"><div id="top-sec-tareas" style="height:0;position:relative;top:-8px;"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
       <div>
         <div style="font-size:18px;font-weight:800;color:#F1F5F9;">✅ Tareas administrativas</div>
-        <div style="font-size:12px;color:#64748B;margin-top:2px;">Checklist recurrente del equipo de administración</div>
+        <div style="font-size:12px;color:#64748B;margin-top:2px;">Calendario y checklist del equipo de administración</div>
       </div>
       <div style="display:flex;gap:8px;">
-        <button onclick="ordenarAlfabetico()" style="background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;">A→Z</button>
-        <button onclick="abrirModalTarea()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;">+ Nueva tarea</button>
+        <button onclick="ordenarAlfabetico()" style="background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:700;">A→Z</button>
+        <button onclick="abrirModalTarea()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;">+ Nueva tarea</button>
       </div>
     </div>
-    <div id="tareas-filtros" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-      <button class="tfil-btn tfil-on" onclick="setFiltroTareas('todas')">Todas</button>
-      <button class="tfil-btn" onclick="setFiltroTareas('semanal')">📅 Semanales</button>
-      <button class="tfil-btn" onclick="setFiltroTareas('mensual')">🗓 Mensuales</button>
-      <button class="tfil-btn" onclick="setFiltroTareas('pendiente')">⏳ Pendientes</button>
-      <button class="tfil-btn" onclick="setFiltroTareas('realizada')">✅ Realizadas</button>
+
+    <!-- Sub-tabs -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid #1E293B;">
+      <button class="mkt-tab mkt-tab-on" id="tareas-tab-cal" onclick="setTareasTab('calendario',this)">📅 Calendario</button>
+      <button class="mkt-tab" id="tareas-tab-lista" onclick="setTareasTab('lista',this)">☰ Lista</button>
     </div>
-    <div id="tareas-lista" style="display:flex;flex-direction:column;gap:10px;">Cargando...</div>
+
+    <!-- TAB CALENDARIO -->
+    <div id="tareas-tab-calendario">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <button onclick="tareasCalPrev()" class="btn-mkt-nav">‹</button>
+        <div id="tareas-cal-titulo" style="font-size:15px;font-weight:800;color:#F1F5F9;min-width:180px;text-align:center;"></div>
+        <button onclick="tareasCalNext()" class="btn-mkt-nav">›</button>
+      </div>
+      <div id="tareas-calendario" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px;"></div>
+      <!-- Panel de tareas del día seleccionado -->
+      <div id="tareas-dia-panel" style="display:none;background:#111827;border:1px solid #1E293B;border-radius:12px;padding:16px;margin-top:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div id="tareas-dia-titulo" style="font-size:14px;font-weight:800;color:#F1F5F9;"></div>
+          <button onclick="document.getElementById('tareas-dia-panel').style.display='none'" style="background:transparent;border:none;color:#64748B;cursor:pointer;font-size:16px;">✕</button>
+        </div>
+        <div id="tareas-dia-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+
+    <!-- TAB LISTA -->
+    <div id="tareas-tab-lista" style="display:none;">
+      <div id="tareas-filtros" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="tfil-btn tfil-on" onclick="setFiltroTareas('todas',this)">Todas</button>
+        <button class="tfil-btn" onclick="setFiltroTareas('semanal',this)">📅 Semanales</button>
+        <button class="tfil-btn" onclick="setFiltroTareas('mensual',this)">🗓 Mensuales</button>
+        <button class="tfil-btn" onclick="setFiltroTareas('pendiente',this)">⏳ Pendientes</button>
+        <button class="tfil-btn" onclick="setFiltroTareas('realizada',this)">✅ Realizadas</button>
+      </div>
+      <div id="tareas-lista" style="display:flex;flex-direction:column;gap:10px;">Cargando...</div>
+    </div>
   </div>
 
   <!-- ══════ SECCIÓN MARKETING ══════ -->
@@ -958,11 +1015,132 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
       <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;" id="mkt-cal-leyenda"></div>
     </div>
 
+  </div>
+
+  <!-- ══════ SECCIÓN COBROS CAJA ══════ -->
+  <div class="section" id="sec-cobros" style="padding-top:8px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-size:18px;font-weight:800;color:#F1F5F9;">💰 Cobros Caja</div>
+        <div style="font-size:12px;color:#64748B;margin-top:2px;">Registro de cobros y pagos a proveedores</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="abrirModalCobro()" style="background:linear-gradient(135deg,#22C55E,#16A34A);color:#fff;border:none;border-radius:10px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;">+ Nuevo cobro</button>
+        <button onclick="abrirModalProveedor()" style="background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:700;">⚙ Proveedores</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <div style="font-size:12px;color:#94A3B8;font-weight:700;">Proveedor:</div>
+      <div id="cobros-proveedores-btns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px;">
+      <div style="background:#111827;border:1px solid #1E293B;border-radius:12px;padding:16px;">
+        <div style="font-size:10px;color:#64748B;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Total pendiente</div>
+        <div id="cobros-total-pendiente" style="font-size:24px;font-weight:900;color:#22C55E;">$0</div>
+      </div>
+      <div style="background:#111827;border:1px solid #1E293B;border-radius:12px;padding:16px;">
+        <div style="font-size:10px;color:#64748B;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Cobros pendientes</div>
+        <div id="cobros-count-pendiente" style="font-size:24px;font-weight:900;color:#F1F5F9;">0</div>
+      </div>
+      <div style="background:#111827;border:1px solid #1E293B;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleHistorialCobros()">
+        <div style="font-size:10px;color:#64748B;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Cierres realizados</div>
+        <div id="cobros-count-historial" style="font-size:24px;font-weight:900;color:#6C63FF;">0</div>
+      </div>
+    </div>
+    <div style="background:#111827;border:1px solid #1E293B;border-radius:12px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:13px;font-weight:800;color:#F1F5F9;">Cobros pendientes</div>
+        <button onclick="abrirCierre()" id="btn-cierre" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;display:none;">✓ Hacer cierre</button>
+      </div>
+      <div id="cobros-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+    <div id="cobros-historial-wrap" style="display:none;">
+      <div style="font-size:13px;font-weight:800;color:#F1F5F9;margin-bottom:12px;">📋 Historial de cierres</div>
+      <div id="cobros-historial-lista" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+  </div>
+
   </div><!-- /sections-container -->
 
 </div><!-- /app -->
 
-<!-- ══════ MODAL IDEA ══════ -->
+<!-- ══════ MODAL COBRO ══════ -->
+<div class="modal-bg" id="modal-cobro">
+  <div class="modal-box" style="max-width:500px;">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-cobro-title">💰 Nuevo cobro</span>
+      <button class="modal-close" onclick="cerrarModal('modal-cobro')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cobro-id">
+      <label class="m-label">Proveedor *</label>
+      <select id="cobro-proveedor" class="m-select"></select>
+      <label class="m-label">Cliente / Concepto *</label>
+      <input id="cobro-cliente" class="m-input" placeholder="Ej: Juan Pérez">
+      <div style="display:flex;gap:10px;align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="m-label">Importe a transferir *</label>
+          <input id="cobro-importe" class="m-input" type="number" placeholder="$0" step="0.01" min="0">
+        </div>
+        <div style="flex:1;">
+          <label class="m-label">Importe del pedido (ref.)</label>
+          <input id="cobro-importe-pedido" class="m-input" type="number" placeholder="$0" step="0.01" min="0">
+        </div>
+      </div>
+      <label class="m-label">Vincular pedido (opcional)</label>
+      <select id="cobro-pedido-vinc" class="m-select">
+        <option value="">— Sin vincular —</option>
+      </select>
+      <label class="m-label">Fecha</label>
+      <input id="cobro-fecha" class="m-input" type="date">
+      <label class="m-label">Notas</label>
+      <textarea id="cobro-notas" class="m-input" style="min-height:50px;resize:vertical;" placeholder="Observaciones..."></textarea>
+      <div id="cobro-error" class="m-error" style="display:none;"></div>
+      <button class="btn-primary" onclick="guardarCobro()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL PROVEEDOR ══════ -->
+<div class="modal-bg" id="modal-proveedor">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-header">
+      <span class="modal-title">⚙ Proveedores</span>
+      <button class="modal-close" onclick="cerrarModal('modal-proveedor')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="proveedores-lista-modal" style="margin-bottom:16px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input id="nuevo-proveedor-nombre" class="m-input" placeholder="Nombre del proveedor" style="flex:1;">
+        <button onclick="agregarProveedor()" style="background:#6C63FF;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL CIERRE ══════ -->
+<div class="modal-bg" id="modal-cierre">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-header">
+      <span class="modal-title">✓ Hacer cierre</span>
+      <button class="modal-close" onclick="cerrarModal('modal-cierre')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:#94A3B8;margin-bottom:12px;">Seleccioná los cobros que querés incluir en este cierre:</div>
+      <div id="cierre-cobros-lista" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;margin-bottom:16px;"></div>
+      <div style="background:#0F172A;border:1px solid #22C55E33;border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:11px;color:#64748B;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">Total seleccionado</div>
+        <div id="cierre-total" style="font-size:26px;font-weight:900;color:#22C55E;">$0</div>
+        <div id="cierre-detalle" style="font-size:11px;color:#64748B;margin-top:4px;"></div>
+      </div>
+      <label class="m-label">Notas del cierre (opcional)</label>
+      <textarea id="cierre-notas" class="m-input" style="min-height:50px;resize:vertical;" placeholder="Ej: Transferencia del lunes..."></textarea>
+      <button class="btn-primary" onclick="aplicarCierre()" style="background:linear-gradient(135deg,#22C55E,#16A34A);">✓ Aplicar y archivar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL TAREA ══════ -->
 <div class="modal-bg" id="modal-idea">
   <div class="modal-box">
     <div class="modal-header">
@@ -1161,12 +1339,27 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
       <input id="t-nombre" class="m-input" placeholder="Ej: Pagar factura de luz">
       <label class="m-label">Descripción / detalle</label>
       <textarea id="t-desc" class="m-input" style="min-height:60px;resize:vertical;" placeholder="Pasos, notas, etc."></textarea>
-      <label class="m-label">Recurrencia *</label>
-      <select id="t-recurrencia" class="m-select">
-        <option value="semanal">📅 Semanal</option>
-        <option value="mensual">🗓 Mensual</option>
-        <option value="unica">🔂 Única vez</option>
-      </select>
+      <label class="m-label">¿Se repite?</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#94A3B8;">
+          <input type="checkbox" id="t-repetitiva" onchange="toggleRepeticion()" style="width:16px;height:16px;accent-color:#6C63FF;">
+          Tarea repetitiva
+        </label>
+      </div>
+      <div id="t-recurrencia-wrap" style="display:none;">
+        <label class="m-label">Repetición</label>
+        <select id="t-recurrencia" class="m-select" onchange="toggleFechaVenc()">
+          <option value="semanal">📅 Cada semana (mismo día)</option>
+          <option value="mensual">🗓 Cada mes (mismo número de día)</option>
+          <option value="bimestral">🗓 Mes por medio</option>
+          <option value="anual">📆 Una vez al año</option>
+        </select>
+      </div>
+      <div id="t-fecha-wrap" style="margin-top:8px;">
+        <label class="m-label" id="t-fecha-label">Fecha de vencimiento</label>
+        <input id="t-fecha" class="m-input" type="date">
+        <div style="font-size:10px;color:#475569;margin-top:4px;" id="t-fecha-hint"></div>
+      </div>
       <div id="t-error" class="m-error" style="display:none;"></div>
       <button class="btn-primary" onclick="guardarTarea()">Guardar tarea</button>
     </div>
@@ -1312,7 +1505,7 @@ const LABEL_ACCION = {
   listo_transporte:"✈ Confirmar Despacho", listo_privado:"🚗 Confirmar Entrega"
 };
 const ROL_TABS = {
-  admin:   [{id:"sec-flexi",label:"◈ Presupuesto"},{id:"sec-presupuestos",label:"💾 Guardados"},{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"},{id:"sec-calc",label:"🧮 Calculadora"},{id:"sec-etiquetas",label:"🏷 Etiquetas"},{id:"sec-tareas",label:"✅ Tareas"},{id:"sec-marketing",label:"📣 Marketing"},{id:"sec-usuarios",label:"👤 Usuarios"}],
+  admin:   [{id:"sec-flexi",label:"◈ Presupuesto"},{id:"sec-presupuestos",label:"💾 Guardados"},{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"},{id:"sec-calc",label:"🧮 Calculadora"},{id:"sec-etiquetas",label:"🏷 Etiquetas"},{id:"sec-tareas",label:"✅ Tareas"},{id:"sec-marketing",label:"📣 Marketing"},{id:"sec-cobros",label:"💰 Cobros Caja"},{id:"sec-usuarios",label:"👤 Usuarios"}],
   deposito:[{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"}],
   entrega: [{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"}],
 };
@@ -1500,6 +1693,7 @@ function showSection(id, btn){
   else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
   else if(id==="sec-tareas"){ renderTareas().then(()=>{ getScroller().scrollTop=0; }); }
   else if(id==="sec-marketing"){ renderMarketing().then(()=>{ getScroller().scrollTop=0; }); }
+  else if(id==="sec-cobros"){ renderCobros().then(()=>{ getScroller().scrollTop=0; }); }
 }
 
 function setSyncState(st){
@@ -4387,217 +4581,482 @@ async function subirAdjuntos(files){
   await cargarListaAdjuntos();
 }
 
+
 // ══════════════════════════════════════════════════
-//  TAREAS ADMINISTRATIVAS
+//  TAREAS ADMINISTRATIVAS — con calendario
 // ══════════════════════════════════════════════════
 let allTareas = [];
 let filtroTareas = "todas";
 let _editTareaId = null;
+let tareasCalFecha = new Date();
+let tareasDiaSeleccionado = null;
 
-function periodoKey(recurrencia){
-  const now = new Date();
-  if(recurrencia==="semanal"){
-    // Semana ISO: año + número de semana
-    const d = new Date(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()));
-    const dayNum = d.getUTCDay()||7;
-    d.setUTCDate(d.getUTCDate()+4-dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-    const wk = Math.ceil((((d-yearStart)/86400000)+1)/7);
-    return `${d.getUTCFullYear()}-W${String(wk).padStart(2,"0")}`;
+function periodoKey(t, refDate){
+  const d = refDate || new Date();
+  const rec = t.recurrencia||"unica";
+  if(rec==="semanal"){
+    const utc=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+    const dy=utc.getUTCDay()||7; utc.setUTCDate(utc.getUTCDate()+4-dy);
+    const ys=new Date(Date.UTC(utc.getUTCFullYear(),0,1));
+    const wk=Math.ceil((((utc-ys)/86400000)+1)/7);
+    return`${utc.getUTCFullYear()}-W${String(wk).padStart(2,"0")}`;
   }
-  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+  if(rec==="mensual"||rec==="bimestral") return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+  if(rec==="anual") return`${d.getFullYear()}`;
+  return t.fecha_venc||"unica";
 }
 
-function periodoLabel(recurrencia){
-  const now = new Date();
-  if(recurrencia==="semanal"){
-    const lunes = new Date(now);
-    lunes.setDate(now.getDate()-((now.getDay()||7)-1));
-    const dom = new Date(lunes); dom.setDate(lunes.getDate()+6);
-    return `${lunes.getDate()}/${lunes.getMonth()+1} – ${dom.getDate()}/${dom.getMonth()+1}`;
-  }
-  if(recurrencia==="unica") return "Una vez";
-  return now.toLocaleDateString("es-AR",{month:"long",year:"numeric"});
+function fechasTareaEnMes(t, año, mes){
+  if(!t.fecha_venc) return [];
+  const rec = t.recurrencia||"unica";
+  const fv = new Date(t.fecha_venc+"T00:00:00");
+  const fechas=[]; const diasMes=new Date(año,mes+1,0).getDate();
+  if(rec==="unica"){ if(fv.getFullYear()===año&&fv.getMonth()===mes) fechas.push(fv.getDate()); }
+  else if(rec==="semanal"){ const dow=fv.getDay(); for(let d=1;d<=diasMes;d++){ if(new Date(año,mes,d).getDay()===dow) fechas.push(d); } }
+  else if(rec==="mensual"){ const dia=fv.getDate(); if(dia<=diasMes) fechas.push(dia); }
+  else if(rec==="bimestral"){ const mesOrig=fv.getMonth(); const diff=(mes-mesOrig+24)%12; if(diff%2===0){const dia=fv.getDate();if(dia<=diasMes)fechas.push(dia);} }
+  else if(rec==="anual"){ if(fv.getMonth()===mes){const dia=fv.getDate();if(dia<=diasMes)fechas.push(dia);} }
+  return fechas;
 }
+
+function estaHechaEnFecha(t,año,mes,dia){ const pk=periodoKey(t,new Date(año,mes,dia)); return(t.realizadas||[]).includes(pk); }
 
 async function cargarTareas(){
   try{
-    const { data, error } = await db.from("tareas").select("*").order("orden",{ascending:true,nullsFirst:true}).order("created_at",{ascending:true});
-    if(error) throw error;
-    allTareas = data||[];
-  }catch(e){
-    // fallback sin campo orden (por si aún no fue migrado)
-    try{
-      const { data } = await db.from("tareas").select("*").order("created_at",{ascending:true});
-      allTareas = data||[];
-    }catch(e2){ allTareas=[]; }
-  }
+    const{data,error}=await db.from("tareas").select("*").order("orden",{ascending:true,nullsFirst:true}).order("created_at",{ascending:true});
+    if(error)throw error; allTareas=data||[];
+  }catch(e){ try{const{data}=await db.from("tareas").select("*").order("created_at",{ascending:true});allTareas=data||[];}catch(e2){allTareas=[];} }
 }
 
-function setFiltroTareas(f){
+let tareasTabActual="calendario";
+function setTareasTab(tab,btn){
+  tareasTabActual=tab;
+  document.querySelectorAll("#tareas-tab-cal,#tareas-tab-lista").forEach(b=>b.classList.remove("mkt-tab-on"));
+  if(btn)btn.classList.add("mkt-tab-on");
+  document.getElementById("tareas-tab-calendario").style.display=tab==="calendario"?"block":"none";
+  document.getElementById("tareas-tab-lista").style.display=tab==="lista"?"block":"none";
+  if(tab==="calendario") renderTareasCalendario();
+  else renderTareasLista();
+}
+
+function setFiltroTareas(f,btn){
   filtroTareas=f;
   document.querySelectorAll(".tfil-btn").forEach(b=>b.classList.remove("tfil-on"));
-  event.currentTarget.classList.add("tfil-on");
-  renderTareas();
+  if(btn)btn.classList.add("tfil-on");
+  renderTareasLista();
 }
 
 async function renderTareas(){
   await cargarTareas();
-  const lista = document.getElementById("tareas-lista");
-  if(!lista) return;
-  let tareas = [...allTareas];
+  if(tareasTabActual==="calendario") renderTareasCalendario();
+  else renderTareasLista();
+}
+
+function tareasCalPrev(){tareasCalFecha=new Date(tareasCalFecha.getFullYear(),tareasCalFecha.getMonth()-1,1);renderTareasCalendario();}
+function tareasCalNext(){tareasCalFecha=new Date(tareasCalFecha.getFullYear(),tareasCalFecha.getMonth()+1,1);renderTareasCalendario();}
+
+function renderTareasCalendario(){
+  const el=document.getElementById("tareas-calendario");if(!el)return;
+  const titulo=document.getElementById("tareas-cal-titulo");
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const año=tareasCalFecha.getFullYear(),mes=tareasCalFecha.getMonth();
+  titulo.textContent=new Date(año,mes,1).toLocaleDateString("es-AR",{month:"long",year:"numeric"}).toUpperCase();
+  const dias=["DOM","LUN","MAR","MIÉ","JUE","VIE","SÁB"];
+  let html=dias.map(d=>`<div class="cal-dia-header">${d}</div>`).join("");
+  const primerDia=new Date(año,mes,1).getDay(),ultimoDia=new Date(año,mes+1,0).getDate();
+  for(let i=0;i<primerDia;i++) html+=`<div class="tareas-cal-dia otro-mes"></div>`;
+  for(let d=1;d<=ultimoDia;d++){
+    const fecha=new Date(año,mes,d);fecha.setHours(0,0,0,0);
+    const esHoy=fecha.getTime()===hoy.getTime();
+    const tareasDelDia=allTareas.filter(t=>fechasTareaEnMes(t,año,mes).includes(d));
+    const chips=tareasDelDia.map(t=>{ const hecha=estaHechaEnFecha(t,año,mes,d); return`<div class="tareas-chip ${hecha?"realizada":"pendiente"}" title="${t.nombre}">${t.nombre.slice(0,14)}${t.nombre.length>14?"…":""}</div>`; }).join("");
+    html+=`<div class="tareas-cal-dia${esHoy?" hoy":""}${tareasDelDia.length?" tiene-tareas":""}" onclick="seleccionarDiaTareas(${año},${mes},${d})"><div class="tareas-cal-dia-num">${d}</div>${chips}</div>`;
+  }
+  const total=primerDia+ultimoDia,celdas=Math.ceil(total/7)*7;
+  for(let i=1;i<=celdas-total;i++) html+=`<div class="tareas-cal-dia otro-mes"></div>`;
+  el.innerHTML=html;
+}
+
+function seleccionarDiaTareas(año,mes,dia){
+  tareasDiaSeleccionado={año,mes,dia};
+  const panel=document.getElementById("tareas-dia-panel");
+  const titulo=document.getElementById("tareas-dia-titulo");
+  const lista=document.getElementById("tareas-dia-lista");
+  titulo.textContent=new Date(año,mes,dia).toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const tareasDelDia=allTareas.filter(t=>fechasTareaEnMes(t,año,mes).includes(dia));
+  if(!tareasDelDia.length){ lista.innerHTML=`<div style="color:#475569;font-size:13px;text-align:center;padding:12px;">No hay tareas para este día</div>`; }
+  else {
+    lista.innerHTML=tareasDelDia.map(t=>{
+      const hecha=estaHechaEnFecha(t,año,mes,dia);
+      const pk=periodoKey(t,new Date(año,mes,dia));
+      const recLabel={"semanal":"📅","mensual":"🗓","bimestral":"🗓","anual":"📆","unica":"🔂"}[t.recurrencia||"unica"]||"";
+      return`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#0F172A;border:1px solid ${hecha?"#22C55E33":"#1E293B"};border-radius:8px;">
+        <button class="tarea-check${hecha?" on":""}" onclick="toggleTareaCalendario('${t.id}','${pk}',${hecha})">${hecha?"✓":""}</button>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:700;color:${hecha?"#475569":"#F1F5F9"};${hecha?"text-decoration:line-through;":""}">${recLabel} ${t.nombre}</div>${t.descripcion?`<div style="font-size:11px;color:#64748B;margin-top:2px;">${t.descripcion}</div>`:""}</div>
+        <div style="display:flex;gap:4px;"><button class="tarea-btn-sm" onclick="editarTarea('${t.id}')">✏</button><button class="tarea-btn-sm del" onclick="eliminarTarea('${t.id}')">🗑</button></div>
+      </div>`;
+    }).join("");
+  }
+  panel.style.display="block";
+  panel.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+async function toggleTareaCalendario(id,pk,actual){
+  const t=allTareas.find(x=>x.id===id);if(!t)return;
+  let r=t.realizadas||[];r=actual?r.filter(p=>p!==pk):[...r,pk];
+  try{ await db.from("tareas").update({realizadas:r}).eq("id",id);t.realizadas=r;renderTareasCalendario();if(tareasDiaSeleccionado)seleccionarDiaTareas(tareasDiaSeleccionado.año,tareasDiaSeleccionado.mes,tareasDiaSeleccionado.dia); }catch(e){}
+}
+
+async function renderTareasLista(){
+  const lista=document.getElementById("tareas-lista");if(!lista)return;
+  let tareas=[...allTareas];const now=new Date();
   if(filtroTareas==="semanal") tareas=tareas.filter(t=>t.recurrencia==="semanal");
   else if(filtroTareas==="mensual") tareas=tareas.filter(t=>t.recurrencia==="mensual");
-  else if(filtroTareas==="pendiente") tareas=tareas.filter(t=>{
-    const pk=periodoKey(t.recurrencia);
-    return !(t.realizadas||[]).includes(pk);
-  });
-  else if(filtroTareas==="realizada") tareas=tareas.filter(t=>{
-    const pk=periodoKey(t.recurrencia);
-    return (t.realizadas||[]).includes(pk);
-  });
-  if(tareas.length===0){
-    lista.innerHTML=`<div style="color:#475569;text-align:center;padding:40px;font-size:13px;">No hay tareas en esta categoría</div>`;
-    return;
-  }
-  lista.innerHTML = tareas.map(t=>{
-    const pk = periodoKey(t.recurrencia);
-    const hecha = (t.realizadas||[]).includes(pk);
-    const recLabel = t.recurrencia==="semanal"?"📅 Semanal":t.recurrencia==="mensual"?"🗓 Mensual":"🔂 Única";
-    const periodo = periodoLabel(t.recurrencia);
-    return `<div class="tarea-card${hecha?" realizada":""}" draggable="true" data-id="${t.id}" 
-      ondragstart="tareaDragStart(event)" ondragover="tareaDragOver(event)" ondragleave="tareaDragLeave(event)" ondrop="tareaDrop(event)">
-      <div class="tarea-drag-handle" title="Arrastrar para reordenar">⠿</div>
-      <button class="tarea-check${hecha?" on":""}" onclick="toggleTarea('${t.id}','${pk}',${hecha})" title="${hecha?"Marcar pendiente":"Marcar realizada"}">${hecha?"✓":""}</button>
+  else if(filtroTareas==="pendiente") tareas=tareas.filter(t=>!(t.realizadas||[]).includes(periodoKey(t,now)));
+  else if(filtroTareas==="realizada") tareas=tareas.filter(t=>(t.realizadas||[]).includes(periodoKey(t,now)));
+  if(!tareas.length){lista.innerHTML=`<div style="color:#475569;text-align:center;padding:40px;font-size:13px;">No hay tareas en esta categoría</div>`;return;}
+  const recLabels={"semanal":"📅 Semanal","mensual":"🗓 Mensual","bimestral":"🗓 Mes por medio","anual":"📆 Anual","unica":"🔂 Única"};
+  lista.innerHTML=tareas.map(t=>{
+    const pk=periodoKey(t,now),hecha=(t.realizadas||[]).includes(pk);
+    const recLabel=recLabels[t.recurrencia||"unica"]||"🔂 Única";
+    const periodo=t.fecha_venc?new Date(t.fecha_venc+"T00:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"}):"";
+    return`<div class="tarea-card${hecha?" realizada":""}" draggable="true" data-id="${t.id}" ondragstart="tareaDragStart(event)" ondragover="tareaDragOver(event)" ondragleave="tareaDragLeave(event)" ondrop="tareaDrop(event)">
+      <div class="tarea-drag-handle">⠿</div>
+      <button class="tarea-check${hecha?" on":""}" onclick="toggleTarea('${t.id}','${pk}',${hecha})">${hecha?"✓":""}</button>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
           <div class="tarea-nombre" style="${hecha?"text-decoration:line-through;color:#475569;":""}">${t.nombre}</div>
-          <span class="tarea-badge ${t.recurrencia}">${recLabel}</span>
-          <span class="tarea-periodo">${periodo}</span>
+          <span class="tarea-badge ${t.recurrencia||"unica"}">${recLabel}</span>
+          ${periodo?`<span class="tarea-periodo">📅 ${periodo}</span>`:""}
         </div>
         ${t.descripcion?`<div class="tarea-desc">${t.descripcion}</div>`:""}
       </div>
-      <div class="tarea-acciones">
-        <button class="tarea-btn-sm" onclick="editarTarea('${t.id}')">✏</button>
-        <button class="tarea-btn-sm del" onclick="eliminarTarea('${t.id}')">🗑</button>
-      </div>
+      <div class="tarea-acciones"><button class="tarea-btn-sm" onclick="editarTarea('${t.id}')">✏</button><button class="tarea-btn-sm del" onclick="eliminarTarea('${t.id}')">🗑</button></div>
     </div>`;
   }).join("");
 }
 
-// ── DRAG & DROP ──────────────────────────────────
-let _dragId = null;
-
-function tareaDragStart(e){
-  _dragId = e.currentTarget.dataset.id;
-  e.currentTarget.style.opacity="0.4";
-  e.dataTransfer.effectAllowed="move";
-}
-function tareaDragOver(e){
-  e.preventDefault();
-  e.dataTransfer.dropEffect="move";
-  e.currentTarget.style.borderColor="#6C63FF";
-  e.currentTarget.style.borderStyle="dashed";
-}
-function tareaDragLeave(e){
-  e.currentTarget.style.borderColor="";
-  e.currentTarget.style.borderStyle="";
-}
-async function tareaDrop(e){
-  e.preventDefault();
-  const targetId = e.currentTarget.dataset.id;
-  e.currentTarget.style.borderColor="";
-  e.currentTarget.style.borderStyle="";
-  document.querySelectorAll(".tarea-card").forEach(c=>c.style.opacity="1");
-  if(!_dragId || _dragId===targetId) return;
-
-  // Reordenar en allTareas
-  const fromIdx = allTareas.findIndex(t=>t.id===_dragId);
-  const toIdx   = allTareas.findIndex(t=>t.id===targetId);
-  if(fromIdx<0||toIdx<0) return;
-  const [moved] = allTareas.splice(fromIdx,1);
-  allTareas.splice(toIdx,0,moved);
-
-  // Guardar nuevo orden en Supabase
-  await guardarOrdenTareas();
-  renderTareas();
+async function toggleTarea(id,pk,actual){
+  const t=allTareas.find(x=>x.id===id);if(!t)return;
+  let r=t.realizadas||[];r=actual?r.filter(p=>p!==pk):[...r,pk];
+  try{await db.from("tareas").update({realizadas:r}).eq("id",id);t.realizadas=r;renderTareasLista();}catch(e){}
 }
 
-async function guardarOrdenTareas(){
-  // Actualizar campo "orden" de cada tarea según posición en allTareas
-  const updates = allTareas.map((t,i)=>
-    db.from("tareas").update({orden:i}).eq("id",t.id)
-  );
-  await Promise.all(updates);
+function toggleRepeticion(){
+  const on=document.getElementById("t-repetitiva").checked;
+  document.getElementById("t-recurrencia-wrap").style.display=on?"block":"none";
+  toggleFechaVenc();
 }
-
-async function ordenarAlfabetico(){
-  allTareas.sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));
-  await guardarOrdenTareas();
-  renderTareas();
+function toggleFechaVenc(){
+  const rec=document.getElementById("t-recurrencia").value;
+  const on=document.getElementById("t-repetitiva").checked;
+  const hint=document.getElementById("t-fecha-hint");
+  document.getElementById("t-fecha-label").textContent=on?"Fecha de referencia":"Fecha de vencimiento";
+  const hints={semanal:"Se repetirá cada semana el mismo día.",mensual:"Se repetirá el mismo número de día cada mes.",bimestral:"Se repetirá mes por medio.",anual:"Se repetirá cada año en esta fecha."};
+  hint.textContent=on?(hints[rec]||""):"";
 }
-
-async function toggleTarea(id, periodoKey, yaHecha){
-  const t = allTareas.find(x=>x.id===id);
-  if(!t) return;
-  let realizadas = t.realizadas||[];
-  if(yaHecha) realizadas = realizadas.filter(p=>p!==periodoKey);
-  else realizadas = [...realizadas, periodoKey];
-  try{
-    await db.from("tareas").update({realizadas}).eq("id",id);
-    t.realizadas = realizadas;
-    renderTareas();
-  }catch(e){ alert("Error al actualizar tarea"); }
-}
-
 function abrirModalTarea(){
   _editTareaId=null;
   document.getElementById("modal-tarea-title").textContent="✅ Nueva tarea";
-  document.getElementById("t-id").value="";
-  document.getElementById("t-nombre").value="";
-  document.getElementById("t-desc").value="";
+  document.getElementById("t-id").value="";document.getElementById("t-nombre").value="";document.getElementById("t-desc").value="";
+  document.getElementById("t-repetitiva").checked=false;
+  document.getElementById("t-recurrencia-wrap").style.display="none";
   document.getElementById("t-recurrencia").value="mensual";
+  document.getElementById("t-fecha").value=new Date().toISOString().slice(0,10);
+  document.getElementById("t-fecha-label").textContent="Fecha de vencimiento";
+  document.getElementById("t-fecha-hint").textContent="";
   document.getElementById("t-error").style.display="none";
   document.getElementById("modal-tarea").classList.add("on");
 }
-
 function editarTarea(id){
-  const t = allTareas.find(x=>x.id===id);
-  if(!t) return;
+  const t=allTareas.find(x=>x.id===id);if(!t)return;
   _editTareaId=id;
+  const esRep=t.recurrencia&&t.recurrencia!=="unica";
   document.getElementById("modal-tarea-title").textContent="✏ Editar tarea";
-  document.getElementById("t-id").value=id;
-  document.getElementById("t-nombre").value=t.nombre||"";
-  document.getElementById("t-desc").value=t.descripcion||"";
-  document.getElementById("t-recurrencia").value=t.recurrencia||"mensual";
+  document.getElementById("t-id").value=id;document.getElementById("t-nombre").value=t.nombre||"";document.getElementById("t-desc").value=t.descripcion||"";
+  document.getElementById("t-repetitiva").checked=esRep;
+  document.getElementById("t-recurrencia-wrap").style.display=esRep?"block":"none";
+  document.getElementById("t-recurrencia").value=esRep?(t.recurrencia||"mensual"):"mensual";
+  document.getElementById("t-fecha").value=t.fecha_venc||new Date().toISOString().slice(0,10);
   document.getElementById("t-error").style.display="none";
+  toggleFechaVenc();
   document.getElementById("modal-tarea").classList.add("on");
 }
-
 async function guardarTarea(){
-  const nombre = document.getElementById("t-nombre").value.trim();
-  const desc = document.getElementById("t-desc").value.trim();
-  const recurrencia = document.getElementById("t-recurrencia").value;
-  const errEl = document.getElementById("t-error");
-  if(!nombre){ errEl.textContent="El nombre es obligatorio";errEl.style.display="block";return; }
+  const nombre=document.getElementById("t-nombre").value.trim();
+  const desc=document.getElementById("t-desc").value.trim();
+  const repetitiva=document.getElementById("t-repetitiva").checked;
+  const recurrencia=repetitiva?document.getElementById("t-recurrencia").value:"unica";
+  const fecha_venc=document.getElementById("t-fecha").value||null;
+  const errEl=document.getElementById("t-error");
+  if(!nombre){errEl.textContent="El nombre es obligatorio";errEl.style.display="block";return;}
   errEl.style.display="none";
   try{
-    if(_editTareaId){
-      await db.from("tareas").update({nombre,descripcion:desc,recurrencia}).eq("id",_editTareaId);
-    } else {
-      await db.from("tareas").insert({nombre,descripcion:desc,recurrencia,realizadas:[]});
-    }
-    cerrarModal("modal-tarea");
-    renderTareas();
-  }catch(e){ errEl.textContent="Error al guardar";errEl.style.display="block"; }
+    if(_editTareaId) await db.from("tareas").update({nombre,descripcion:desc,recurrencia,fecha_venc}).eq("id",_editTareaId);
+    else await db.from("tareas").insert({nombre,descripcion:desc,recurrencia,fecha_venc,realizadas:[],orden:allTareas.length});
+    cerrarModal("modal-tarea");await cargarTareas();
+    if(tareasTabActual==="calendario") renderTareasCalendario(); else renderTareasLista();
+  }catch(e){errEl.textContent="Error: "+e.message;errEl.style.display="block";}
+}
+async function eliminarTarea(id){
+  if(!confirm("¿Eliminar esta tarea?"))return;
+  try{await db.from("tareas").delete().eq("id",id);await cargarTareas();renderTareas();}catch(e){}
+}
+let _dragId=null;
+function tareaDragStart(e){_dragId=e.currentTarget.dataset.id;e.currentTarget.style.opacity="0.4";e.dataTransfer.effectAllowed="move";}
+function tareaDragOver(e){e.preventDefault();e.currentTarget.style.borderColor="#6C63FF";e.currentTarget.style.borderStyle="dashed";}
+function tareaDragLeave(e){e.currentTarget.style.borderColor="";e.currentTarget.style.borderStyle="";}
+async function tareaDrop(e){
+  e.preventDefault();const targetId=e.currentTarget.dataset.id;
+  e.currentTarget.style.borderColor="";e.currentTarget.style.borderStyle="";
+  document.querySelectorAll(".tarea-card").forEach(c=>c.style.opacity="1");
+  if(!_dragId||_dragId===targetId)return;
+  const fi=allTareas.findIndex(t=>t.id===_dragId),ti=allTareas.findIndex(t=>t.id===targetId);
+  if(fi<0||ti<0)return;
+  const[moved]=allTareas.splice(fi,1);allTareas.splice(ti,0,moved);
+  await Promise.all(allTareas.map((t,i)=>db.from("tareas").update({orden:i}).eq("id",t.id)));
+  renderTareasLista();
+}
+async function ordenarAlfabetico(){
+  allTareas.sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));
+  await Promise.all(allTareas.map((t,i)=>db.from("tareas").update({orden:i}).eq("id",t.id)));
+  renderTareasLista();
 }
 
-async function eliminarTarea(id){
-  if(!confirm("¿Eliminar esta tarea?")) return;
+// ══════════════════════════════════════════════════
+//  COBROS CAJA
+// ══════════════════════════════════════════════════
+let allCobros=[], allProveedores=[], allCierres=[];
+let cobroProveedorActivo=null;
+
+async function renderCobros(){
+  await Promise.all([cargarProveedores(),cargarCobros(),cargarCierres()]);
+  renderProveedoresBtns();
+  renderCobrosPendientes();
+  renderCierresHistorial();
+}
+
+async function cargarProveedores(){
+  try{const{data}=await db.from("cobros_proveedores").select("*").order("nombre");allProveedores=data||[];}catch(e){allProveedores=[];}
+}
+async function cargarCobros(){
   try{
-    await db.from("tareas").delete().eq("id",id);
-    renderTareas();
-  }catch(e){ alert("Error al eliminar"); }
+    let q=db.from("cobros").select("*").eq("archivado",false).order("fecha",{ascending:false});
+    if(cobroProveedorActivo) q=q.eq("proveedor_id",cobroProveedorActivo);
+    const{data}=await q; allCobros=data||[];
+  }catch(e){allCobros=[];}
+}
+async function cargarCierres(){
+  try{
+    let q=db.from("cobros_cierres").select("*").order("fecha",{ascending:false}).limit(20);
+    if(cobroProveedorActivo) q=q.eq("proveedor_id",cobroProveedorActivo);
+    const{data}=await q; allCierres=data||[];
+  }catch(e){allCierres=[];}
+}
+
+function renderProveedoresBtns(){
+  const wrap=document.getElementById("cobros-proveedores-btns");if(!wrap)return;
+  let html=`<button class="prov-btn${!cobroProveedorActivo?" on":""}" onclick="setCobroProveedor(null,this)">Todos</button>`;
+  allProveedores.forEach(p=>{
+    html+=`<button class="prov-btn${cobroProveedorActivo===p.id?" on":""}" onclick="setCobroProveedor('${p.id}',this)">${p.nombre}</button>`;
+  });
+  wrap.innerHTML=html;
+}
+
+async function setCobroProveedor(id,btn){
+  cobroProveedorActivo=id;
+  document.querySelectorAll(".prov-btn").forEach(b=>b.classList.remove("on"));
+  if(btn)btn.classList.add("on");
+  await Promise.all([cargarCobros(),cargarCierres()]);
+  renderCobrosPendientes();renderCierresHistorial();
+}
+
+function renderCobrosPendientes(){
+  const lista=document.getElementById("cobros-lista");
+  const total=allCobros.reduce((s,c)=>s+(+c.importe||0),0);
+  document.getElementById("cobros-total-pendiente").textContent="$"+new Intl.NumberFormat("es-AR").format(total);
+  document.getElementById("cobros-count-pendiente").textContent=allCobros.length;
+  document.getElementById("cobros-count-historial").textContent=allCierres.length;
+  document.getElementById("btn-cierre").style.display=allCobros.length?"inline-block":"none";
+  if(!allCobros.length){lista.innerHTML=`<div style="color:#475569;font-size:13px;text-align:center;padding:20px;">Sin cobros pendientes</div>`;return;}
+  lista.innerHTML=allCobros.map(c=>{
+    const prov=allProveedores.find(p=>p.id===c.proveedor_id);
+    const fecha=c.fecha?new Date(c.fecha+"T00:00:00").toLocaleDateString("es-AR"):"";
+    return`<div class="cobro-item">
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span class="cobro-cliente">${c.cliente||"Sin nombre"}</span>
+          ${prov?`<span class="cobro-proveedor-badge">${prov.nombre}</span>`:""}
+        </div>
+        <div class="cobro-meta">${fecha}${c.notas?" · "+c.notas:""}</div>
+      </div>
+      <span class="cobro-importe">$${new Intl.NumberFormat("es-AR").format(+c.importe||0)}</span>
+      <button class="tarea-btn-sm" onclick="editarCobro('${c.id}')" style="flex-shrink:0;">✏</button>
+      <button class="tarea-btn-sm del" onclick="eliminarCobro('${c.id}')" style="flex-shrink:0;">🗑</button>
+    </div>`;
+  }).join("");
+}
+
+function renderCierresHistorial(){
+  const lista=document.getElementById("cobros-historial-lista");if(!lista)return;
+  if(!allCierres.length){lista.innerHTML=`<div style="color:#475569;font-size:13px;text-align:center;padding:20px;">Sin cierres realizados</div>`;return;}
+  lista.innerHTML=allCierres.map(c=>{
+    const prov=allProveedores.find(p=>p.id===c.proveedor_id);
+    const fecha=c.fecha?new Date(c.fecha+"T00:00:00").toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"}):"";
+    const comp=JSON.parse(c.composicion||"[]");
+    return`<div class="cierre-item">
+      <div class="cierre-header">
+        <div>
+          <span class="cierre-total-badge">$${new Intl.NumberFormat("es-AR").format(+c.total||0)}</span>
+          ${prov?`<span class="cobro-proveedor-badge" style="margin-left:8px;">${prov.nombre}</span>`:""}
+        </div>
+        <span class="cierre-fecha">${fecha}</span>
+      </div>
+      <div class="cierre-composicion">${comp.map(x=>`• ${x.cliente}: $${new Intl.NumberFormat("es-AR").format(+x.importe||0)}`).join("<br>")}</div>
+      ${c.notas?`<div style="font-size:11px;color:#64748B;margin-top:6px;border-top:1px solid #1E293B;padding-top:6px;">${c.notas}</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+function toggleHistorialCobros(){
+  const wrap=document.getElementById("cobros-historial-wrap");
+  wrap.style.display=wrap.style.display==="none"?"block":"none";
+}
+
+// ── MODAL COBRO ─────────────────────────────────
+function abrirModalCobro(){
+  document.getElementById("modal-cobro-title").textContent="💰 Nuevo cobro";
+  document.getElementById("cobro-id").value="";
+  ["cobro-cliente","cobro-importe","cobro-importe-pedido","cobro-notas"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("cobro-fecha").value=new Date().toISOString().slice(0,10);
+  // Poblar proveedor select
+  const sel=document.getElementById("cobro-proveedor");
+  sel.innerHTML=allProveedores.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
+  if(cobroProveedorActivo) sel.value=cobroProveedorActivo;
+  // Poblar pedidos vinculables
+  const pedSel=document.getElementById("cobro-pedido-vinc");
+  pedSel.innerHTML=`<option value="">— Sin vincular —</option>`+allPedidos.filter(p=>p.estado!=="entregado").map(p=>`<option value="${p.id}">#${p.numero} ${p.cliente}</option>`).join("");
+  document.getElementById("cobro-error").style.display="none";
+  document.getElementById("modal-cobro").classList.add("on");
+}
+
+function editarCobro(id){
+  const c=allCobros.find(x=>x.id===id);if(!c)return;
+  document.getElementById("modal-cobro-title").textContent="✏ Editar cobro";
+  document.getElementById("cobro-id").value=id;
+  document.getElementById("cobro-cliente").value=c.cliente||"";
+  document.getElementById("cobro-importe").value=c.importe||"";
+  document.getElementById("cobro-importe-pedido").value=c.importe_pedido||"";
+  document.getElementById("cobro-fecha").value=c.fecha||new Date().toISOString().slice(0,10);
+  document.getElementById("cobro-notas").value=c.notas||"";
+  const sel=document.getElementById("cobro-proveedor");
+  sel.innerHTML=allProveedores.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
+  sel.value=c.proveedor_id||"";
+  const pedSel=document.getElementById("cobro-pedido-vinc");
+  pedSel.innerHTML=`<option value="">— Sin vincular —</option>`+allPedidos.filter(p=>p.estado!=="entregado").map(p=>`<option value="${p.id}">#${p.numero} ${p.cliente}</option>`).join("");
+  pedSel.value=c.pedido_id||"";
+  document.getElementById("cobro-error").style.display="none";
+  document.getElementById("modal-cobro").classList.add("on");
+}
+
+async function guardarCobro(){
+  const id=document.getElementById("cobro-id").value;
+  const proveedor_id=document.getElementById("cobro-proveedor").value;
+  const cliente=document.getElementById("cobro-cliente").value.trim();
+  const importe=parseFloat(document.getElementById("cobro-importe").value)||0;
+  const importe_pedido=parseFloat(document.getElementById("cobro-importe-pedido").value)||null;
+  const fecha=document.getElementById("cobro-fecha").value;
+  const notas=document.getElementById("cobro-notas").value.trim();
+  const pedido_id=document.getElementById("cobro-pedido-vinc").value||null;
+  const errEl=document.getElementById("cobro-error");
+  if(!cliente||!importe){errEl.textContent="Cliente e importe son obligatorios";errEl.style.display="block";return;}
+  errEl.style.display="none";
+  try{
+    const data={proveedor_id,cliente,importe,importe_pedido,fecha,notas,pedido_id,archivado:false};
+    if(id) await db.from("cobros").update(data).eq("id",id);
+    else await db.from("cobros").insert(data);
+    cerrarModal("modal-cobro");await cargarCobros();renderCobrosPendientes();
+  }catch(e){errEl.textContent="Error: "+e.message;errEl.style.display="block";}
+}
+
+async function eliminarCobro(id){
+  if(!confirm("¿Eliminar este cobro?"))return;
+  try{await db.from("cobros").delete().eq("id",id);await cargarCobros();renderCobrosPendientes();}catch(e){}
+}
+
+// ── CIERRE ──────────────────────────────────────
+function abrirCierre(){
+  const lista=document.getElementById("cierre-cobros-lista");
+  lista.innerHTML=allCobros.map(c=>{
+    const prov=allProveedores.find(p=>p.id===c.proveedor_id);
+    return`<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#0F172A;border:1px solid #1E293B;border-radius:8px;">
+      <div class="cobro-check-box" id="cb-${c.id}" onclick="toggleCierreCheck('${c.id}',${+c.importe||0})"></div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:#F1F5F9;">${c.cliente}</div>
+        <div style="font-size:10px;color:#475569;">${prov?prov.nombre:""} · ${c.fecha||""}</div>
+      </div>
+      <span style="font-size:14px;font-weight:800;color:#22C55E;">$${new Intl.NumberFormat("es-AR").format(+c.importe||0)}</span>
+    </div>`;
+  }).join("");
+  document.getElementById("cierre-total").textContent="$0";
+  document.getElementById("cierre-detalle").textContent="";
+  document.getElementById("cierre-notas").value="";
+  document.getElementById("modal-cierre").classList.add("on");
+  window._cierreSeleccionados={};
+}
+
+function toggleCierreCheck(id,importe){
+  if(!window._cierreSeleccionados) window._cierreSeleccionados={};
+  const el=document.getElementById("cb-"+id);
+  if(window._cierreSeleccionados[id]){ delete window._cierreSeleccionados[id];el.classList.remove("on");el.textContent=""; }
+  else{ window._cierreSeleccionados[id]=importe;el.classList.add("on");el.textContent="✓"; }
+  const ids=Object.keys(window._cierreSeleccionados);
+  const total=ids.reduce((s,k)=>s+(+window._cierreSeleccionados[k]||0),0);
+  document.getElementById("cierre-total").textContent="$"+new Intl.NumberFormat("es-AR").format(total);
+  document.getElementById("cierre-detalle").textContent=ids.length+" cobro"+( ids.length!==1?"s":"")+" seleccionado"+(ids.length!==1?"s":"");
+}
+
+async function aplicarCierre(){
+  const sel=window._cierreSeleccionados||{};
+  const ids=Object.keys(sel);
+  if(!ids.length){alert("Seleccioná al menos un cobro");return;}
+  const total=ids.reduce((s,k)=>s+(+sel[k]||0),0);
+  const notas=document.getElementById("cierre-notas").value.trim();
+  const composicion=ids.map(id=>{
+    const c=allCobros.find(x=>x.id===id);
+    return{id,cliente:c?.cliente||"",importe:c?.importe||0};
+  });
+  const proveedor_id=composicion.length?allCobros.find(x=>x.id===composicion[0].id)?.proveedor_id:null;
+  try{
+    await db.from("cobros_cierres").insert({proveedor_id,total,composicion:JSON.stringify(composicion),notas,fecha:new Date().toISOString().slice(0,10)});
+    await db.from("cobros").update({archivado:true}).in("id",ids);
+    cerrarModal("modal-cierre");await Promise.all([cargarCobros(),cargarCierres()]);renderCobrosPendientes();renderCierresHistorial();
+    document.getElementById("cobros-historial-wrap").style.display="block";
+  }catch(e){alert("Error al aplicar cierre: "+e.message);}
+}
+
+// ── PROVEEDORES ─────────────────────────────────
+function abrirModalProveedor(){
+  renderProveedoresModal();
+  document.getElementById("nuevo-proveedor-nombre").value="";
+  document.getElementById("modal-proveedor").classList.add("on");
+}
+function renderProveedoresModal(){
+  const lista=document.getElementById("proveedores-lista-modal");
+  if(!allProveedores.length){lista.innerHTML=`<div style="color:#475569;font-size:13px;text-align:center;padding:12px;">Sin proveedores</div>`;return;}
+  lista.innerHTML=allProveedores.map(p=>`<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#0F172A;border:1px solid #1E293B;border-radius:8px;margin-bottom:6px;">
+    <span style="flex:1;font-size:13px;font-weight:700;color:#F1F5F9;">${p.nombre}</span>
+    <button class="tarea-btn-sm del" onclick="eliminarProveedor('${p.id}')">🗑</button>
+  </div>`).join("");
+}
+async function agregarProveedor(){
+  const nombre=document.getElementById("nuevo-proveedor-nombre").value.trim();
+  if(!nombre)return;
+  try{await db.from("cobros_proveedores").insert({nombre});document.getElementById("nuevo-proveedor-nombre").value="";await cargarProveedores();renderProveedoresModal();renderProveedoresBtns();}catch(e){alert("Error: "+e.message);}
+}
+async function eliminarProveedor(id){
+  if(!confirm("¿Eliminar este proveedor?"))return;
+  try{await db.from("cobros_proveedores").delete().eq("id",id);await cargarProveedores();renderProveedoresModal();renderProveedoresBtns();}catch(e){}
 }
 </script>
 
