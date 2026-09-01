@@ -5433,9 +5433,9 @@ function setPredominante(ci){
   // Dibujar todo de una sola vez en lugar de celda por celda
   fctx.fillStyle=c.h;
   fctx.fillRect(0,0,fcv.width,fcv.height);
-  // Grilla sutil
-  fctx.strokeStyle="rgba(0,0,0,0.08)";
-  fctx.lineWidth=0.4;
+  // Grilla con el mismo contraste automático que drawCell()
+  fctx.strokeStyle=lineaContraste(c.h);
+  fctx.lineWidth=1;
   for(let r=0;r<=FS.rows;r++){fctx.beginPath();fctx.moveTo(0,r*CELL);fctx.lineTo(fcv.width,r*CELL);fctx.stroke();}
   for(let c2=0;c2<=FS.cols;c2++){fctx.beginPath();fctx.moveTo(c2*CELL,0);fctx.lineTo(c2*CELL,fcv.height);fctx.stroke();}
   updateLegendLive();
