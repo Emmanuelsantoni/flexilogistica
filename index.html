@@ -70,9 +70,9 @@ html,body{height:100%;}
 .topbar-brand .icon{font-size:20px;color:var(--blue);}
 .topbar-brand h1{font-size:16px;font-weight:900;color:#F1F5F9;letter-spacing:-.5px;}
 .topbar-brand small{font-size:14px;color:#475569;letter-spacing:2px;margin-left:6px;}
-.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.tab-nav{display:flex;background:#0F172A;border-radius:8px;overflow:hidden;border:1px solid #334155;}
-.tab-btn{padding:7px 14px;font-size:14px;font-weight:700;color:#64748B;background:transparent;
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0;}
+.tab-nav{display:flex;background:#0F172A;border-radius:8px;border:1px solid #334155;overflow-x:auto;min-width:0;max-width:100%;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+.tab-btn{padding:7px 14px;font-size:14px;font-weight:700;color:#64748B;background:transparent;flex-shrink:0;
   border:none;cursor:pointer;letter-spacing:.5px;white-space:nowrap;}
 .tab-btn.on{background:var(--blue);color:#fff;}
 .user-badge{display:flex;align-items:center;gap:6px;padding:6px 10px;
@@ -2916,13 +2916,21 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
   <div class="section" id="sec-tareas" style="padding-top:8px;"><div id="top-sec-tareas" style="height:0;position:relative;top:-8px;"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
       <div>
-        <div style="font-size:18px;font-weight:800;color:#F1F5F9;">✅ Tareas administrativas</div>
+        <div style="font-size:18px;font-weight:800;color:#F1F5F9;">📅 Calendario</div>
         <div style="font-size:14px;color:#64748B;margin-top:2px;">Calendario y checklist del equipo de administración</div>
       </div>
       <div style="display:flex;gap:8px;">
+        <button onclick="abrirModalNotas()" style="background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:14px;font-weight:700;">📝 Notas</button>
         <button onclick="ordenarAlfabetico()" style="background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:14px;font-weight:700;">A→Z</button>
         <button onclick="abrirModalTarea()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;">+ Nueva tarea</button>
       </div>
+    </div>
+
+    <!-- AVISO DE PENDIENTES DE MESES ANTERIORES -->
+    <div id="tareas-aviso-pendientes" onclick="irAPendientesAnteriores()" style="display:none;align-items:center;gap:10px;background:#7F1D1D33;border:1px solid #EF444455;border-radius:10px;padding:10px 14px;margin-bottom:14px;cursor:pointer;">
+      <span style="font-size:16px;">⚠️</span>
+      <span style="font-size:14px;color:#FCA5A5;font-weight:700;flex:1;">Tenés tareas pendientes de meses anteriores. Tocá para verlas.</span>
+      <span style="font-size:13px;color:#FCA5A5;">Ir →</span>
     </div>
 
     <!-- CALENDARIO -->
@@ -3332,6 +3340,23 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
   </div>
 </div>
 
+<!-- ══════ MODAL NOTAS (calendario) ══════ -->
+<div class="modal-bg" id="modal-notas">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-header">
+      <span class="modal-title">📝 Notas</span>
+      <button class="modal-close" onclick="cerrarModal('modal-notas')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:14px;color:#64748B;margin-bottom:10px;">Un bloc de notas general para el equipo. Es el mismo siempre, no cambia por mes.</div>
+      <textarea id="notas-texto" class="m-input" style="min-height:260px;resize:vertical;" placeholder="Escribí acá..."></textarea>
+      <div id="notas-guardado" style="font-size:13px;color:#22C55E;margin-top:6px;height:16px;"></div>
+      <div id="notas-error" class="m-error" style="display:none;"></div>
+      <button class="btn-primary" onclick="guardarNotas()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════ MODAL ADJUNTOS ══════ -->
 <div class="modal-bg" id="modal-adjuntos">
   <div class="modal-box" style="max-width:520px;">
@@ -3469,7 +3494,7 @@ const LABEL_ACCION = {
   listo_transporte:"✈ Confirmar Despacho", listo_privado:"🚗 Confirmar Entrega"
 };
 const ROL_TABS = {
-  admin:   [{id:"sec-flexi",label:"◈ Presupuesto"},{id:"sec-presupuestos",label:"💾 Guardados"},{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"},{id:"sec-calc",label:"🧮 Calculadora"},{id:"sec-etiquetas",label:"🏷 Etiquetas"},{id:"sec-tareas",label:"✅ Tareas"},{id:"sec-marketing",label:"📣 Marketing"},{id:"sec-cobros",label:"💰 Cobros Caja"},{id:"sec-usuarios",label:"👤 Usuarios"}],
+  admin:   [{id:"sec-flexi",label:"◈ Presupuesto"},{id:"sec-presupuestos",label:"💾 Guardados"},{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"},{id:"sec-calc",label:"🧮 Calculadora"},{id:"sec-etiquetas",label:"🏷 Etiquetas"},{id:"sec-tareas",label:"📅 Calendario"},{id:"sec-marketing",label:"📣 Marketing"},{id:"sec-cobros",label:"💰 Cobros Caja"},{id:"sec-usuarios",label:"👤 Usuarios"}],
   deposito:[{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"}],
   entrega: [{id:"sec-kanban",label:"⬡ Panel Preparación"},{id:"sec-historial",label:"📋 Historial"}],
 };
@@ -6428,6 +6453,7 @@ let filtroTareas = "todas";
 let _editTareaId = null;
 let tareasCalFecha = new Date();
 let tareasDiaSeleccionado = null;
+let _pendientesAnterioresMes = null;
 
 function periodoKey(t, refDate){
   const d = refDate || new Date();
@@ -6463,6 +6489,42 @@ function fechasTareaEnMes(t, año, mes){
 
 function estaHechaEnFecha(t,año,mes,dia){ const pk=periodoKey(t,new Date(año,mes,dia)); return(t.realizadas||[]).includes(pk); }
 
+function buscarPendientesAnteriores(){
+  const hoy=new Date(); const añoAct=hoy.getFullYear(), mesAct=hoy.getMonth();
+  let masAntiguo=null;
+  for(const t of allTareas){
+    if(!t.fecha_venc) continue;
+    const fv=new Date(t.fecha_venc+"T00:00:00");
+    let año=fv.getFullYear(), mes=fv.getMonth();
+    let guard=0;
+    while((año<añoAct || (año===añoAct && mes<mesAct)) && guard<600){
+      guard++;
+      const fechas=fechasTareaEnMes(t,año,mes);
+      for(const d of fechas){
+        if(!estaHechaEnFecha(t,año,mes,d)){
+          if(!masAntiguo || año<masAntiguo.año || (año===masAntiguo.año && mes<masAntiguo.mes)) masAntiguo={año,mes};
+        }
+      }
+      mes++; if(mes>11){mes=0;año++;}
+    }
+  }
+  return masAntiguo;
+}
+
+function actualizarAvisoPendientes(){
+  const banner=document.getElementById("tareas-aviso-pendientes");
+  if(!banner) return;
+  _pendientesAnterioresMes=buscarPendientesAnteriores();
+  banner.style.display=_pendientesAnterioresMes?"flex":"none";
+}
+
+function irAPendientesAnteriores(){
+  if(!_pendientesAnterioresMes) return;
+  tareasCalFecha=new Date(_pendientesAnterioresMes.año,_pendientesAnterioresMes.mes,1);
+  renderTareasCalendario();
+  renderTareasLista();
+}
+
 async function cargarTareas(){
   try{
     const{data,error}=await db.from("tareas").select("*").order("orden",{ascending:true,nullsFirst:true}).order("created_at",{ascending:true});
@@ -6481,6 +6543,7 @@ async function renderTareas(){
   await cargarTareas();
   renderTareasCalendario();
   renderTareasLista();
+  actualizarAvisoPendientes();
 }
 
 function tareasCalPrev(){tareasCalFecha=new Date(tareasCalFecha.getFullYear(),tareasCalFecha.getMonth()-1,1);renderTareasCalendario();renderTareasLista();}
@@ -6540,6 +6603,7 @@ async function toggleTareaCalendario(id,pk,actual){
     t.realizadas=r;
     renderTareasCalendario();
     renderTareasLista(); // sincronizar lista
+    actualizarAvisoPendientes();
     if(tareasDiaSeleccionado) seleccionarDiaTareas(tareasDiaSeleccionado.año,tareasDiaSeleccionado.mes,tareasDiaSeleccionado.dia);
   }catch(e){}
 }
@@ -6586,6 +6650,7 @@ async function toggleTarea(id,pk,actual){
     t.realizadas=r;
     renderTareasLista();
     renderTareasCalendario(); // sincronizar calendario
+    actualizarAvisoPendientes();
     if(tareasDiaSeleccionado) seleccionarDiaTareas(tareasDiaSeleccionado.año,tareasDiaSeleccionado.mes,tareasDiaSeleccionado.dia);
   }catch(e){}
 }
@@ -6643,12 +6708,37 @@ async function guardarTarea(){
     if(_editTareaId) await db.from("tareas").update({nombre,descripcion:desc,recurrencia,fecha_venc}).eq("id",_editTareaId);
     else await db.from("tareas").insert({nombre,descripcion:desc,recurrencia,fecha_venc,realizadas:[],orden:allTareas.length});
     cerrarModal("modal-tarea");await cargarTareas();
-    if(tareasTabActual==="calendario") renderTareasCalendario(); else renderTareasLista();
+    renderTareasCalendario();renderTareasLista();actualizarAvisoPendientes();
   }catch(e){errEl.textContent="Error: "+e.message;errEl.style.display="block";}
 }
 async function eliminarTarea(id){
   if(!confirm("¿Eliminar esta tarea?"))return;
   try{await db.from("tareas").delete().eq("id",id);await cargarTareas();renderTareas();}catch(e){}
+}
+
+// ══════════════════════════════════════════════════
+//  NOTAS GLOBALES (bloc único, no cambia por mes)
+// ══════════════════════════════════════════════════
+async function abrirModalNotas(){
+  document.getElementById("modal-notas").classList.add("on");
+  document.getElementById("notas-guardado").textContent="";
+  document.getElementById("notas-error").style.display="none";
+  const ta=document.getElementById("notas-texto");
+  ta.value="Cargando...";ta.disabled=true;
+  try{
+    const{data,error}=await db.from("cal_notas").select("*").eq("id","global").maybeSingle();
+    ta.value=(!error&&data)?(data.contenido||""):"";
+  }catch(e){ta.value="";}
+  ta.disabled=false;
+}
+async function guardarNotas(){
+  const contenido=document.getElementById("notas-texto").value;
+  const errEl=document.getElementById("notas-error");errEl.style.display="none";
+  try{
+    const{error}=await db.from("cal_notas").upsert({id:"global",contenido,updated_at:new Date().toISOString()});
+    if(error){errEl.textContent="Error al guardar: "+error.message;errEl.style.display="block";return;}
+    const g=document.getElementById("notas-guardado");g.textContent="Guardado ✓";setTimeout(()=>{if(g)g.textContent="";},2000);
+  }catch(e){errEl.textContent="Error: "+e.message;errEl.style.display="block";}
 }
 let _dragId=null;
 function tareaDragStart(e){_dragId=e.currentTarget.dataset.id;e.currentTarget.style.opacity="0.4";e.dataTransfer.effectAllowed="move";}
