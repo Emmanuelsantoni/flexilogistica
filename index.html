@@ -1038,7 +1038,7 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
         <div style="font-size:10px;color:#64748B;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Cobros pendientes</div>
         <div id="cobros-count-pendiente" style="font-size:24px;font-weight:900;color:#F1F5F9;">0</div>
       </div>
-      <div style="background:#111827;border:1px solid #1E293B;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleHistorialCobros()">
+      <div id="card-cierres" style="background:#111827;border:1px solid #1E293B;border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;" onclick="toggleHistorialCobros()">
         <div style="font-size:10px;color:#64748B;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Cierres realizados</div>
         <div id="cobros-count-historial" style="font-size:24px;font-weight:900;color:#6C63FF;">0</div>
       </div>
@@ -4963,7 +4963,7 @@ function renderCierresHistorial(){
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <span class="cierre-fecha">${fecha}</span>
-          <button class="tarea-btn-sm del" onclick="eliminarCierre('${c.id}',${JSON.stringify(comp).replace(/'/g,"&#39;")})" style="white-space:nowrap;">🗑 Eliminar</button>
+          <button class="tarea-btn-sm del" onclick="eliminarCierre('${c.id}')" style="white-space:nowrap;">🗑 Eliminar</button>
         </div>
       </div>
       <div class="cierre-composicion">${comp.map(x=>`• ${x.cliente}: $${new Intl.NumberFormat("es-AR").format(+x.importe||0)}`).join("<br>")}</div>
@@ -4972,13 +4972,13 @@ function renderCierresHistorial(){
   }).join("");
 }
 
-async function eliminarCierre(cierreId, comp){
+async function eliminarCierre(cierreId){
   if(!confirm("¿Eliminar este cierre? Los cobros volverán a aparecer como pendientes.")) return;
   try{
-    // Reactivar los cobros que componían el cierre
+    const cierre = allCierres.find(x=>x.id===cierreId);
+    const comp = JSON.parse(cierre?.composicion||"[]");
     const ids = comp.map(x=>x.id).filter(Boolean);
     if(ids.length) await db.from("cobros").update({archivado:false}).in("id",ids);
-    // Borrar el cierre
     await db.from("cobros_cierres").delete().eq("id",cierreId);
     await Promise.all([cargarCobros(),cargarCierres()]);
     renderCobrosPendientes();
@@ -4988,7 +4988,15 @@ async function eliminarCierre(cierreId, comp){
 
 function toggleHistorialCobros(){
   const wrap=document.getElementById("cobros-historial-wrap");
-  wrap.style.display=wrap.style.display==="none"?"block":"none";
+  const card=document.getElementById("card-cierres");
+  const abierto=wrap.style.display==="none"||wrap.style.display==="";
+  wrap.style.display=abierto?"block":"none";
+  if(card){
+    card.style.background=abierto?"#6C63FF":"#111827";
+    card.style.borderColor=abierto?"#6C63FF":"#1E293B";
+    card.querySelector("div").style.color=abierto?"rgba(255,255,255,0.8)":"#64748B";
+    card.querySelector("#cobros-count-historial").style.color=abierto?"#fff":"#6C63FF";
+  }
 }
 
 // ── MODAL COBRO ─────────────────────────────────
