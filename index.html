@@ -1831,7 +1831,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
             <div><label>Teléfono</label><input id="cTel" type="tel" placeholder="+54 9 11..."></div>
             <div><label>Ciudad / Localidad</label><input id="cCiudad" type="text" placeholder="CABA, GBA..."></div>
           </div>
-          <label>Email</label><input id="cEmail" type="email" placeholder="cliente@mail.com">
+          <div class="row2">
+            <div><label>DNI / CUIT</label><input id="cDni" type="text" placeholder="20-12345678-9"></div>
+            <div><label>Email</label><input id="cEmail" type="email" placeholder="cliente@mail.com"></div>
+          </div>
           <label>Tipo de entrega</label>
           <div class="delivery-toggle" style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
             <button class="dtog on" id="dtog-retira_fabrica" onclick="setDelivery('retira_fabrica')" style="font-size:14px;">🏭 Retira en Fábrica</button>
@@ -3233,6 +3236,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
         <div><label class="m-label">Teléfono *</label><input id="lf-telefono" class="m-input" placeholder="+54 9 11..."></div>
         <div><label class="m-label">Ciudad</label><input id="lf-ciudad" class="m-input" placeholder="CABA..."></div>
       </div>
+      <div class="m-grid2">
+        <div><label class="m-label">DNI / CUIT</label><input id="lf-dni" class="m-input" placeholder="20-12345678-9"></div>
+        <div><label class="m-label">Email</label><input id="lf-email" class="m-input" type="email" placeholder="cliente@mail.com"></div>
+      </div>
       <label class="m-label">Dirección de entrega</label>
       <input id="lf-direccion" class="m-input" placeholder="Calle 1234...">
       <label class="m-label">Tipo de entrega</label>
@@ -3268,6 +3275,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
       <div class="m-grid2">
         <div><label class="m-label">Teléfono *</label><input id="ep-telefono" class="m-input"></div>
         <div><label class="m-label">Ciudad</label><input id="ep-ciudad" class="m-input"></div>
+      </div>
+      <div class="m-grid2">
+        <div><label class="m-label">DNI / CUIT</label><input id="ep-dni" class="m-input"></div>
+        <div><label class="m-label">Email</label><input id="ep-email" class="m-input" type="email"></div>
       </div>
       <label class="m-label">Dirección de entrega</label>
       <input id="ep-direccion" class="m-input">
@@ -3937,6 +3948,7 @@ function capturarEstadoFlexi(){
       nombre: document.getElementById("cNombre")?.value||"",
       tel: document.getElementById("cTel")?.value||"",
       ciudad: document.getElementById("cCiudad")?.value||"",
+      dni: document.getElementById("cDni")?.value||"",
       email: document.getElementById("cEmail")?.value||"",
       nota: document.getElementById("cNota")?.value||"",
       direccion: document.getElementById("cDireccion")?.value||"",
@@ -4026,6 +4038,7 @@ async function cargarPresupuesto(id){
     document.getElementById("cNombre").value = d.cliente.nombre||"";
     document.getElementById("cTel").value = d.cliente.tel||"";
     document.getElementById("cCiudad").value = d.cliente.ciudad||"";
+    document.getElementById("cDni").value = d.cliente.dni||"";
     document.getElementById("cEmail").value = d.cliente.email||"";
     document.getElementById("cNota").value = d.cliente.nota||"";
     if(document.getElementById("cDireccion")) document.getElementById("cDireccion").value = d.cliente.direccion||"";
@@ -4117,6 +4130,8 @@ function abrirEtiqueta(id){
       pedido: "#"+p.numero,
       nombre: p.cliente||"",
       tel: p.telefono||"",
+      dni: p.dni||"",
+      email: p.email||"",
       dir: p.direccion||"",
       loc: "",
       tipo: tipo,
@@ -4134,6 +4149,8 @@ function abrirModalNuevoPedido(){
   document.getElementById("ep-cliente").value = "";
   document.getElementById("ep-telefono").value = "";
   document.getElementById("ep-ciudad").value = "";
+  document.getElementById("ep-dni").value = "";
+  document.getElementById("ep-email").value = "";
   document.getElementById("ep-direccion").value = "";
   document.getElementById("ep-obs").value = "";
   document.getElementById("ep-productos").innerHTML = "";
@@ -4149,6 +4166,8 @@ function abrirEditarPedido(id){
   document.getElementById("ep-cliente").value = p.cliente||"";
   document.getElementById("ep-telefono").value = p.telefono||"";
   document.getElementById("ep-ciudad").value = "";
+  document.getElementById("ep-dni").value = p.dni||"";
+  document.getElementById("ep-email").value = p.email||"";
   document.getElementById("ep-direccion").value = p.direccion||"";
   document.getElementById("ep-obs").value = p.observaciones||"";
   document.getElementById("ep-productos").innerHTML = "";
@@ -4245,6 +4264,8 @@ async function guardarPedidoEditado(){
   const id = document.getElementById("ep-id").value;
   const cliente = document.getElementById("ep-cliente").value.trim();
   const telefono = document.getElementById("ep-telefono").value.trim();
+  const dni = document.getElementById("ep-dni").value.trim();
+  const email = document.getElementById("ep-email").value.trim();
   const direccion = document.getElementById("ep-direccion").value.trim();
   const obs = document.getElementById("ep-obs").value.trim();
   const errEl = document.getElementById("ep-error");
@@ -4259,7 +4280,7 @@ async function guardarPedidoEditado(){
   errEl.style.display="none";
   try{
     if(id){
-      await db.from("pedidos").update({cliente,telefono,direccion,observaciones:obs,productos,updated_at:new Date().toISOString()}).eq("id",id);
+      await db.from("pedidos").update({cliente,telefono,dni,email,direccion,observaciones:obs,productos,updated_at:new Date().toISOString()}).eq("id",id);
       toast("Pedido actualizado ✓","ok");
     } else {
       const {data:ult} = await db.from("pedidos").select("numero").order("numero",{ascending:false}).limit(1);
@@ -4267,7 +4288,7 @@ async function guardarPedidoEditado(){
       await db.from("pedidos").insert({
         id:Date.now().toString(), numero, estado:"pendiente",
         fecha:new Date().toLocaleDateString("es-AR"),
-        creado_por:currentUser.nombre, cliente, telefono, direccion,
+        creado_por:currentUser.nombre, cliente, telefono, dni, email, direccion,
         observaciones:obs, productos, origen_flexi:false, historial_estados:[]
       });
       toast("Pedido creado ✓","ok");
@@ -4284,6 +4305,7 @@ function abrirModalLogiflow(){
   const nombre = document.getElementById("cNombre").value||"";
   const tel = document.getElementById("cTel").value||"";
   const ciudad = document.getElementById("cCiudad").value||"";
+  const dni = document.getElementById("cDni")?.value||"";
   const email = document.getElementById("cEmail").value||"";
   const nota = document.getElementById("cNota").value||"";
   const dirEl = document.getElementById("cDireccion");
@@ -4291,8 +4313,10 @@ function abrirModalLogiflow(){
   document.getElementById("lf-cliente").value = nombre;
   document.getElementById("lf-telefono").value = tel;
   document.getElementById("lf-ciudad").value = ciudad;
+  document.getElementById("lf-dni").value = dni;
+  document.getElementById("lf-email").value = email;
   document.getElementById("lf-direccion").value = dir||ciudad;
-  document.getElementById("lf-obs").value = nota||(email?"Email: "+email:"");
+  document.getElementById("lf-obs").value = nota;
   const deliveryMap = {
     "retira_fabrica":"listo_fabrica", "retira_santoni":"listo_santoni",
     "envio_interior":"listo_transporte", "envio_privado":"listo_privado"
@@ -4344,6 +4368,8 @@ async function confirmarEnvioLogiflow(){
   const cliente=document.getElementById("lf-cliente").value.trim();
   const telefono=document.getElementById("lf-telefono").value.trim();
   const ciudad=document.getElementById("lf-ciudad").value.trim();
+  const dni=document.getElementById("lf-dni").value.trim();
+  const email=document.getElementById("lf-email").value.trim();
   const direccion=document.getElementById("lf-direccion").value.trim();
   const obs=document.getElementById("lf-obs").value.trim();
   const entrega=document.getElementById("lf-entrega").value;
@@ -4413,7 +4439,8 @@ async function confirmarEnvioLogiflow(){
     cliente:document.getElementById("lf-cliente").value||document.getElementById("cNombre").value||"",
     tel:document.getElementById("lf-telefono").value||document.getElementById("cTel").value||"",
     ciudad:document.getElementById("lf-ciudad").value||document.getElementById("cCiudad").value||"",
-    email:document.getElementById("cEmail").value||"",
+    dni:document.getElementById("lf-dni").value||document.getElementById("cDni")?.value||"",
+    email:document.getElementById("lf-email").value||document.getElementById("cEmail").value||"",
     obs:document.getElementById("cNota").value||"",
     entrega:FS.delivery==="envio"?"Envio"+(document.getElementById("cDireccion")?.value?" → "+document.getElementById("cDireccion").value:""):"Retira en local",
     dim:FS.lR>0?FS.lR.toFixed(2)+" x "+FS.aR.toFixed(2)+" m":FS.m2cot+" m2",
@@ -4439,7 +4466,7 @@ async function confirmarEnvioLogiflow(){
       id:Date.now().toString(),numero,estado:"pendiente",
       fecha:new Date().toLocaleDateString("es-AR"),
       creado_por:currentUser?.nombre||"FlexiFloor",
-      cliente,telefono,direccion:direccion||ciudad,
+      cliente,telefono,dni,email,direccion:direccion||ciudad,
       observaciones:obsCompleto,productos:prods,origen_flexi:true,historial_estados:[],
       imagen_diseno:imagenDiseno||null,
       datos_presupuesto:datosPresupuesto||null
@@ -8614,8 +8641,7 @@ function buildPrivado(sender) {
       });
 
       if (faltantes.length) {
-        alert(`Faltan datos obligatorios:\n\n${faltantes.map(campo => `- ${campo}`).join('\n')}`);
-        return false;
+        return confirm(`Faltan datos obligatorios:\n\n${faltantes.map(campo => `- ${campo}`).join('\n')}\n\n¿Querés imprimir igual?`);
       }
 
       return true;
@@ -8744,24 +8770,28 @@ function buildPrivado(sender) {
     document.addEventListener('DOMContentLoaded', init);
 // ─── Puente con FlexiLogística: prefill desde el Panel de Preparación (Kanban) ───
 window.enviosAplicarPedido = function(datos) {
+  // Limpia cualquier dato de un pedido cargado anteriormente antes de aplicar el nuevo
+  limpiarDatos();
   const tipo = datos.tipo || 'privado';
   $('tipoCartel').value = tipo;
   actualizarFormulario();
   if (tipo === 'micro') {
-    if (datos.pedido) $('pedidoMicro').value = datos.pedido;
-    if (datos.nombre) $('destNombreMicro').value = datos.nombre;
-    if (datos.tel) $('destTelefonoMicro').value = datos.tel;
-    if (datos.dir) $('destDireccionMicro').value = datos.dir;
-    if (datos.loc) $('destLocalidadMicro').value = datos.loc;
-    if (datos.obs) $('observacionesMicro').value = datos.obs;
-    if (datos.transporte) $('transporte').value = datos.transporte;
+    $('pedidoMicro').value = datos.pedido || '';
+    $('destNombreMicro').value = datos.nombre || '';
+    $('destDni').value = datos.dni || '';
+    $('destTelefonoMicro').value = datos.tel || '';
+    $('destDireccionMicro').value = datos.dir || '';
+    $('destLocalidadMicro').value = datos.loc || '';
+    $('destEmailMicro').value = datos.email || '';
+    $('observacionesMicro').value = datos.obs || '';
+    $('transporte').value = datos.transporte || '';
   } else {
-    if (datos.pedido) $('pedido').value = datos.pedido;
-    if (datos.nombre) $('destNombre').value = datos.nombre;
-    if (datos.tel) $('destTelefono').value = datos.tel;
-    if (datos.dir) $('destDireccion').value = datos.dir;
-    if (datos.loc) $('destLocalidad').value = datos.loc;
-    if (datos.obs) $('aclaraciones').value = datos.obs;
+    $('pedido').value = datos.pedido || '';
+    $('destNombre').value = datos.nombre || '';
+    $('destTelefono').value = datos.tel || '';
+    $('destDireccion').value = datos.dir || '';
+    $('destLocalidad').value = datos.loc || '';
+    $('aclaraciones').value = datos.obs || '';
   }
   actualizarVistaPrevia();
 };
