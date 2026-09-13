@@ -187,8 +187,14 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   display:flex;align-items:center;gap:8px;}
 .kstat-num{font-size:22px;font-weight:900;font-family:monospace;}
 .kstat-lbl{font-size:14px;color:#64748B;line-height:1.3;}
-.kanban-board{display:flex;gap:14px;overflow-x:auto;align-items:flex-start;padding-bottom:20px;margin-top:0;}
-.k-col{flex:0 0 290px;background:#111827;border-radius:12px;border:1px solid #1E293B;overflow:hidden;}
+.kanban-board{display:flex;gap:10px;overflow-x:auto;align-items:flex-start;padding-bottom:20px;margin-top:0;}
+.kanban-board::-webkit-scrollbar{height:32px;}
+.kanban-board::-webkit-scrollbar-track{background:#111827;border-radius:8px;}
+.kanban-board::-webkit-scrollbar-thumb{background:#334155;border-radius:8px;border:8px solid #111827;}
+.kanban-board::-webkit-scrollbar-thumb:hover{background:#475569;}
+.k-col{flex:0 0 200px;background:#111827;border-radius:12px;border:1px solid #1E293B;overflow:hidden;}
+.k-col[data-estado="embalado"]{flex:0 0 240px;}
+.k-col[data-estado^="listo_"]{flex:0 0 165px;}
 .k-col-header{padding:12px 14px;border-bottom:1px solid #1E293B;display:flex;justify-content:space-between;align-items:center;}
 .k-col-title{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;letter-spacing:.5px;}
 .k-col-dot{width:7px;height:7px;border-radius:50%;}
@@ -201,10 +207,10 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
   border-left:3px solid #334155;padding:14px;margin-bottom:10px;
   transition:transform .15s,box-shadow .15s;cursor:default;}
 .pedido-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4);}
-.pc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.pc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
 .pc-num{font-size:17px;font-weight:900;color:#F1F5F9;font-family:monospace;}
 .pc-fecha{font-size:12px;color:#64748B;margin-top:1px;}
-.pc-badge{border-radius:20px;padding:3px 9px;font-size:12px;font-weight:700;letter-spacing:.5px;border:1px solid;}
+.pc-badge{border-radius:20px;padding:3px 9px;font-size:12px;font-weight:700;letter-spacing:.5px;border:1px solid;white-space:nowrap;}
 .pc-cliente{font-size:13px;font-weight:700;color:#F1F5F9;margin-bottom:2px;}
 .pc-dir{font-size:12px;color:#64748B;line-height:1.4;}
 .pc-productos{background:#0F172A;border-radius:6px;padding:8px 10px;margin:8px 0;}
@@ -3471,7 +3477,7 @@ const TODOS = ["deposito","entrega","admin"];
 const ESTADOS = [
   {id:"pendiente",          label:"Pendiente",               color:"#94A3B8", roles:TODOS},
   {id:"preparado",          label:"En Preparación",           color:"#F59E0B", roles:TODOS},
-  {id:"embalado",           label:"Embalado",                 color:"#6C63FF", roles:TODOS},
+  {id:"embalado",           label:"Preparado",                color:"#6C63FF", roles:TODOS},
   {id:"listo_fabrica",      label:"Listo — Retira Fábrica",  color:"#00C9A7", roles:TODOS},
   {id:"listo_santoni",      label:"Listo — Retira Santoni",  color:"#06B6D4", roles:TODOS},
   {id:"listo_transporte",   label:"Listo — Envío Interior",  color:"#F97316", roles:TODOS},
@@ -3490,7 +3496,7 @@ const ANT_ESTADO = {
   entregado:"embalado"
 };
 const LABEL_ACCION = {
-  pendiente:"▶ Iniciar Preparación", preparado:"⬡ Marcar Embalado",
+  pendiente:"▶ Iniciar Preparación", preparado:"⬡ Marcar Preparado",
   listo_fabrica:"✓ Confirmar Retiro", listo_santoni:"✓ Confirmar Retiro",
   listo_transporte:"✈ Confirmar Despacho", listo_privado:"🚗 Confirmar Entrega"
 };
@@ -3723,8 +3729,9 @@ function renderKanban(){
   const statsEl = document.getElementById("kanban-stats");
   statsEl.innerHTML = ESTADOS.filter(e=>e.id!=="entregado").map(e=>{
     const n = activos.filter(p=>p.estado===e.id).length;
-    return`<div class="kstat"><span class="kstat-num" style="color:${e.color}">${n}</span><span class="kstat-lbl">${e.label}</span></div>`;
-  }).join("") + `<div class="kstat" style="margin-left:auto;"><span class="kstat-num" style="color:#F1F5F9">${activos.length}</span><span class="kstat-lbl">Total activos</span></div>`;
+    return`<div class="kstat" style="cursor:pointer;" onclick="scrollAEstadoKanban('${e.id}')" title="Ir a ${e.label}"><span class="kstat-num" style="color:${e.color}">${n}</span><span class="kstat-lbl">${e.label}</span></div>`;
+  }).join("") + `<div class="kstat"><span class="kstat-num" style="color:#F1F5F9">${activos.length}</span><span class="kstat-lbl">Total activos</span></div>`
+  + (currentUser.rol==="admin" ? `<button onclick="abrirModalNuevoPedido()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;display:flex;align-items:center;">+ Nuevo pedido</button>` : "");
   // Board
   const board = document.getElementById("kanban-board");
   board.innerHTML = "";
@@ -3747,19 +3754,17 @@ function renderKanban(){
       <div class="k-col-body">${peds.length===0?'<div class="k-empty">Sin pedidos</div>':peds.map(p=>cardHTML(p,est)).join("")}</div>`;
     board.appendChild(col);
   });
-  // Nuevo pedido (solo admin)
-  if(currentUser.rol==="admin"){
-    const addBtn = document.createElement("div");
-    addBtn.style.cssText="flex:0 0 auto;display:flex;align-items:flex-start;padding-top:8px;";
-    addBtn.innerHTML=`<button onclick="abrirModalNuevoPedido()" style="background:linear-gradient(135deg,#6C63FF,#4F46E5);color:#fff;border:none;border-radius:10px;padding:12px 18px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;">+ Nuevo pedido</button>`;
-    board.appendChild(addBtn);
-  }
   // Restaurar scroll de cada columna
   document.querySelectorAll(".k-col").forEach(col=>{
     const id = col.dataset.estado;
     const body = col.querySelector(".k-col-body");
     if(id && body && scrollPositions[id]) body.scrollTop = scrollPositions[id];
   });
+}
+
+function scrollAEstadoKanban(estadoId){
+  const col = document.querySelector(`.k-col[data-estado="${estadoId}"]`);
+  if(col) col.scrollIntoView({behavior:"smooth", inline:"start", block:"nearest"});
 }
 
 function cardHTML(p, est){
@@ -3796,9 +3801,9 @@ function cardHTML(p, est){
     const sueltasStr = sueltas>0 ? sueltas+" u" : "";
     const embStr = cajas>0&&sueltas>0 ? cajasStr+" + "+sueltasStr : cajas>0 ? cajasStr : sueltasStr||total+" u";
     cajasHTML+=`<div style="background:${hex};border-radius:7px;padding:8px 12px;margin-bottom:6px;-webkit-print-color-adjust:exact;">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <span style="color:${textColor};font-size:13px;font-weight:800;">${nombreColor}</span>
-        <span style="color:${textColor};font-size:13px;font-weight:900;">${embStr}</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;">
+        <span style="color:${textColor};font-size:13px;font-weight:800;white-space:nowrap;">${nombreColor}</span>
+        <span style="color:${textColor};font-size:13px;font-weight:900;white-space:nowrap;">${embStr}</span>
       </div>
       <div style="color:${textColor};opacity:.75;font-size:14px;margin-top:3px;">
         ${fmtNum(total)} pz &nbsp;(${cajasStr}${sueltas>0?" + "+sueltas+" u":""}) &nbsp;· &nbsp;${m2Color} m²
@@ -3827,7 +3832,6 @@ function cardHTML(p, est){
         </div>
         <div class="pc-fecha">${p.fecha}</div>
       </div>
-      <span class="pc-badge" style="background:${est.color}22;color:${est.color};border-color:${est.color}44;">${est.label.toUpperCase()}</span>
     </div>
     ${p.origen_flexi?'<div class="pc-origen">◈ FLEXI</div>':''}
     <div class="pc-cliente">${p.cliente}</div>
@@ -4486,7 +4490,7 @@ function verDetalleHistorial(id){
   if(!p) return;
 
   const ESTADO_LABELS = {
-    pendiente:"Pendiente", preparado:"En Preparación", embalado:"Embalado",
+    pendiente:"Pendiente", preparado:"En Preparación", embalado:"Preparado",
     listo_retirar:"Listo para Retirar", listo_despachar:"Listo para Despachar",
     entregado:"Entregado", despachado:"Despachado"
   };
@@ -4888,7 +4892,7 @@ function imprimirPedidoKanban(id){
   const totalStr = obsMatch ? fmtP(parseFloat(obsMatch[1].replace(/\./g,"").replace(",","."))) : "";
 
   // Tipo de entrega
-  const estadoLabels={"listo_fabrica":"🏭 Retira en Fábrica","listo_santoni":"🏪 Retira en Santoni","listo_transporte":"📦 Envío Interior","listo_privado":"🚗 Envío Privado","pendiente":"Pendiente","preparado":"En preparación","embalado":"Embalado","entregado":"Entregado"};
+  const estadoLabels={"listo_fabrica":"🏭 Retira en Fábrica","listo_santoni":"🏪 Retira en Santoni","listo_transporte":"📦 Envío Interior","listo_privado":"🚗 Envío Privado","pendiente":"Pendiente","preparado":"En preparación","embalado":"Preparado","entregado":"Entregado"};
   const entregaLabel = estadoLabels[p.estado]||p.estado;
 
   const printHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8">
