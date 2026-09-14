@@ -192,13 +192,11 @@ nav.flexi-nav button.on{color:var(--accent);border-bottom-color:var(--accent);}
 .kanban-board::-webkit-scrollbar-track{background:#111827;border-radius:8px;}
 .kanban-board::-webkit-scrollbar-thumb{background:#334155;border-radius:8px;border:8px solid #111827;}
 .kanban-board::-webkit-scrollbar-thumb:hover{background:#475569;}
-.k-col{flex:0 0 200px;background:#111827;border-radius:12px;border:1px solid #1E293B;overflow:hidden;}
-.k-col[data-estado="embalado"]{flex:0 0 240px;}
-.k-col[data-estado^="listo_"]{flex:0 0 165px;}
-.k-col-header{padding:12px 14px;border-bottom:1px solid #1E293B;display:flex;justify-content:space-between;align-items:center;}
-.k-col-title{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;letter-spacing:.5px;}
-.k-col-dot{width:7px;height:7px;border-radius:50%;}
-.k-col-count{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;}
+.k-col{flex:0 0 210px;background:#111827;border-radius:12px;border:1px solid #1E293B;overflow:hidden;}
+.k-col-header{padding:12px 14px;border-bottom:1px solid #1E293B;display:flex;justify-content:space-between;align-items:center;min-height:46px;box-sizing:border-box;}
+.k-col-title{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;letter-spacing:.5px;}
+.k-col-dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;}
+.k-col-count{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex:0 0 auto;}
 .k-col-body{padding:10px;max-height:calc(100vh - 280px);overflow-y:auto;min-height:50px;}
 .k-empty{text-align:center;padding:24px 0;color:#334155;font-size:14px;}
 
@@ -3478,10 +3476,10 @@ const ESTADOS = [
   {id:"pendiente",          label:"Pendiente",               color:"#94A3B8", roles:TODOS},
   {id:"preparado",          label:"En Preparación",           color:"#F59E0B", roles:TODOS},
   {id:"embalado",           label:"Preparado",                color:"#6C63FF", roles:TODOS},
-  {id:"listo_fabrica",      label:"Listo — Retira Fábrica",  color:"#00C9A7", roles:TODOS},
-  {id:"listo_santoni",      label:"Listo — Retira Santoni",  color:"#06B6D4", roles:TODOS},
-  {id:"listo_transporte",   label:"Listo — Envío Interior",  color:"#F97316", roles:TODOS},
-  {id:"listo_privado",      label:"Listo — Envío Privado",   color:"#A855F7", roles:TODOS},
+  {id:"listo_fabrica",      label:"Listo-Ret Fabr",          color:"#00C9A7", roles:TODOS},
+  {id:"listo_santoni",      label:"Listo-Ret Sant",          color:"#06B6D4", roles:TODOS},
+  {id:"listo_transporte",   label:"Listo-Env Int",           color:"#F97316", roles:TODOS},
+  {id:"listo_privado",      label:"Listo-Env Priv",          color:"#A855F7", roles:TODOS},
   {id:"entregado",          label:"Entregado / Despachado",  color:"#10B981", roles:TODOS},
 ];
 const SIG_ESTADO = {
