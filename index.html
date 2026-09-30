@@ -3909,8 +3909,9 @@ function abrirModalDespachoParaEstado(id, estadoDestino){
 
 async function cambiarEstado(id, nuevoEstado){
   try{
-    const ahora = new Date().toISOString();
     const pedido = allPedidos.find(p=>p.id===id);
+    if(nuevoEstado==="entregado" && !confirm(`¿Confirmás que el pedido #${pedido?.numero||""} pasa a Entregado?\n\nUna vez confirmado, sale del Panel Preparación y pasa a Historial.`)) return;
+    const ahora = new Date().toISOString();
     const hist = pedido?.historial_estados||[];
     hist.push({estado:nuevoEstado, fecha:ahora, usuario:currentUser.nombre});
     await db.from("pedidos").update({estado:nuevoEstado, historial_estados:hist, updated_at:ahora}).eq("id",id);
@@ -5026,9 +5027,13 @@ async function verDiseno(id){
   +".tbox .l{font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#888;}"
   +".tbox .v{font-size:18px;font-weight:700;color:#cc3300;}"
   +".footer{font-size:13px;color:#aaa;text-align:center;margin-top:auto;border-top:1px solid #eee;padding-top:4px;}"
+  +".rd-row{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid #ccc;padding:7px 0;font-size:14px;}"
+  +".rd-row .rd-l{color:#888;letter-spacing:.5px;text-transform:uppercase;font-size:13px;}"
+  +".rd-sig{border:1px solid #ccc;border-radius:4px;height:64px;margin-top:4px;}"
   +"@media print{button{display:none;}}"
   +"</style></head><body>"
   +"<button onclick='window.print()' style='position:fixed;top:10px;right:10px;background:#2D76B8;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:14px;font-weight:700;z-index:999;'>🖨 Imprimir PDF</button>"
+  +"<button id='rdToggleBtn' onclick='rdToggleRecibo()' style='position:fixed;top:56px;right:10px;background:#111827;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:14px;font-weight:700;z-index:999;'>🧾 Recibo de Entrega</button>"
   +"<div class='sheet'>"
   +"<div class='col-left'>"
   +"<div class='hdr'><div class='logo'>Flexi<span>Floor</span><sup style='font-size:14px;'>®</sup><small>Baldosas Plasticas Encastrables</small></div>"
@@ -5048,7 +5053,7 @@ async function verDiseno(id){
   +"<div style='font-size:14px;font-weight:700;color:#226600;'>"+embStr2(totalPz)+" · "+new Intl.NumberFormat("es-AR").format(totalPz)+" piezas</div></div>"
   +"</div></div>"
   +"<div class='col-right'>"
-  +"<div class='hdr'><span style='font-size:14px;font-weight:700;color:#2D76B8;letter-spacing:1px;'>PRESUPUESTO</span>"
+  +"<div class='hdr'><span id='rdHdrTitle' style='font-size:14px;font-weight:700;color:#2D76B8;letter-spacing:1px;'>PRESUPUESTO</span>"
   +"<div><div class='num'>N° "+(d.num||"FF-"+p.numero)+"</div><div class='dt'>"+(d.dt||p.fecha)+"</div></div></div>"
   +"<div class='sec'><div class='stitle'>Cliente</div>"
   +"<div class='line'><b>"+(d.cliente||p.cliente)+"</b></div>"
@@ -5076,7 +5081,7 @@ async function verDiseno(id){
   +"</div>"
   +(sinPintar>0?"<div style='background:#fff8e6;border:1px solid #f59e0b;border-radius:3px;padding:4px 7px;font-size:13px;color:#92400e;margin-bottom:5px;'><strong>"+sinPintar+" sin asignar</strong>. Precio sobre "+totalPz+" piezas.</div>":"")
   +"</div>"
-  +"<div class='sec'><div class='stitle'>Precio</div>"
+  +"<div class='sec' id='rdPrecioSec'><div class='stitle'>Precio</div>"
   +"<div class='tbox'><div class='l'>Total estimado</div><div class='v'>"+(d.total!==null&&d.total!==undefined?fmtAR(d.total):"—")+"</div></div>"
   +(d.pm2>0?"<div style='font-size:13px;color:#888;'>Por m2: "+fmtAR(d.pm2)+" x "+(d.pintadas?((d.pintadas/16).toFixed(2)):d.m2cot)+" m2</div>":"")
   +(d.ppz>0?"<div style='font-size:13px;color:#888;'>Por pieza: "+fmtAR(d.ppz)+" x "+new Intl.NumberFormat("es-AR").format(d.pintadas||0)+" pzas</div>":"")
@@ -5091,10 +5096,28 @@ async function verDiseno(id){
     );
     const obsExtra=partesKanban.join(" · ");
     const obsFinal=[obsPresup,obsExtra].filter(Boolean).join("\n");
-    return obsFinal?"<div class='sec'><div class='stitle'>Observaciones</div><div style='font-size:14px;color:#444;line-height:1.8;white-space:pre-line;'>"+obsFinal+"</div></div>":"";
+    return "<div class='sec' id='rdObsSec'"+(obsFinal?"":" style='display:none;'")+"><div class='stitle'>Observaciones</div><div style='font-size:14px;color:#444;line-height:1.8;white-space:pre-line;'>"+(obsFinal||"")+"</div></div>";
   })()
+  +"<div class='sec' id='rdReciboSec' style='display:none;'><div class='stitle'>Recibo de entrega</div>"
+  +"<div class='rd-row'><span class='rd-l'>Cantidad de bultos</span><span>&nbsp;</span></div>"
+  +"<div class='rd-row'><span class='rd-l'>Entregado</span><span>&nbsp;</span></div>"
+  +"<div class='rd-row'><span class='rd-l'>Nombre y Apellido</span><span>&nbsp;</span></div>"
+  +"<div class='rd-row' style='border-bottom:none;'><span class='rd-l'>DNI</span><span>&nbsp;</span></div>"
+  +"<div style='font-size:13px;color:#888;letter-spacing:.5px;text-transform:uppercase;margin-top:8px;margin-bottom:2px;'>Firma</div>"
+  +"<div class='rd-sig'></div>"
+  +"</div>"
   +"<div class='footer'>FlexiFloor® — Baldosas Plasticas Encastrables<br>Validez del presupuesto: 7 dias corridos</div>"
-  +"</div></div></body></html>";
+  +"</div></div>"
+  +"<script>function rdToggleRecibo(){"
+  +"var recibo=document.getElementById('rdReciboSec');"
+  +"var modo=recibo.style.display==='none';"
+  +"recibo.style.display=modo?'':'none';"
+  +"var precio=document.getElementById('rdPrecioSec'); if(precio) precio.style.display=modo?'none':'';"
+  +"var obs=document.getElementById('rdObsSec'); if(obs) obs.style.display=modo?'none':'';"
+  +"var hdr=document.getElementById('rdHdrTitle'); if(hdr) hdr.textContent=modo?'RECIBO DE ENTREGA':'PRESUPUESTO';"
+  +"var btn=document.getElementById('rdToggleBtn'); if(btn) btn.textContent=modo?'📄 Ver Presupuesto':'🧾 Recibo de Entrega';"
+  +"}<\/script>"
+  +"</body></html>";
 
   const win=window.open("","_blank");
   win.document.write(printHTML);
