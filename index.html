@@ -3471,6 +3471,10 @@ let allPedidos = [];
 let allUsuarios = [];
 let syncInterval = null;
 
+// Columnas de "pedidos" para el listado general: todas excepto imagen_diseno
+// (puede pesar varios MB por fila; se carga aparte, on-demand, en verDiseno()).
+const PEDIDOS_COLS_LISTADO = "id,numero,estado,fecha,cliente,direccion,telefono,observaciones,productos,creado_por,origen_flexi,historial_estados,created_at,updated_at,despacho_transporte,despacho_numero,prioridad,datos_presupuesto,cant_adjuntos,dni,email,tiene_imagen";
+
 const TODOS = ["deposito","entrega","admin"];
 const ESTADOS = [
   {id:"pendiente",          label:"Pendiente",               color:"#94A3B8", roles:TODOS},
@@ -3529,15 +3533,18 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 
 
-async function syncAll(){
+async function syncAll(opts){
+  // opts.usuarios === false evita re-pedir la tabla "usuarios" (se carga una sola
+  // vez al iniciar sesión y se guarda en memoria; no hace falta repreguntarla en
+  // cada ciclo del auto-sync de fondo).
+  const incluirUsuarios = !opts || opts.usuarios !== false;
   try{
     setSyncState("syncing");
-    const [{data:p},{data:u}] = await Promise.all([
-      db.from("pedidos").select("*").order("numero",{ascending:false}),
-      db.from("usuarios").select("*").order("nombre"),
-    ]);
-    allPedidos = p||[];
-    allUsuarios = u||[];
+    const calls = [ db.from("pedidos").select(PEDIDOS_COLS_LISTADO).order("numero",{ascending:false}) ];
+    if(incluirUsuarios) calls.push(db.from("usuarios").select("*").order("nombre"));
+    const results = await Promise.all(calls);
+    allPedidos = results[0].data||[];
+    if(incluirUsuarios) allUsuarios = results[1].data||[];
     _kanbanSynced = true;
     setSyncState("ok");
     if(currentSection==="sec-kanban") renderKanban();
@@ -3631,12 +3638,28 @@ async function iniciarSesion(u){
   // Reset scroll
   const secEl = document.getElementById(currentSection);
   if(secEl) secEl.scrollTop = 0;
-  // Auto-sync cada 10s
-  syncInterval = setInterval(()=>syncAll().then(()=>{
-    if(currentSection==="sec-kanban") renderKanban();
-    else if(currentSection==="sec-historial") renderHistorial();
-  }), 10000);
+  // Auto-sync de fondo cada 120s (antes 10s). No repide "usuarios" (ver syncAll) y
+  // se saltea mientras la pestaña no está visible, para no gastar egress de más
+  // con pestañas/perfiles abiertos de fondo sin que nadie los esté mirando.
+  syncInterval = setInterval(()=>{
+    if(document.visibilityState==="hidden") return;
+    syncAll({usuarios:false}).then(()=>{
+      if(currentSection==="sec-kanban") renderKanban();
+      else if(currentSection==="sec-historial") renderHistorial();
+    });
+  }, 120000);
 }
+
+// Al volver a la pestaña (después de tenerla en segundo plano), sincronizar al
+// toque en vez de esperar hasta el próximo tick del auto-sync de 120s.
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState==="visible" && currentUser){
+    syncAll({usuarios:false}).then(()=>{
+      if(currentSection==="sec-kanban") renderKanban();
+      else if(currentSection==="sec-historial") renderHistorial();
+    });
+  }
+});
 
 function doLogout(){
   clearInterval(syncInterval);
@@ -3681,10 +3704,10 @@ function showSection(id, btn){
 
   if(id==="sec-kanban"){
     renderKanban();
-    syncAll().then(()=>{ renderKanban(); getScroller().scrollTop=0; });
-  } else if(id==="sec-historial"){ renderHistorial(); syncAll().then(renderHistorial); }
+    syncAll({usuarios:false}).then(()=>{ renderKanban(); getScroller().scrollTop=0; });
+  } else if(id==="sec-historial"){ renderHistorial(); syncAll({usuarios:false}).then(renderHistorial); }
   else if(id==="sec-usuarios"){ renderUsuarios(); syncAll().then(renderUsuarios); }
-  else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll().then(renderPresupuestos); }
+  else if(id==="sec-presupuestos"){ renderPresupuestos(); syncAll({usuarios:false}).then(renderPresupuestos); }
   else if(id==="sec-tareas"){ renderTareas().then(()=>{ getScroller().scrollTop=0; }); }
   else if(id==="sec-marketing"){ renderMarketing().then(()=>{ getScroller().scrollTop=0; }); }
   else if(id==="sec-cobros"){ renderCobros().then(()=>{ getScroller().scrollTop=0; }); }
@@ -3868,7 +3891,7 @@ function cardHTML(p, est){
       ` : ""}
       ${puedeRetroceder?`<button class="pc-btn-editar" onclick="cambiarEstado('${p.id}','${antEst}')" title="Volver estado anterior" style="font-size:14px;padding:8px;">← Volver</button>`:''}
       ${puedeEtiqueta?`<button class="pc-btn-etiqueta" onclick="abrirEtiqueta('${p.id}')" title="Imprimir etiqueta">🖨</button>`:''}
-      ${(p.origen_flexi||p.imagen_diseno||p.datos_presupuesto)?`<button class="pc-btn-etiqueta" onclick="verDiseno('${p.id}')" title="Ver presupuesto PDF" style="font-size:13px;">🖼</button>`:''}
+      ${(p.origen_flexi||p.tiene_imagen||p.datos_presupuesto)?`<button class="pc-btn-etiqueta" onclick="verDiseno('${p.id}')" title="Ver presupuesto PDF" style="font-size:13px;">🖼</button>`:''}
       <button class="pc-btn-etiqueta" onclick="abrirAdjuntos('${p.id}','${p.numero}')" title="Adjuntos" style="font-size:13px;position:relative;">📎${(p.cant_adjuntos>0)?`<span style="position:absolute;top:-4px;right:-4px;background:#6C63FF;color:#fff;border-radius:8px;padding:0 4px;font-size:13px;font-weight:800;">${p.cant_adjuntos}</span>`:""}</button>
       <button class="pc-btn-etiqueta" onclick="imprimirPedidoKanban('${p.id}')" title="Imprimir pedido" style="font-size:13px;">📋</button>
       ${puedeEditar?`<button class="pc-btn-editar" onclick="abrirEditarPedido('${p.id}')" title="Editar">✏</button>`:''}
@@ -4965,17 +4988,17 @@ function imprimirPedidoKanban(id){
 async function verDiseno(id){
   const p = allPedidos.find(x=>x.id===id);
   if(!p) return;
-  let imagen_diseno = p.imagen_diseno||null;
-  let datos_presupuesto = p.datos_presupuesto||null;
-  if(!imagen_diseno && !datos_presupuesto){
+  // imagen_diseno ya no viene en el listado general (ver PEDIDOS_COLS_LISTADO):
+  // si todavía no se pidió para este pedido en esta sesión (clave ausente, no
+  // simplemente null), se trae ahora, una sola vez, y se cachea en el objeto.
+  if(typeof p.imagen_diseno === "undefined"){
     try{
-      const {data} = await db.from("pedidos").select("imagen_diseno,datos_presupuesto").eq("id",id).single();
-      imagen_diseno = data?.imagen_diseno||null;
-      datos_presupuesto = data?.datos_presupuesto||null;
-      p.imagen_diseno = imagen_diseno;
-      p.datos_presupuesto = datos_presupuesto;
-    }catch(e){}
+      const {data} = await db.from("pedidos").select("imagen_diseno").eq("id",id).single();
+      p.imagen_diseno = data?.imagen_diseno||null;
+    }catch(e){ p.imagen_diseno = null; }
   }
+  const imagen_diseno = p.imagen_diseno||null;
+  const datos_presupuesto = p.datos_presupuesto||null;
   if(!imagen_diseno && !datos_presupuesto) return;
   const d = datos_presupuesto||{};
   const img = imagen_diseno;
